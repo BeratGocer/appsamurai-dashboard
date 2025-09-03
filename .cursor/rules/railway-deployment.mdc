@@ -1,0 +1,92 @@
+# Railway Deployment Rule
+
+## Overview
+This rule ensures that Railway deployment is properly configured for automatic deployment from GitHub commits.
+
+## Railway Auto-Deploy Setup
+Railway automatically deploys when changes are pushed to the main branch.
+
+### 1. Railway CLI Installation
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login to Railway
+railway login
+
+# Link project to Railway
+railway link
+```
+
+### 2. Environment Variables
+Railway automatically pulls environment variables from `.env` files:
+- `.env` - Local development
+- `.env.production` - Production environment
+
+### 3. Build Configuration
+Railway detects the build system automatically:
+- **Vite**: Detects `vite.config.ts`
+- **Node.js**: Detects `package.json`
+- **Docker**: Detects `Dockerfile`
+
+### 4. Deployment Triggers
+- **GitHub Integration**: Automatic deployment on push to main
+- **Manual Deployment**: `railway up`
+- **Preview Deployments**: For pull requests
+
+### 5. Domain Configuration
+- **Custom Domain**: Configure in Railway dashboard
+- **SSL Certificate**: Automatically provisioned
+- **CDN**: Global edge network
+
+## Best Practices
+
+### Environment Management
+```bash
+# Set production environment variables
+railway variables set NODE_ENV=production
+railway variables set DATABASE_URL=your-database-url
+
+# View current variables
+railway variables
+```
+
+### Build Optimization
+```javascript
+// vite.config.ts - Optimize for Railway
+export default defineConfig({
+  build: {
+    target: 'esnext',
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom']
+        }
+      }
+    }
+  }
+})
+```
+
+### Health Checks
+```javascript
+// Add health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+```
+
+## Monitoring & Logs
+- **Real-time Logs**: `railway logs`
+- **Metrics**: CPU, Memory, Network usage
+- **Alerts**: Configure notifications for downtime
+
+## Cost Optimization
+- **Auto-sleep**: Free tier sleeps after inactivity
+- **Resource Limits**: Set appropriate CPU/Memory limits
+- **Usage Monitoring**: Track resource consumption
+description:
+globs:
+alwaysApply: true
+---

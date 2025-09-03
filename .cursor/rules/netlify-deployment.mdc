@@ -1,0 +1,123 @@
+# Netlify Deployment Rule
+
+## Overview
+This rule ensures that Netlify deployment is properly configured for automatic deployment from GitHub commits.
+
+## Netlify Auto-Deploy Setup
+Netlify automatically deploys when changes are pushed to the main branch.
+
+### 1. Netlify CLI Installation
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
+
+# Login to Netlify
+netlify login
+
+# Initialize Netlify project
+netlify init
+```
+
+### 2. Build Configuration
+Create `netlify.toml` for build settings:
+```toml
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+### 3. Environment Variables
+Set environment variables in Netlify dashboard:
+- **Build Variables**: Available during build
+- **Runtime Variables**: Available in browser
+- **Secret Variables**: Hidden from logs
+
+### 4. Deployment Triggers
+- **GitHub Integration**: Automatic deployment on push to main
+- **Manual Deployment**: `netlify deploy --prod`
+- **Preview Deployments**: For pull requests
+- **Branch Deployments**: For feature branches
+
+### 5. Domain Configuration
+- **Custom Domain**: Configure in Netlify dashboard
+- **SSL Certificate**: Automatically provisioned
+- **CDN**: Global edge network
+- **DNS Management**: Automatic DNS configuration
+
+## Best Practices
+
+### Build Optimization
+```javascript
+// vite.config.ts - Optimize for Netlify
+export default defineConfig({
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom']
+        }
+      }
+    }
+  }
+})
+```
+
+### Form Handling
+```html
+<!-- Netlify form handling -->
+<form name="contact" netlify>
+  <input type="text" name="name" />
+  <input type="email" name="email" />
+  <button type="submit">Send</button>
+</form>
+```
+
+### Redirects & Rewrites
+```toml
+# netlify.toml
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.appsamurai.com/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/"
+  status = 301
+```
+
+## Monitoring & Analytics
+- **Real-time Logs**: `netlify logs`
+- **Analytics**: Built-in analytics dashboard
+- **Performance**: Core Web Vitals monitoring
+- **Error Tracking**: JavaScript error monitoring
+
+## Functions & Edge Functions
+```javascript
+// netlify/functions/api.js
+exports.handler = async (event, context) => {
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: 'Hello from Netlify Function!' })
+  };
+};
+```
+
+## Cost Optimization
+- **Free Tier**: 100GB bandwidth/month
+- **Build Minutes**: 300 minutes/month
+- **Function Calls**: 125,000 calls/month
+- **Form Submissions**: 100 submissions/month
+description:
+globs:
+alwaysApply: true
+---
