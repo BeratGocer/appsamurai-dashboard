@@ -1,0 +1,98 @@
+# Maintenance Schedule
+
+## Daily Tasks
+- **Deployment Monitoring**: Check deployment status
+- **Error Monitoring**: Review error logs
+- **Performance Monitoring**: Check Core Web Vitals
+- **Security Monitoring**: Review security alerts
+
+## Weekly Tasks
+- **Dependency Updates**: Check for dependency updates
+- **Security Scans**: Run security vulnerability scans
+- **Performance Review**: Analyze performance metrics
+- **Backup Verification**: Verify backup integrity
+
+## Monthly Tasks
+- **Code Review**: Review code quality and standards
+- **Documentation Update**: Update project documentation
+- **Performance Optimization**: Identify optimization opportunities
+- **Security Audit**: Conduct security audit
+
+## Quarterly Tasks
+- **Major Updates**: Plan major feature updates
+- **Architecture Review**: Review system architecture
+- **Scalability Assessment**: Assess system scalability
+- **Compliance Review**: Review compliance requirements
+
+## Dependency Management
+```bash
+# Weekly dependency check
+npm audit
+npm outdated
+npm update
+
+# Security updates
+npm audit fix
+npm audit fix --force
+
+# Major version updates
+npm-check-updates -u
+```
+
+## Performance Monitoring
+- **Core Web Vitals**: Monitor LCP, FID, CLS
+- **Bundle Size**: Track bundle size changes
+- **Load Times**: Monitor page load times
+- **Error Rates**: Track error rates
+
+## Security Maintenance
+- **Vulnerability Scans**: Regular security scans
+- **Access Review**: Review access permissions
+- **Secret Rotation**: Rotate sensitive secrets
+- **Security Updates**: Apply security patches
+
+## Database Maintenance
+- **Backup Verification**: Verify backup integrity
+- **Performance Tuning**: Optimize database performance
+- **Index Maintenance**: Maintain database indexes
+- **Data Cleanup**: Clean up old data
+
+## Infrastructure Maintenance
+- **SSL Certificate**: Monitor SSL certificate expiration
+- **Domain Renewal**: Monitor domain expiration
+- **CDN Optimization**: Optimize CDN configuration
+- **Monitoring Setup**: Ensure monitoring is active
+
+## Code Quality Maintenance
+- **Linting**: Run linting checks
+- **Type Checking**: Verify TypeScript types
+- **Test Coverage**: Maintain test coverage
+- **Code Review**: Regular code reviews
+
+## Documentation Maintenance
+- **README Updates**: Keep README current
+- **API Documentation**: Update API docs
+- **Deployment Guides**: Update deployment guides
+- **Troubleshooting**: Update troubleshooting guides
+
+## Emergency Procedures
+- **Incident Response**: Define incident response procedures
+- **Rollback Procedures**: Define rollback procedures
+- **Contact Information**: Maintain contact information
+- **Escalation Procedures**: Define escalation procedures
+
+## Maintenance Checklist
+- [ ] Dependencies updated
+- [ ] Security scans completed
+- [ ] Performance monitored
+- [ ] Backups verified
+- [ ] Documentation updated
+- [ ] Code reviewed
+- [ ] Tests passing
+- [ ] Monitoring active
+- [ ] SSL certificates valid
+- [ ] Emergency procedures documented
+description:
+globs:
+alwaysApply: true
+---

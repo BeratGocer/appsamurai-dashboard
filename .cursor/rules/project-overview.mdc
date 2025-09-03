@@ -1,0 +1,62 @@
+# AppSamurai Dashboard Project Overview
+
+## Project Structure
+The AppSamurai Dashboard is a React + TypeScript + Vite application for analyzing mobile app campaign data from CSV files.
+
+### Core Architecture
+- **Entry Point**: [src/main.tsx](mdc:src/main.tsx) → [src/App.tsx](mdc:src/App.tsx)
+- **Main Component**: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+- **Navigation**: [src/components/Navbar.tsx](mdc:src/components/Navbar.tsx)
+- **Data Processing**: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- **Types**: [src/types/index.ts](mdc:src/types/index.ts)
+
+### Key Features
+1. **File Upload System**: Users upload CSV campaign data files
+2. **Multi-Tab Navigation**: Anasayfa, Müşteriler, Account Managers, Dashboard
+3. **Data Visualization**: KPI cards, metrics, filtered views
+4. **Accordion Layouts**: Row-by-row expandable listings instead of grid cards
+5. **Search & Filtering**: Applied to campaign data across all views
+
+### Data Flow
+CSV Files → [csvParser.ts](mdc:src/utils/csvParser.ts) → State Management → Dashboard Views
+
+### UI Standards
+- Uses shadcn/ui component library
+- Tailwind CSS for styling
+- Turkish language UI labels
+- Dark/Light theme support via [ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
+
+### Deployment Architecture
+- **Frontend**: Netlify (https://ubiquitous-sherbet-b4f6bf.netlify.app)
+- **Backend**: Railway (PostgreSQL database)
+- **Auto-deploy**: GitHub integration for both platforms
+
+### Key Components
+- **Dashboard**: Main analytics interface
+- **FileUpload**: CSV upload and processing
+- **CampaignTable**: Campaign data display
+- **GameTable**: Game-specific analytics
+- **SettingsPanel**: User preferences and configuration
+- **DynamicKPISection**: Configurable KPI cards
+
+### Data Processing
+- **CSV Parsing**: Flexible parsing for multiple formats
+- **Data Aggregation**: Campaign performance metrics
+- **Filtering**: Game, platform, country-based filtering
+- **Export**: Data export functionality
+
+### State Management
+- React Context for theme management
+- Local state for component-specific data
+- File-based settings persistence
+- Real-time data updates
+
+### Performance Optimizations
+- Lazy loading for large datasets
+- Virtual scrolling for tables
+- Optimized CSV parsing
+- Efficient re-rendering strategies
+description:
+globs:
+alwaysApply: true
+---

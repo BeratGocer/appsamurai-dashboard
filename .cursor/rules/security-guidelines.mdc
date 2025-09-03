@@ -1,0 +1,110 @@
+# Security Guidelines
+
+## Data Validation
+- **Input Sanitization**: Always validate and sanitize user inputs
+- **CSV Validation**: Validate CSV file structure and content
+- **File Size Limits**: Implement file size restrictions
+- **File Type Validation**: Only allow specific file types
+
+## Authentication & Authorization
+- **User Authentication**: Implement proper user authentication
+- **Session Management**: Secure session handling
+- **Role-Based Access**: Implement role-based access control
+- **API Security**: Secure API endpoints
+
+## Data Protection
+- **Sensitive Data**: Never log sensitive information
+- **Data Encryption**: Encrypt sensitive data in transit and at rest
+- **PII Protection**: Protect personally identifiable information
+- **Data Retention**: Implement proper data retention policies
+
+## Frontend Security
+- **XSS Prevention**: Use proper escaping and sanitization
+- **CSRF Protection**: Implement CSRF tokens
+- **Content Security Policy**: Use CSP headers
+- **Secure Headers**: Implement security headers
+
+## API Security
+```typescript
+// Secure API call example
+const secureApiCall = async (data: SensitiveData) => {
+  try {
+    const response = await fetch('/api/endpoint', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken(),
+      },
+      body: JSON.stringify(sanitizeData(data)),
+    });
+    
+    if (!response.ok) {
+      throw new Error('API call failed');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    // Log error without sensitive data
+    console.error('API call failed:', error.message);
+    throw error;
+  }
+};
+```
+
+## File Upload Security
+- **File Validation**: Validate file type, size, and content
+- **Virus Scanning**: Implement virus scanning for uploads
+- **Secure Storage**: Store files securely
+- **Access Control**: Control file access permissions
+
+## Environment Variables
+- **Sensitive Config**: Store sensitive data in environment variables
+- **No Hardcoding**: Never hardcode secrets in code
+- **Secure Storage**: Use secure secret management
+- **Access Control**: Limit access to environment variables
+
+## Error Handling
+- **Information Disclosure**: Don't expose sensitive information in errors
+- **Generic Errors**: Use generic error messages for users
+- **Detailed Logging**: Log detailed errors for debugging
+- **Error Boundaries**: Implement error boundaries
+
+## Dependencies
+- **Security Updates**: Keep dependencies updated
+- **Vulnerability Scanning**: Regularly scan for vulnerabilities
+- **Trusted Sources**: Only use trusted package sources
+- **License Compliance**: Ensure license compliance
+
+## Data Processing
+- **Input Validation**: Validate all input data
+- **Output Encoding**: Properly encode output data
+- **SQL Injection**: Use parameterized queries
+- **NoSQL Injection**: Validate NoSQL queries
+
+## Monitoring & Logging
+- **Security Events**: Log security-related events
+- **Access Logs**: Log access attempts
+- **Error Monitoring**: Monitor for security errors
+- **Alert System**: Implement security alerts
+
+## Compliance
+- **GDPR Compliance**: Follow GDPR requirements
+- **Data Privacy**: Implement data privacy controls
+- **Audit Trails**: Maintain audit trails
+- **Data Portability**: Support data portability
+
+## Security Checklist
+- [ ] Input validation implemented
+- [ ] Output encoding applied
+- [ ] Authentication implemented
+- [ ] Authorization configured
+- [ ] Error handling secure
+- [ ] Dependencies updated
+- [ ] Security headers set
+- [ ] CSP configured
+- [ ] CSRF protection active
+- [ ] File uploads secured
+description:
+globs:
+alwaysApply: true
+---

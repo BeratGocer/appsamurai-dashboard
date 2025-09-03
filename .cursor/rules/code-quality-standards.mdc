@@ -1,0 +1,92 @@
+# Code Quality Standards
+
+## TypeScript Standards
+- **Strict Mode**: Always use strict TypeScript configuration
+- **Type Definitions**: Define proper types for all data structures
+- **Interface Naming**: Use PascalCase for interfaces (e.g., `CampaignData`)
+- **Type Guards**: Use type guards for runtime type checking
+- **Generic Types**: Use generics for reusable components
+
+## React Best Practices
+- **Functional Components**: Use functional components with hooks
+- **Custom Hooks**: Extract reusable logic into custom hooks
+- **Props Interface**: Define props interface for every component
+- **Event Handlers**: Use proper event handler types
+- **State Management**: Use appropriate state management patterns
+
+## Component Structure
+```typescript
+// Standard component structure
+interface ComponentProps {
+  // Define props
+}
+
+export const Component: React.FC<ComponentProps> = ({ prop1, prop2 }) => {
+  // Hooks first
+  const [state, setState] = useState();
+  
+  // Event handlers
+  const handleClick = () => {
+    // Implementation
+  };
+  
+  // Render
+  return (
+    <div>
+      {/* JSX */}
+    </div>
+  );
+};
+```
+
+## File Organization
+- **Component Files**: PascalCase (e.g., `Dashboard.tsx`)
+- **Utility Files**: camelCase (e.g., `csvParser.ts`)
+- **Type Files**: camelCase (e.g., `index.ts`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `API_ENDPOINTS`)
+
+## Naming Conventions
+- **Variables**: camelCase
+- **Functions**: camelCase
+- **Components**: PascalCase
+- **Interfaces**: PascalCase
+- **Types**: PascalCase
+- **Constants**: UPPER_SNAKE_CASE
+
+## Error Handling
+- **Try-Catch**: Use try-catch for async operations
+- **Error Boundaries**: Implement error boundaries for components
+- **User Feedback**: Provide meaningful error messages
+- **Logging**: Log errors for debugging
+
+## Performance Guidelines
+- **Memoization**: Use React.memo for expensive components
+- **useMemo/useCallback**: Use for expensive calculations
+- **Lazy Loading**: Implement lazy loading for large components
+- **Bundle Size**: Keep bundle size optimized
+
+## Testing Standards
+- **Unit Tests**: Write tests for utility functions
+- **Component Tests**: Test component behavior
+- **Integration Tests**: Test component interactions
+- **Test Coverage**: Maintain good test coverage
+
+## Documentation
+- **JSDoc**: Document complex functions
+- **README**: Keep documentation updated
+- **Comments**: Add comments for complex logic
+- **Type Comments**: Use type comments for complex types
+
+## Code Review Checklist
+- [ ] TypeScript types are properly defined
+- [ ] Component props interface is defined
+- [ ] Error handling is implemented
+- [ ] Performance considerations are addressed
+- [ ] Code is properly documented
+- [ ] Naming conventions are followed
+- [ ] No console.log statements in production
+- [ ] No unused imports or variables
+description:
+globs:
+alwaysApply: true
+---
