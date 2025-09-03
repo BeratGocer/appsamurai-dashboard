@@ -1,0 +1,66 @@
+---
+alwaysApply: true
+description: Automatic Git push functionality - commits and pushes changes automatically when files are modified
+---
+
+# Auto Git Push Rule
+
+## Overview
+This rule ensures that any file changes in the AppSamurai Dashboard project are automatically committed and pushed to GitHub.
+
+## Automatic Git Workflow
+When files are modified, the following Git commands will be executed automatically:
+
+1. **Stage Changes**: `git add .`
+2. **Commit Changes**: `git commit -m "Auto-commit: [description of changes]"`
+3. **Push to GitHub**: `git push origin main`
+
+## Implementation Pattern
+```bash
+# Automatic staging
+git add .
+
+# Smart commit message generation
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - $(git status --porcelain | head -1 | cut -c4-)"
+
+# Push to remote
+git push origin main
+```
+
+## File Monitoring
+This rule applies to all project files except:
+- `node_modules/`
+- `dist/`
+- `.git/`
+- `.DS_Store`
+- `*.log`
+
+## Commit Message Format
+Auto-generated commit messages follow this pattern:
+- `Auto-commit: YYYY-MM-DD_HH:MM:SS - [file description]`
+- Example: `Auto-commit: 2025-01-03_16:30:45 - Updated Dashboard component`
+
+## Error Handling
+If push fails due to conflicts:
+1. Pull latest changes: `git pull origin main`
+2. Resolve conflicts if any
+3. Re-push: `git push origin main`
+
+## GitHub Integration
+- Repository: https://github.com/BeratGocer/appsamurai-dashboard
+- Branch: main
+- Remote: origin
+
+## Usage Instructions
+1. Make changes to any project file
+2. Save the file
+3. Rule automatically detects changes
+4. Git commands execute automatically
+5. Changes are pushed to GitHub
+
+## Safety Measures
+- Only staged files are committed
+- Commit messages include timestamp
+- Push only to main branch
+- No force push operations
+- Preserves existing Git history
