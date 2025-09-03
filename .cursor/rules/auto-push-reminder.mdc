@@ -1,0 +1,77 @@
+# Auto Push Reminder Rule
+
+## Automatic Push System
+**ALWAYS PUSH CHANGES IMMEDIATELY** after any file modification!
+
+## Push Verification Checklist
+Before ending any session, verify:
+1. ✅ **All changes committed**: `git status` should show "working tree clean"
+2. ✅ **All changes pushed**: `git log --oneline -1` should match remote
+3. ✅ **No uncommitted files**: No red files in `git status`
+
+## Auto-Push Commands
+**Use these commands after ANY file change:**
+
+```bash
+# Standard auto-push (use this most of the time)
+git add . && git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - [description]" && git push origin main
+
+# Quick auto-push (for minor changes)
+git add . && git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Quick update" && git push origin main
+
+# Detailed auto-push (for major changes)
+git add . && git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - [detailed description]" && git push origin main
+```
+
+## Push Triggers
+**ALWAYS PUSH when:**
+- ✅ File is saved/modified
+- ✅ Component is updated
+- ✅ Configuration is changed
+- ✅ New feature is added
+- ✅ Bug is fixed
+- ✅ Documentation is updated
+
+## Verification Commands
+```bash
+# Check if everything is pushed
+git status
+git log --oneline -1
+git remote -v
+
+# Force push if needed (rarely)
+git push origin main --force-with-lease
+```
+
+## Common Push Scenarios
+
+### After Code Changes
+```bash
+git add . && git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Updated [component name]" && git push origin main
+```
+
+### After Configuration Changes
+```bash
+git add . && git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Updated configuration files" && git push origin main
+```
+
+### After New Features
+```bash
+git add . && git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Added [feature name]" && git push origin main
+```
+
+## Emergency Recovery
+If push fails:
+1. **Pull latest**: `git pull origin main`
+2. **Resolve conflicts**: If any
+3. **Re-push**: `git push origin main`
+
+## NEVER FORGET
+- ❌ **Never leave uncommitted changes**
+- ❌ **Never forget to push**
+- ❌ **Never assume changes are saved**
+- ✅ **Always verify push success**
+description:
+globs:
+alwaysApply: true
+---

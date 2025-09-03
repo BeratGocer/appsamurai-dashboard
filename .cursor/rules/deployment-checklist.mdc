@@ -1,0 +1,114 @@
+# Deployment Checklist Rule
+
+## Pre-Deployment Checklist
+**ALWAYS CHECK BEFORE DEPLOYING:**
+
+### 1. Service Verification
+```bash
+# Check current directory
+pwd
+
+# Check current Railway service (if using Railway)
+railway service
+
+# Check Netlify status (if using Netlify)
+netlify status
+```
+
+### 2. Code Status
+```bash
+# Check if all changes are committed
+git status
+
+# Check if all changes are pushed
+git log --oneline -1
+```
+
+### 3. Build Verification
+```bash
+# Test build locally
+npm run build
+
+# Check build output
+ls -la dist/
+```
+
+## Deployment Process
+
+### Frontend Deployment (Netlify)
+```bash
+# 1. Verify directory
+pwd  # Should be: /Users/appsamurai/Desktop/appsamurai-dashboard
+
+# 2. Build
+npm run build
+
+# 3. Deploy
+netlify deploy --prod --dir=dist
+
+# 4. Verify deployment
+netlify status
+```
+
+### Backend Deployment (Railway)
+```bash
+# 1. Verify directory
+pwd  # Should be: /Users/appsamurai/Desktop/appsamurai-dashboard/server
+
+# 2. Verify service
+railway service  # Should show: backend
+
+# 3. Deploy
+railway up
+
+# 4. Verify deployment
+railway status
+```
+
+## Post-Deployment Verification
+
+### Frontend Verification
+- ✅ **URL accessible**: https://ubiquitous-sherbet-b4f6bf.netlify.app
+- ✅ **No console errors**: Check browser console
+- ✅ **All features working**: Test main functionality
+- ✅ **Responsive design**: Test on different screen sizes
+
+### Backend Verification
+- ✅ **API endpoints**: Test API calls
+- ✅ **Database connection**: Check database connectivity
+- ✅ **Environment variables**: Verify all env vars are set
+- ✅ **Logs clean**: Check Railway logs for errors
+
+## Common Issues & Solutions
+
+### Frontend Issues
+- **Build fails**: Check Node.js version and dependencies
+- **Deploy fails**: Check Netlify configuration
+- **404 errors**: Check routing configuration
+
+### Backend Issues
+- **Service wrong**: `cd server && railway link`
+- **Database issues**: Check Railway variables
+- **Build fails**: Check Dockerfile and dependencies
+
+## Emergency Procedures
+
+### If Frontend Breaks
+1. **Check Netlify logs**: `netlify logs`
+2. **Redeploy**: `netlify deploy --prod --dir=dist`
+3. **Check configuration**: `netlify.toml`
+
+### If Backend Breaks
+1. **Check Railway logs**: `railway logs`
+2. **Redeploy**: `railway up`
+3. **Check service**: `railway service`
+
+## Success Indicators
+- ✅ **Frontend**: Netlify shows "Deploy complete"
+- ✅ **Backend**: Railway shows "Deploy successful"
+- ✅ **Database**: Connection established
+- ✅ **Auto-deploy**: GitHub integration working
+description:
+globs:
+alwaysApply: true
+---

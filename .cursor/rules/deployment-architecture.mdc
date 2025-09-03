@@ -1,0 +1,63 @@
+# Deployment Architecture Rule
+
+## Service Separation
+**CRITICAL**: Never mix frontend and backend deployments!
+
+### Frontend (React/Vite App)
+- **Platform**: Netlify ONLY
+- **Location**: Root directory `/Users/appsamurai/Desktop/appsamurai-dashboard`
+- **Build Command**: `npm run build`
+- **Deploy Directory**: `dist/`
+- **URL**: https://ubiquitous-sherbet-b4f6bf.netlify.app
+- **Auto-deploy**: GitHub push to main branch
+
+### Backend (Node.js/Express)
+- **Platform**: Railway ONLY
+- **Location**: `/Users/appsamurai/Desktop/appsamurai-dashboard/server`
+- **Service Name**: `backend`
+- **Database**: PostgreSQL on Railway
+- **Auto-deploy**: GitHub push to main branch
+
+## NEVER DO THESE
+❌ **Never link Railway to root directory** (frontend)
+❌ **Never deploy frontend to Railway**
+❌ **Never deploy backend to Netlify**
+❌ **Never mix service directories**
+
+## ALWAYS DO THESE
+✅ **Frontend**: Always use Netlify from root directory
+✅ **Backend**: Always use Railway from server directory
+✅ **Check current service**: `railway service` before deployment
+✅ **Check current directory**: `pwd` before any deployment
+
+## Deployment Commands
+
+### Frontend (Netlify)
+```bash
+# From root directory
+cd /Users/appsamurai/Desktop/appsamurai-dashboard
+npm run build
+netlify deploy --prod --dir=dist
+```
+
+### Backend (Railway)
+```bash
+# From server directory
+cd /Users/appsamurai/Desktop/appsamurai-dashboard/server
+railway up
+```
+
+## Service Verification
+Before any deployment, ALWAYS verify:
+1. **Current directory**: `pwd`
+2. **Current service**: `railway service` (if using Railway)
+3. **Target platform**: Netlify for frontend, Railway for backend
+
+## Emergency Recovery
+If service gets mixed up:
+1. **For Railway**: `cd server && railway link`
+2. **For Netlify**: `cd /Users/appsamurai/Desktop/appsamurai-dashboard && netlify status`
+description:
+globs:
+alwaysApply: true
+---
