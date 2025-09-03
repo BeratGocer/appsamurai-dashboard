@@ -1,0 +1,42 @@
+# State Management Patterns
+
+## Core State Structure
+- **App Level**: [src/App.tsx](mdc:src/App.tsx) manages uploaded files and active file
+- **Dashboard Level**: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) manages view state
+- **Component Level**: Individual components manage their own UI state
+
+## Key State Variables
+```typescript
+// App.tsx
+const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+const [activeFileId, setActiveFileId] = useState<string>('')
+const [showUploadPage, setShowUploadPage] = useState(false)
+
+// Dashboard.tsx
+const [currentTab, setCurrentTab] = useState<'overview' | 'customers' | 'managers'>('overview')
+const [selectedGame, setSelectedGame] = useState<string | null>(null)
+const [hiddenTables, setHiddenTables] = useState<Set<string>>(new Set())
+```
+
+## Data Flow
+1. **File Upload**: FileUpload → App → Backend → Database
+2. **File Loading**: App → Backend → App → Dashboard → Components
+3. **State Updates**: User actions → Component state → App state → Backend
+4. **Persistence**: Backend stores data, localStorage as fallback
+
+## State Management Rules
+- Keep state as close to where it's used as possible
+- Use React Context for theme and global settings
+- Pass data down through props, not through context
+- Use localStorage for user preferences only
+- Always handle loading and error states
+
+## Performance Considerations
+- Memoize expensive calculations with useMemo
+- Use React.memo for components that don't need frequent updates
+- Lazy load components when possible
+- Debounce search and filter operations
+description:
+globs:
+alwaysApply: true
+---

@@ -1,0 +1,32 @@
+# API Integration Patterns
+
+## Backend URL Configuration
+- **Production**: Hardcoded Railway URL in [src/utils/api.ts](mdc:src/utils/api.ts)
+- **Fallback**: `https://backend-production-80f6.up.railway.app`
+- **Runtime Override**: `window.__API_BASE` (if needed)
+
+## API Endpoints
+- **Health Check**: `GET /health` → `{ ok: true }`
+- **File Init**: `POST /files/init` → `{ fileId, storageKey }`
+- **CSV Ingest**: `POST /files/{id}/ingest` → `{ inserted: number }`
+- **File Groups**: `GET /files/{id}/groups` → `GameCountryPublisherGroup[]`
+
+## Error Handling
+- **500 P2003**: Foreign key constraint → Organization record missing
+- **Connection Refused**: localhost:8787 → Frontend not using Railway URL
+- **Ingest Failed**: CSV parsing error → Check CSV format compatibility
+
+## Database Schema
+- **Organization**: Required for File creation (FK constraint)
+- **File**: Stores metadata and CSV processing results
+- **CampaignRow**: Individual CSV data rows
+- **FileSettings**: Per-file configuration persistence
+
+## Migration Strategy
+- **Auto-migrate**: `prisma migrate deploy` runs on Railway startup
+- **Safe migrations**: Only applies pending migrations
+- **Rollback**: Manual intervention required for failed migrations
+description:
+globs:
+alwaysApply: true
+---

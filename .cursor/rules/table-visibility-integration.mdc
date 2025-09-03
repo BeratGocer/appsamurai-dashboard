@@ -1,0 +1,123 @@
+---
+description: Table visibility management integration with KPI calculations and dashboard filtering
+---
+
+# Table Visibility Management Integration
+
+## Hidden Tables State Management
+
+Hidden tables are managed as a `Set<string>` where each table ID follows this format:
+```typescript
+const tableId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+```
+
+## KPI Integration Pattern
+
+**CRITICAL**: KPI calculations MUST exclude hidden tables using this exact pattern:
+
+```typescript
+export function calculateKPIValue(
+  data: CampaignData[], 
+  config: KPICardConfig, 
+  hiddenTables?: Set<string>,
+  gameGroups?: any[]
+): KPIValue {
+  let filteredData = data;
+  
+  if (hiddenTables && hiddenTables.size > 0 && gameGroups) {
+    // Special case: if all tables are hidden, return 0 immediately
+    if (hiddenTables.size >= gameGroups.length) {
+      return {
+        raw: 0,
+        formatted: formatValue(0, config.format, config.decimalPlaces)
+      };
+    }
+    
+    // Filter to only visible groups and collect their data
+    const visibleGroups = gameGroups.filter(group => {
+      const tableId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+      return !hiddenTables.has(tableId);
+    });
+    
+    // Use data from visible groups only
+    filteredData = visibleGroups.flatMap(group => group.dailyData);
+  }
+  
+  // Continue with normal calculation on filtered data
+  const validData = filteredData.filter(row => {
+    const value = row[config.column as keyof CampaignData];
+    return value !== undefined && value !== null && !isNaN(Number(value));
+  });
+  
+  // ... rest of calculation logic
+}
+```
+
+## Table Visibility Controls
+
+Implement bulk visibility controls in [GameTables.tsx](mdc:src/components/GameTables.tsx):
+
+```typescript
+// Hide all tables
+const hideAllTables = () => {
+  const allTableIds = gameGroups.map(group => 
+    `${group.game}-${group.country}-${group.platform}-${group.publisher}`
+  );
+  setHiddenTables(new Set(allTableIds));
+};
+
+// Show all tables  
+const showAllTables = () => {
+  setHiddenTables(new Set());
+};
+
+// Toggle individual table
+const toggleTableVisibility = (tableId: string) => {
+  const newHidden = new Set(hiddenTables);
+  if (newHidden.has(tableId)) {
+    newHidden.delete(tableId);
+  } else {
+    newHidden.add(tableId);
+  }
+  setHiddenTables(newHidden);
+};
+```
+
+## Dashboard Integration
+
+Pass hidden tables state to all components that need it:
+
+```typescript
+<DynamicKPISection
+  data={filteredData}
+  activeFileId={activeFileId}
+  hiddenTables={hiddenTables}
+  gameGroups={gameGroups}
+  isEditMode={kpiEditMode}
+  onEditModeToggle={() => setKpiEditMode(!kpiEditMode)}
+/>
+
+<GameTables
+  gameGroups={gameGroups}
+  hiddenTables={hiddenTables}
+  onToggleTable={toggleTableVisibility}
+  onHideAll={hideAllTables}
+  onShowAll={showAllTables}
+  settings={settings}
+  onSettingsChange={setSettings}
+/>
+```
+
+## Real-time Updates
+
+When `hiddenTables` state changes:
+1. KPI cards automatically recalculate (via useMemo dependency)
+2. Table display updates immediately
+3. No manual refresh needed
+
+## Validation Rules
+
+- **Table ID Format**: Must exactly match `${game}-${country}-${platform}-${publisher}`
+- **Zero Handling**: When all tables hidden, KPIs should show 0, not NaN or undefined
+- **State Persistence**: Hidden tables state persists during session but resets on page reload
+- **Performance**: Use `useMemo` for expensive calculations that depend on `hiddenTables`

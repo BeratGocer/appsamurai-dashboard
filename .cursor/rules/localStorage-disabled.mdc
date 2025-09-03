@@ -1,0 +1,34 @@
+# localStorage Disabled
+
+## Implementation
+- **Location**: [index.html](mdc:index.html) script injection
+- **Method**: Override `window.localStorage` with no-op functions
+- **Scope**: Global, affects entire application
+
+## Behavior
+- **getItem()**: Always returns `null`
+- **setItem()**: No-op (does nothing)
+- **removeItem()**: No-op (does nothing)
+- **clear()**: No-op (does nothing)
+- **key()**: Always returns `null`
+- **length**: Always `0`
+
+## Purpose
+- **Security**: Prevents client-side data persistence
+- **Compliance**: Ensures no sensitive data stored in browser
+- **Consistency**: Forces all data to go through backend API
+
+## Impact
+- **File persistence**: Must use backend storage
+- **Settings**: Must use backend API endpoints
+- **State management**: Must use React state only
+- **Caching**: Must use backend caching strategies
+
+## Development Notes
+- **Expected errors**: localStorage calls will fail silently
+- **Debugging**: Check browser console for localStorage warnings
+- **Testing**: Verify data flows through API, not browser storage
+description:
+globs:
+alwaysApply: true
+---

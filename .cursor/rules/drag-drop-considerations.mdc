@@ -1,0 +1,51 @@
+---
+description: Drag and drop implementation considerations and library compatibility for React 19
+---
+
+# Drag and Drop Implementation Considerations
+
+## Library Compatibility Issues
+- **react-beautiful-dnd**: Not compatible with React 19 (peer dependency conflict)
+- **@dnd-kit/core**: Modern alternative that supports React 19
+- Always check React version compatibility before adding drag-and-drop libraries
+
+## Installation Commands
+```bash
+# For React 19 projects, use @dnd-kit
+npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
+
+# Avoid react-beautiful-dnd with React 19
+# npm install react-beautiful-dnd @types/react-beautiful-dnd  # Will fail
+```
+
+## Implementation Pattern for @dnd-kit
+```typescript
+import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// In sortable item component
+const {
+  attributes,
+  listeners,
+  setNodeRef,
+  transform,
+  transition,
+} = useSortable({ id: uniqueId });
+
+const style = {
+  transform: CSS.Transform.toString(transform),
+  transition,
+};
+```
+
+## Fallback Strategy
+When drag-and-drop libraries have compatibility issues:
+- Implement smart sorting as fallback
+- Add visual drag handles for future implementation
+- Use manual sorting by content similarity (platform+country grouping)
+- Document intended drag behavior for future enhancement
+
+## Current Implementation Status
+Tables in [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) have smart sorting by platform+country, then by publisher. Drag handles are present for future drag-and-drop implementation when library compatibility is resolved.

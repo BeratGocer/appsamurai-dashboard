@@ -1,0 +1,60 @@
+---
+description: ROAS and percentage value formatting standards across the dashboard
+globs: src/components/*.tsx
+---
+
+# Percentage Formatting Standards
+
+## ROAS Value Display Rules
+All ROAS (Return on Ad Spend) values must be displayed as percentages, not decimals.
+
+## Conversion Formula
+```typescript
+// CORRECT: Convert decimal to percentage
+const roasPercentage = `${(roasValue * 100).toFixed(1)}%`;
+
+// WRONG: Display as raw decimal
+const roasDecimal = roasValue.toFixed(3); // Don't do this
+```
+
+## Implementation Locations
+
+### KPI Cards (MetricsCard)
+```typescript
+<MetricsCard
+  title="Average ROAS D7"
+  value={`${(totalMetrics.avgRoas * 100).toFixed(1)}%`}  // ✅ Percentage format
+  description="7-day return on ad spend"
+/>
+```
+
+### Table Displays
+```typescript
+// In table cells for ROAS columns
+const isROAS = column.startsWith('roas_');
+const formattedValue = isROAS ? `${(value * 100).toFixed(2)}%` : value.toLocaleString();
+```
+
+### Dashboard Cards
+```typescript
+// Customer ROAS displays
+<div>{(customer.avgRoasD7 * 100).toFixed(1)}%</div>
+
+// Account Manager ROAS displays  
+<div>{(manager.avgRoasD7 * 100).toFixed(1)}%</div>
+
+// App Overview ROAS displays
+<span>{(app.avgRoasD7 * 100).toFixed(1)}%</span>
+```
+
+## Precision Guidelines
+- **KPI Cards**: 1 decimal place (35.4%)
+- **Table Cells**: 2 decimal places (35.42%)
+- **Summary Cards**: 1 decimal place (35.4%)
+
+## What NOT to Display
+❌ Raw decimals: `0.354`  
+❌ Too many decimals: `35.4567%`  
+❌ Missing % symbol: `35.4`  
+
+✅ Correct format: `35.4%`

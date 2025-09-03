@@ -1,0 +1,74 @@
+---
+description: Data flow and state management patterns in the AppSamurai Dashboard
+---
+
+# Data Flow Architecture
+
+## Overview
+Data flows from CSV files through parsing utilities to React components for display.
+
+## Core Data Flow
+```
+CSV Files → [csvParser.ts](mdc:src/utils/csvParser.ts) → React State → UI Components
+```
+
+## Data Types
+All types defined in [src/types/index.ts](mdc:src/types/index.ts):
+
+### Core Interfaces
+- `CampaignData`: Raw parsed CSV row data
+- `GameCountryPublisherGroup`: Grouped data for table display
+- `AppSummary`: Aggregated app-level metrics
+- `Customer`: Customer information for file uploads
+
+### Data Transformation Pipeline
+1. **Parse CSV**: `parseCSV(csvContent)` → `CampaignData[]`
+2. **Group Data**: `getGameCountryPublisherGroups(data)` → `GameCountryPublisherGroup[]`
+3. **Calculate KPIs**: Aggregate installs, ROAS, app counts
+
+## State Management Patterns
+
+### File Upload State
+Managed in [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx):
+```tsx
+const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
+const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
+```
+
+### Dashboard State  
+Managed in [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx):
+```tsx
+const [campaignData, setCampaignData] = useState<CampaignData[]>([]);
+const [activeTab, setActiveTab] = useState('overview');
+```
+
+### Data Processing Rules
+- Always validate CSV content before parsing
+- Handle empty/invalid files gracefully  
+- Store customer metadata with file data
+- Group data immediately after parsing for performance
+
+## Component Data Props
+
+### GameTables Component
+Receives grouped data: `GameCountryPublisherGroup[]`
+
+### MetricsCard Component  
+Receives computed metrics: `title`, `value`, `description`
+
+### File Management
+- Store file metadata: name, size, record count, upload date
+- Associate customer and account manager info
+- Track active/selected file state
+
+## Error Handling
+- CSV parsing errors: Show user-friendly messages
+- Invalid date formats: Display "Invalid Date"  
+- Missing data: Use fallback values (0, 'Unknown')
+- File upload errors: Clear validation messages
+
+## Performance Considerations
+- Parse CSV only once per file upload
+- Cache grouped data results
+- Use React.memo for expensive table renders
+- Minimize re-renders with proper dependency arrays

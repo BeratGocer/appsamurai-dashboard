@@ -1,0 +1,53 @@
+---
+description: Conditional formatting implementation patterns for table data visualization
+---
+
+# Conditional Formatting Patterns
+
+## Core Implementation
+Conditional formatting applies styling to individual numbers within table cells, not entire cells. This is implemented in [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) and managed through [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx).
+
+## Styling Application Pattern
+```typescript
+// Apply styling to span element inside TableCell, not the cell itself
+<TableCell className="font-mono text-xs text-center">
+  <span 
+    className="transition-all duration-200"
+    style={getCellStyle(value, 'column_name')}
+  >
+    {formattedValue}
+  </span>
+</TableCell>
+```
+
+## Rule Structure
+```typescript
+interface ConditionalFormattingRule {
+  id: string;
+  column: 'installs' | 'roas_d7' | 'roas_d30' | 'roas_d0';
+  operator: '>' | '>=' | '<' | '<=' | '=';
+  value: number;
+  color: string;
+  backgroundColor: string;
+  isActive: boolean;
+}
+```
+
+## Comparison Logic
+- **ROAS values**: Compare raw decimal values (not percentage display)
+- **Install values**: Compare raw numbers
+- **Float comparison**: Use tolerance for equality (`Math.abs(compareValue - rule.value) < 0.001`)
+- **Rule precedence**: First matching active rule wins
+
+## Visual Design Requirements
+- Only the number gets styled, not the entire cell
+- Use `display: 'inline-block'` for proper span styling
+- Include `fontWeight: '700'` for emphasis
+- Add `borderRadius: '3px'` and `padding: '1px 3px'` for visual distinction
+- Apply `transition-all duration-200` for smooth changes
+
+## Settings Integration
+- Rules are managed in SettingsPanel with add/edit/delete functionality
+- Rules are persisted per-file in localStorage
+- Color presets available for user selection
+- Rules can be activated/deactivated without deletion

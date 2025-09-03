@@ -1,0 +1,29 @@
+---
+description: Deletion controls for files in Customers and Account Managers pages
+---
+
+# Deletion Controls in Customers/Managers
+
+## Pattern
+Provide delete buttons for files listed under both Customers and Account Managers sections. Use the existing `onFileDelete(fileId)` passed from the top-level to remove the file and update localStorage.
+
+## Implementation Notes
+- In [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx), top-level Files list already includes a delete button (×).
+- Apply the same pattern inside the expanded file items under:
+  - Customers → Selected customer → Files
+  - Account Managers → Selected manager → Files
+
+## Example Button
+```tsx
+<Button
+  variant="ghost"
+  size="sm"
+  onClick={(e) => { e.stopPropagation(); onFileDelete(file.id); }}
+  className="text-red-600 hover:text-red-700"
+>
+  ×
+</Button>
+```
+
+## State
+No extra state required. After deletion, if the active file is removed, `App.tsx` already sets a new active file or clears it.

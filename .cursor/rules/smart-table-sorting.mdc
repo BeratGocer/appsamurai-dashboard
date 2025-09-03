@@ -1,0 +1,53 @@
+---
+description: Smart table sorting and organization patterns for dashboard performance tables
+---
+
+# Smart Table Sorting and Organization
+
+## Sorting Algorithm
+Tables are automatically sorted to group related content together:
+
+1. **Primary Sort**: Platform + Country combination (`${platform}-${country}`)
+2. **Secondary Sort**: Publisher name (alphabetical)
+3. **Result**: Similar campaigns (same platform/country, different publishers) appear side by side
+
+## Implementation Pattern
+```typescript
+const [sortedGroups, setSortedGroups] = useState(() => {
+  const sorted = [...groups].sort((a, b) => {
+    // First sort by platform + country
+    const aKey = `${a.platform}-${a.country}`;
+    const bKey = `${b.platform}-${b.country}`;
+    
+    if (aKey !== bKey) {
+      return aKey.localeCompare(bKey);
+    }
+    
+    // Then by publisher within same platform+country
+    return a.publisher.localeCompare(b.publisher);
+  });
+  
+  return sorted;
+});
+```
+
+## Expected Grouping Behavior
+- iOS US campaigns group together (different publishers side by side)
+- Android US campaigns group together  
+- iOS UK campaigns group together
+- etc.
+
+## Visual Organization
+- Use responsive grid: `lg:grid-cols-2 xl:grid-cols-3`
+- Gap between cards: `gap-4`
+- Cards maintain consistent spacing and alignment
+- Related tables appear adjacent for easy comparison
+
+## Data Structure Requirements
+Each table group must have:
+- `game`: Game name extracted from app column
+- `country`: Full country name with code like "United States (US)"
+- `platform`: iOS/Android extracted from app or campaign data
+- `publisher`: Decoded publisher name (Prime, Fluent, Ad it up, etc.)
+
+This ensures proper sorting and grouping behavior in [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx).

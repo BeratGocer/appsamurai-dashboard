@@ -1,0 +1,73 @@
+---
+description: Per-file settings persistence patterns for dashboard configuration management
+---
+
+# Per-File Settings Persistence
+
+## Why Per-File Settings
+Different CSV files represent different campaigns with different KPI targets:
+- Campaign A might have ROAS target of 0.45
+- Campaign B might have ROAS target of 0.5
+- Date ranges may differ between campaign analysis periods
+
+## Implementation Pattern
+Settings are stored in localStorage with unique keys per file:
+
+```typescript
+// Generate unique key per file
+const getSettingsKey = () => {
+  return activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
+};
+
+// Load settings for specific file
+const loadFileSettings = (fileId: string | null) => {
+  const settingsKey = fileId ? `dashboard-settings-${fileId}` : 'dashboard-settings-default';
+  const saved = localStorage.getItem(settingsKey);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      // Return default on parse error
+    }
+  }
+  return defaultSettings;
+};
+```
+
+## useEffect Pattern for File Changes
+```typescript
+useEffect(() => {
+  // Update data when active file changes
+  const activeFile = uploadedFiles.find(f => f.id === activeFileId);
+  if (activeFile) {
+    setData(activeFile.data);
+  } else {
+    setData([]);
+  }
+  
+  // Load settings for the new active file
+  const fileSettings = loadFileSettings(activeFileId);
+  setSettings(fileSettings);
+}, [uploadedFiles, activeFileId]);
+```
+
+## Settings Structure
+```typescript
+interface SettingsData {
+  dateRange: {
+    startDate: string;
+    endDate: string;
+  };
+  conditionalRules: ConditionalFormattingRule[];
+}
+```
+
+## Implementation Location
+This pattern is implemented in [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) where `activeFileId` determines which file's settings to load/save.
+
+## Best Practices
+- Always provide fallback to default settings
+- Handle JSON parsing errors gracefully
+- Use consistent key naming pattern
+- Update settings immediately when activeFileId changes
+- Save settings on every change to ensure persistence

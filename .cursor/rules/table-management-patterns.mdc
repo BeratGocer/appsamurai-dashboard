@@ -1,0 +1,135 @@
+---
+description: Table visibility management and settings integration patterns
+---
+
+# Table Management Patterns
+
+## Table Visibility State Management
+Use Set<string> for efficient hide/show operations:
+
+```typescript
+// In parent component
+const [hiddenTables, setHiddenTables] = useState<Set<string>>(new Set());
+
+// Hide table
+const hideTable = (tableId: string) => {
+  const newHidden = new Set(hiddenTables);
+  newHidden.add(tableId);
+  setHiddenTables(newHidden);
+};
+
+// Show table  
+const showTable = (tableId: string) => {
+  const newHidden = new Set(hiddenTables);
+  newHidden.delete(tableId);
+  setHiddenTables(newHidden);
+};
+
+// Filter visible tables
+const visibleTables = allTables.filter(table => !hiddenTables.has(table.id));
+```
+
+## Table Component Integration
+Each table should have hide/show controls:
+
+```typescript
+interface TableItemProps {
+  table: TableData;
+  isHidden?: boolean;
+  onVisibilityChange?: (isHidden: boolean) => void;
+}
+
+function TableItem({ table, isHidden, onVisibilityChange }: TableItemProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <TableTitle />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onVisibilityChange?.(true)}
+              title="Tabloyu gizle"
+            >
+              <EyeOff className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
+```
+
+## Bulk Actions
+Provide bulk hide/show operations:
+
+```typescript
+// Bulk operations
+const handleBulkHide = () => {
+  const allTableIds = tables.map(table => table.id);
+  setHiddenTables(new Set(allTableIds));
+};
+
+const handleBulkShow = () => {
+  setHiddenTables(new Set());
+};
+
+// UI
+<div className="flex gap-2">
+  <Button onClick={handleBulkShow}>
+    <Eye className="h-4 w-4" />
+    Tümünü Göster ({hiddenCount})
+  </Button>
+  <Button onClick={handleBulkHide}>
+    <EyeOff className="h-4 w-4" />
+    Tümünü Gizle
+  </Button>
+</div>
+```
+
+## Settings Panel Integration
+Hidden tables should be manageable from settings:
+
+```typescript
+// In SettingsPanel
+{hiddenTables.length > 0 && (
+  <div className="space-y-4">
+    <Label>Gizli Tablolar ({hiddenTables.length})</Label>
+    {hiddenTables.map(table => (
+      <div key={table.id} className="flex items-center justify-between p-3 border rounded">
+        <div>
+          <div className="font-medium">{table.name}</div>
+          <div className="text-sm text-muted-foreground">{table.description}</div>
+        </div>
+        <Button onClick={() => onTableVisibilityChange(table.id, false)}>
+          <Eye className="h-4 w-4" />
+          Göster
+        </Button>
+      </div>
+    ))}
+  </div>
+)}
+```
+
+## Persistence
+Use localStorage with per-file keys:
+```typescript
+const getHiddenTablesKey = () => {
+  return activeFileId ? `hidden-tables-${activeFileId}` : 'hidden-tables-default';
+};
+
+// Save on change
+const hiddenTablesKey = getHiddenTablesKey();
+localStorage.setItem(hiddenTablesKey, JSON.stringify(Array.from(hiddenTables)));
+
+// Load on file change
+const savedHiddenTables = localStorage.getItem(hiddenTablesKey);
+if (savedHiddenTables) {
+  setHiddenTables(new Set(JSON.parse(savedHiddenTables)));
+}
+```
+
+## Complete Example
+See [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) and [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) for full implementation.

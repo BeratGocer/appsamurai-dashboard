@@ -1,0 +1,29 @@
+# Backend Integration Patterns
+
+## API Configuration
+- **Backend URL**: `https://backend-production-80f6.up.railway.app`
+- **API Functions**: [src/utils/api.ts](mdc:src/utils/api.ts)
+- **Backend Code**: [server/src/index.ts](mdc:server/src/index.ts)
+
+## Key API Endpoints
+- `GET /files` - Get all uploaded files
+- `POST /files/init` - Initialize file upload
+- `POST /files/{id}/ingest` - Process CSV data
+- `GET /files/{id}/groups` - Get processed campaign groups
+- `DELETE /files/{id}` - Delete file
+
+## Data Persistence Strategy
+1. **File Upload**: Files are uploaded to backend and processed
+2. **State Management**: Frontend loads files from backend on startup
+3. **Cross-Device Sync**: All devices access same backend data
+4. **Fallback**: LocalStorage used if backend fails
+
+## Implementation Notes
+- Always use `apiGetFiles()` to load files from backend
+- Convert backend data to frontend format in [App.tsx](mdc:src/App.tsx)
+- Handle BigInt serialization issues in backend responses
+- Use error handling with localStorage fallback
+description:
+globs:
+alwaysApply: true
+---

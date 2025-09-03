@@ -1,0 +1,154 @@
+---
+description: Dynamic conditional formatting that supports any CSV column
+---
+
+# Dynamic Conditional Formatting
+
+## Flexible Rule Structure
+Support any column from CSV data, not just predefined ones:
+
+```typescript
+export interface ConditionalFormattingRule {
+  id: string;
+  column: string; // Changed from union type to string for flexibility
+  operator: '<' | '>' | '>=' | '<=' | '=';
+  value: number;
+  color: string;
+  backgroundColor: string;
+  isActive: boolean;
+}
+```
+
+## Dynamic Column Selection
+Populate column dropdown from available data:
+
+```typescript
+// In SettingsPanel
+<Select
+  value={newRule.column}
+  onValueChange={(value) => setNewRule({ ...newRule, column: value })}
+>
+  <SelectTrigger>
+    <SelectValue />
+  </SelectTrigger>
+  <SelectContent>
+    {availableColumns.map(column => (
+      <SelectItem key={column} value={column}>
+        {getColumnLabel(column)}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
+
+## Universal Cell Styling Function
+Handle any column type in formatting:
+
+```typescript
+const getCellStyle = (value: number, column: string) => {
+  if (!conditionalRules || conditionalRules.length === 0) return {};
+
+  const matchingRule = conditionalRules.find(rule => {
+    if (rule.column !== column || !rule.isActive) return false;
+
+    const compareValue = value;
+    
+    switch (rule.operator) {
+      case '>': return compareValue > rule.value;
+      case '>=': return compareValue >= rule.value;
+      case '<': return compareValue < rule.value;
+      case '<=': return compareValue <= rule.value;
+      case '=': return Math.abs(compareValue - rule.value) < 0.001;
+      default: return false;
+    }
+  });
+
+  if (matchingRule) {
+    return {
+      color: matchingRule.color,
+      backgroundColor: matchingRule.backgroundColor,
+      fontWeight: '700',
+      borderRadius: '3px',
+      padding: '1px 3px',
+      display: 'inline-block',
+    };
+  }
+
+  return {};
+};
+```
+
+## Column Label Mapping
+Provide comprehensive labels for all CSV columns:
+
+```typescript
+const getColumnLabel = (column: string): string => {
+  const columnLabels: Record<string, string> = {
+    installs: 'Install Sayısı',
+    roas_d0: 'ROAS D0',
+    roas_d1: 'ROAS D1',
+    roas_d2: 'ROAS D2',
+    roas_d3: 'ROAS D3',
+    roas_d4: 'ROAS D4',
+    roas_d5: 'ROAS D5',
+    roas_d6: 'ROAS D6',
+    roas_d7: 'ROAS D7',
+    roas_d14: 'ROAS D14',
+    roas_d21: 'ROAS D21',
+    roas_d30: 'ROAS D30',
+    roas_d45: 'ROAS D45',
+    roas_d60: 'ROAS D60',
+    retention_rate_d1: 'Retention D1',
+    retention_rate_d7: 'Retention D7',
+    retention_rate_d14: 'Retention D14',
+    retention_rate_d30: 'Retention D30',
+    ecpi: 'eCPI',
+    adjust_cost: 'Maliyet',
+    ad_revenue: 'Reklam Geliri',
+    gross_profit: 'Brüt Kar',
+  };
+  return columnLabels[column] || column;
+};
+```
+
+## Rules Display
+Show applied rules with dynamic column labels:
+
+```typescript
+{settings.conditionalRules.map((rule) => (
+  <div key={rule.id} className="flex items-center justify-between p-3 border rounded-lg">
+    <div className="flex items-center gap-3">
+      <div
+        className="w-4 h-4 rounded border"
+        style={{
+          backgroundColor: rule.backgroundColor,
+          borderColor: rule.color,
+        }}
+      />
+      <span className="text-sm">
+        {getColumnLabel(rule.column)} {rule.operator} {rule.value}
+      </span>
+      <Badge variant={rule.isActive ? "default" : "secondary"}>
+        {rule.isActive ? "Aktif" : "Pasif"}
+      </Badge>
+    </div>
+  </div>
+))}
+```
+
+## Integration Pattern
+Pass available columns to settings:
+
+```typescript
+<SettingsPanel
+  settings={settings}
+  onSettingsChange={handleSettingsChange}
+  availableColumns={data.length > 0 ? Object.keys(data[0]).filter(key => 
+    key.startsWith('roas_') || key.startsWith('retention_rate_') || 
+    ['installs', 'ecpi', 'adjust_cost', 'ad_revenue', 'gross_profit'].includes(key)
+  ) : []}
+/>
+```
+
+## Complete Implementation
+See [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx) for full dynamic conditional formatting implementation.

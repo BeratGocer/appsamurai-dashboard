@@ -1,0 +1,232 @@
+# Error Handling Patterns
+
+## Common Error Types
+
+### TypeScript Build Errors
+- **TS6133**: Unused imports/variables
+- **TS2345**: Type mismatches
+- **TS1128**: Syntax errors in commented code
+- **TS7053**: Index signature issues
+
+### Runtime Errors
+- **QuotaExceededError**: localStorage limits
+- **ERR_CONNECTION_REFUSED**: Backend not running
+- **CORS Errors**: Cross-origin issues
+- **File Upload Errors**: Invalid CSV format
+
+## Error Prevention Strategies
+
+### Import Management
+```typescript
+// CORRECT: Remove unused imports
+import { useState, useEffect } from 'react';
+// import React from 'react'; // Remove if unused
+
+// CORRECT: Use underscore prefix for unused parameters
+const handleEditKPI = (_configId: string) => {
+  // Implementation
+};
+```
+
+### Type Safety
+```typescript
+// CORRECT: Use proper type assertions
+const columnLabel = COLUMN_LABELS[rule.column as keyof typeof COLUMN_LABELS] || rule.column;
+
+// CORRECT: Handle optional properties
+interface Props {
+  data?: CampaignData[];
+  onUpdate?: (data: CampaignData) => void;
+}
+```
+
+### Commented Code
+```typescript
+// CORRECT: Comment entire blocks
+// const sensors = useSensors(
+//   useSensor(PointerSensor, {
+//     activationConstraint: {
+//       distance: 8,
+//     },
+//   })
+// );
+
+// WRONG: Partial comments cause syntax errors
+// const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+```
+
+## Debugging Workflow
+
+### 1. Build Error Resolution
+```bash
+# Check for TypeScript errors
+pnpm build
+
+# Fix errors in order:
+# 1. Remove unused imports
+# 2. Fix type mismatches
+# 3. Fix syntax errors
+# 4. Update type definitions
+```
+
+### 2. Runtime Error Investigation
+```bash
+# Check backend status
+curl http://localhost:8787/health
+
+# Check database connection
+psql -d appsamurai -c "SELECT 1;"
+
+# Check process status
+ps aux | grep -E "(vite|fastify|postgres)"
+```
+
+### 3. Browser Debugging
+```javascript
+// Console debugging
+console.log('Data:', data);
+console.log('Settings:', settings);
+
+// Network tab
+// Check API calls and responses
+
+// Application tab
+// Check localStorage/IndexedDB
+```
+
+## Error Recovery Patterns
+
+### localStorage Quota Management
+```typescript
+// Handle storage limits
+try {
+  localStorage.setItem('key', JSON.stringify(largeData));
+} catch (error) {
+  if (error.name === 'QuotaExceededError') {
+    // Fallback to IndexedDB
+    await idb.saveFile(fileId, data);
+  }
+}
+```
+
+### API Error Handling
+```typescript
+// Graceful API failure
+const fetchData = async () => {
+  try {
+    const response = await api.getFileGroups(fileId);
+    return response.data;
+  } catch (error) {
+    console.warn('API failed, using local data:', error);
+    return getLocalData(fileId);
+  }
+};
+```
+
+### File Upload Validation
+```typescript
+// Validate before processing
+const validateCSV = (content: string): boolean => {
+  if (!content || content.trim().length === 0) {
+    throw new Error('CSV dosyası boş');
+  }
+  
+  const lines = content.trim().split('\n');
+  if (lines.length < 2) {
+    throw new Error('CSV dosyası geçersiz');
+  }
+  
+  return true;
+};
+```
+
+## Error Reporting
+
+### User-Friendly Messages
+```typescript
+const errorMessages = {
+  'QuotaExceededError': 'Dosya çok büyük, lütfen daha küçük bir dosya deneyin',
+  'ERR_CONNECTION_REFUSED': 'Sunucu bağlantısı kurulamadı',
+  'CORS_ERROR': 'Güvenlik hatası, lütfen sayfayı yenileyin',
+  'INVALID_CSV': 'CSV formatı geçersiz',
+};
+```
+
+### Error Logging
+```typescript
+// Log errors for debugging
+const logError = (error: Error, context: string) => {
+  console.error(`[${context}] Error:`, error);
+  
+  // Send to error tracking service (future)
+  // errorTracker.captureException(error);
+};
+```
+
+## Testing Error Scenarios
+
+### Build Testing
+```bash
+# Test build process
+pnpm build
+
+# Test development server
+pnpm dev
+
+# Test production build
+pnpm build && npx serve dist
+```
+
+### Runtime Testing
+```bash
+# Test backend connectivity
+curl http://localhost:8787/health
+
+# Test file upload
+# Upload large CSV file
+
+# Test localStorage limits
+# Upload multiple large files
+```
+
+## Critical Error Patterns
+
+### Must Fix Before Deploy
+- [ ] All TypeScript build errors
+- [ ] Unused imports removed
+- [ ] Type mismatches resolved
+- [ ] Syntax errors in comments fixed
+- [ ] localStorage quota handling implemented
+
+### Monitor in Production
+- [ ] API response times
+- [ ] File upload success rates
+- [ ] User error reports
+- [ ] Browser console errors
+- [ ] Network request failures
+
+## Error Prevention Checklist
+
+### Code Review
+- [ ] No unused imports
+- [ ] Proper type definitions
+- [ ] Error boundaries implemented
+- [ ] Graceful fallbacks
+- [ ] User-friendly error messages
+
+### Testing
+- [ ] Build succeeds
+- [ ] Development server runs
+- [ ] File upload works
+- [ ] Dashboard displays correctly
+- [ ] Settings persist properly
+description:
+globs:
+alwaysApply: true
+---

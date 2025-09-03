@@ -1,0 +1,40 @@
+# Frontend-Backend Integration Patterns
+
+## API Integration
+All frontend API calls must use the centralized API utilities in [src/utils/api.ts](mdc:src/utils/api.ts):
+
+```typescript
+import { apiInitFile, apiIngestCsv, apiGetGroups, apiGetFiles } from '@/utils/api'
+```
+
+## File Upload Flow
+The [FileUpload.tsx](mdc:src/components/FileUpload.tsx) component must:
+
+1. **Initialize File**: Call `apiInitFile()` to create backend record
+2. **Upload Data**: Call `apiIngestCsv()` with CSV content
+3. **Local Display**: Parse CSV locally for immediate UI feedback
+4. **Backend Sync**: Use backend fileId for persistence
+
+## Environment Configuration
+- **Development**: `VITE_API_BASE=http://localhost:8787`
+- **Production**: `VITE_API_BASE=https://backend-production-80f6.up.railway.app`
+- **Fallback**: Always provide localhost fallback in [api.ts](mdc:src/utils/api.ts)
+
+## Error Handling
+- **Network Errors**: Show user-friendly error messages
+- **Backend Unavailable**: Fall back to local storage temporarily
+- **Upload Failures**: Retry mechanism for failed uploads
+
+## Data Flow
+1. **Upload**: Frontend → Backend → Database
+2. **Display**: Database → Backend → Frontend
+3. **Persistence**: All data stored in PostgreSQL, not localStorage
+
+## Testing Integration
+- **Health Check**: Verify backend connectivity on app load
+- **Upload Test**: Test file upload with backend API
+- **Data Sync**: Verify uploaded files appear in database
+description:
+globs:
+alwaysApply: true
+---

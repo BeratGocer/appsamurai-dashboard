@@ -1,0 +1,249 @@
+# Data Aggregation Patterns
+
+## Publisher Grouping Logic
+
+### Core Grouping Rule
+**PRIMARY GROUP**: APP + COUNTRY + PLATFORM (same values)  
+**SECONDARY**: Different ADNETWORK/PUBLISHER (side by side)
+
+### Publisher Prefix Normalization
+```typescript
+// Normalize publisher by prefix for grouping
+const normalizePublisher = (adgroupNetwork: string): string => {
+  const prefixes = ['SFT_', 'SDA_', 'SPE_', 'SAP_', 'MT_', 'WU_', 'LV9_'];
+  
+  for (const prefix of prefixes) {
+    if (adgroupNetwork.startsWith(prefix)) {
+      return prefix; // Group by prefix, not full name
+    }
+  }
+  
+  return adgroupNetwork; // Keep original if no prefix
+};
+```
+
+### Grouping Implementation
+```typescript
+// Group by game, country, platform, and normalized publisher
+const groups = new Map<string, GameCountryPublisherGroup>();
+
+data.forEach(row => {
+  const parsed = parseCampaignNetwork(row.campaign_network);
+  const normalizedPublisher = normalizePublisher(row.adgroup_network);
+  
+  const key = `${row.app}-${parsed.country}-${parsed.platform}-${normalizedPublisher}`;
+  
+  if (!groups.has(key)) {
+    groups.set(key, {
+      game: row.app,
+      country: parsed.country,
+      platform: parsed.platform,
+      publisher: normalizedPublisher,
+      dailyData: []
+    });
+  }
+  
+  groups.get(key)!.dailyData.push({
+    date: row.day,
+    installs: row.installs,
+    roas_d7: row.roas_d7,
+    roas_d30: row.roas_d30
+  });
+});
+```
+
+## Data Merging Patterns
+
+### Weighted Averages for ROAS
+```typescript
+// Calculate weighted average ROAS by installs
+const calculateWeightedROAS = (dailyData: DailyData[]): number => {
+  const totalInstalls = dailyData.reduce((sum, day) => sum + day.installs, 0);
+  
+  if (totalInstalls === 0) return 0;
+  
+  const weightedSum = dailyData.reduce((sum, day) => {
+    return sum + (day.roas_d7 * day.installs);
+  }, 0);
+  
+  return weightedSum / totalInstalls;
+};
+```
+
+### Summing Metrics
+```typescript
+// Sum metrics that should be added
+const sumMetrics = (dailyData: DailyData[]) => {
+  return {
+    installs: dailyData.reduce((sum, day) => sum + day.installs, 0),
+    cost: dailyData.reduce((sum, day) => sum + (day.cost || 0), 0),
+    revenue: dailyData.reduce((sum, day) => sum + (day.revenue || 0), 0)
+  };
+};
+```
+
+## Date Synchronization
+
+### Missing Date Handling
+```typescript
+// Fill missing dates with zero values
+const synchronizeDates = (groups: GameCountryPublisherGroup[]): GameCountryPublisherGroup[] => {
+  // Find overall date range
+  const allDates = new Set<string>();
+  groups.forEach(group => {
+    group.dailyData.forEach(day => allDates.add(day.date));
+  });
+  
+  const sortedDates = Array.from(allDates).sort();
+  
+  // Fill missing dates for each group
+  return groups.map(group => {
+    const existingDataMap = new Map(group.dailyData.map(day => [day.date, day]));
+    
+    const synchronizedData = sortedDates.map(date => {
+      return existingDataMap.get(date) || {
+        date,
+        installs: 0,
+        roas_d7: 0,
+        roas_d30: 0
+      };
+    });
+    
+    return { ...group, dailyData: synchronizedData };
+  });
+};
+```
+
+## Performance Optimization
+
+### Memoization Patterns
+```typescript
+// Memoize expensive calculations
+const gameGroups = React.useMemo(() => {
+  return processGameData(rawData, settings);
+}, [rawData, settings.dateRange, settings.visibleColumns]);
+
+// Memoize filtered data
+const filteredGroups = React.useMemo(() => {
+  return gameGroups.filter(group => {
+    return matchesFilters(group, filters);
+  });
+}, [gameGroups, filters]);
+```
+
+### Efficient Data Structures
+```typescript
+// Use Maps for O(1) lookups
+const dataMap = new Map<string, CampaignData>();
+
+// Use Sets for unique values
+const uniqueGames = new Set(data.map(row => row.app));
+
+// Use Arrays for ordered data
+const sortedData = [...data].sort((a, b) => 
+  new Date(a.day).getTime() - new Date(b.day).getTime()
+);
+```
+
+## Data Validation
+
+### Input Validation
+```typescript
+// Validate CSV data structure
+const validateCampaignData = (data: CampaignData[]): boolean => {
+  if (!Array.isArray(data) || data.length === 0) return false;
+  
+  const requiredFields = ['app', 'campaign_network', 'adgroup_network', 'day', 'installs'];
+  
+  return data.every(row => {
+    return requiredFields.every(field => 
+      row.hasOwnProperty(field) && row[field] !== undefined
+    );
+  });
+};
+```
+
+### Data Cleaning
+```typescript
+// Clean and normalize data
+const cleanCampaignData = (data: CampaignData[]): CampaignData[] => {
+  return data.map(row => ({
+    ...row,
+    app: row.app.replace(' Android', '').replace(' iOS', ''),
+    installs: Math.max(0, row.installs || 0),
+    roas_d7: Math.max(0, row.roas_d7 || 0),
+    roas_d30: Math.max(0, row.roas_d30 || 0)
+  }));
+};
+```
+
+## Aggregation Functions
+
+### Summary Statistics
+```typescript
+// Calculate summary statistics for a group
+const calculateSummary = (group: GameCountryPublisherGroup) => {
+  const totalInstalls = group.dailyData.reduce((sum, day) => sum + day.installs, 0);
+  const avgD7Roas = calculateWeightedROAS(group.dailyData);
+  const dayCount = group.dailyData.length;
+  
+  return {
+    totalInstalls,
+    avgD7Roas,
+    dayCount,
+    avgDailyInstalls: totalInstalls / dayCount
+  };
+};
+```
+
+### Trend Analysis
+```typescript
+// Calculate trends over time
+const calculateTrends = (dailyData: DailyData[]) => {
+  const sortedData = [...dailyData].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  
+  if (sortedData.length < 2) return { trend: 'neutral', change: 0 };
+  
+  const firstHalf = sortedData.slice(0, Math.floor(sortedData.length / 2));
+  const secondHalf = sortedData.slice(Math.floor(sortedData.length / 2));
+  
+  const firstAvg = calculateWeightedROAS(firstHalf);
+  const secondAvg = calculateWeightedROAS(secondHalf);
+  
+  const change = ((secondAvg - firstAvg) / firstAvg) * 100;
+  
+  return {
+    trend: change > 5 ? 'up' : change < -5 ? 'down' : 'neutral',
+    change: Math.abs(change)
+  };
+};
+```
+
+## Critical Requirements
+
+### Data Integrity
+- ✅ Always validate input data before processing
+- ✅ Handle missing or invalid values gracefully
+- ✅ Use consistent date formats (YYYY-MM-DD)
+- ✅ Normalize publisher names for grouping
+- ✅ Calculate weighted averages for ROAS metrics
+
+### Performance
+- ✅ Memoize expensive calculations
+- ✅ Use efficient data structures (Map, Set)
+- ✅ Avoid unnecessary re-renders
+- ✅ Process data in chunks for large files
+- ✅ Implement proper error boundaries
+
+### Accuracy
+- ✅ Verify aggregation logic matches business requirements
+- ✅ Test with edge cases (empty data, single records)
+- ✅ Ensure date synchronization works correctly
+- ✅ Validate weighted average calculations
+- ✅ Check for data loss during processing
+description:
+globs:
+alwaysApply: true
+---

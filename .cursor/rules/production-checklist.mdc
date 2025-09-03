@@ -1,0 +1,44 @@
+# Production Deployment Checklist
+
+## Pre-Deployment
+- [ ] **Frontend Build**: `npm run build` succeeds without errors
+- [ ] **TypeScript**: All TS errors resolved
+- [ ] **Backend Health**: `curl https://backend-production-80f6.up.railway.app/health`
+- [ ] **Database**: Prisma migrations applied on Railway
+- [ ] **Environment**: `VITE_API_BASE` set correctly in Netlify
+
+## Frontend Deployment (Netlify)
+- [ ] **Build Command**: `npm run build`
+- [ ] **Publish Directory**: `dist`
+- [ ] **Environment Variables**: `VITE_API_BASE=https://backend-production-80f6.up.railway.app`
+- [ ] **Deploy Trigger**: Manual or automatic from Git
+- [ ] **Domain**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+
+## Backend Deployment (Railway)
+- [ ] **Service**: Backend service active
+- [ ] **Database**: PostgreSQL service connected
+- [ ] **Environment**: `DATABASE_URL` set correctly
+- [ ] **Health Check**: Backend responds to `/health`
+- [ ] **API Endpoints**: All endpoints functional
+
+## Post-Deployment Testing
+- [ ] **Frontend Loads**: Site accessible without errors
+- [ ] **File Upload**: CSV upload works end-to-end
+- [ ] **Data Persistence**: Uploaded files appear in database
+- [ ] **Cross-Device**: Data visible from different devices
+- [ ] **API Integration**: Frontend successfully calls backend
+
+## Monitoring
+- [ ] **Error Logs**: Check Netlify and Railway logs
+- [ ] **Performance**: Monitor response times
+- [ ] **Database**: Verify data integrity
+- [ ] **Uptime**: Ensure services remain available
+
+## Rollback Plan
+- [ ] **Previous Version**: Keep previous deployment as backup
+- [ ] **Database Backup**: Regular PostgreSQL backups
+- [ ] **Quick Revert**: Ability to rollback to working version
+description:
+globs:
+alwaysApply: true
+---

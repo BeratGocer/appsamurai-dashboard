@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fixed font size for table cells - equivalent to 11pt */
+.table-cell-fixed {
+  font-size: 14px !important; /* 14px = ~11pt */
+  line-height: 1.2 !important;
+}
+
+.table-header-fixed {
+  font-size: 14px !important; /* 14px = ~11pt */
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+/* Fixed font size for card content - equivalent to 12pt */
+.card-content-fixed {
+  font-size: 16px !important; /* 16px = ~12pt */
+  line-height: 1.3 !important;
+}
+
+.card-title-fixed {
+  font-size: 18px !important; /* 18px = ~13.5pt */
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 250 47% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 250 47% 96%;
+    --secondary-foreground: 250 47% 20%;
+    --muted: 250 47% 96%;
+    --muted-foreground: 250 47% 45%;
+    --accent: 250 47% 96%;
+    --accent-foreground: 250 47% 20%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 250 47% 90%;
+    --input: 250 47% 90%;
+    --ring: 250 47% 60%;
+    --chart-1: 250 70% 60%;
+    --chart-2: 280 65% 65%;
+    --chart-3: 260 75% 70%;
+    --chart-4: 240 60% 55%;
+    --chart-5: 270 80% 75%;
+    --radius: 0.5rem
+  }
+  .dark {
+    --background: 250 47% 8%;
+    --foreground: 250 47% 98%;
+    --card: 250 47% 12%;
+    --card-foreground: 250 47% 98%;
+    --popover: 250 47% 12%;
+    --popover-foreground: 250 47% 98%;
+    --primary: 250 47% 70%;
+    --primary-foreground: 250 47% 10%;
+    --secondary: 250 47% 15%;
+    --secondary-foreground: 250 47% 98%;
+    --muted: 250 47% 15%;
+    --muted-foreground: 250 47% 65%;
+    --accent: 250 47% 15%;
+    --accent-foreground: 250 47% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 250 47% 20%;
+    --input: 250 47% 20%;
+    --ring: 250 47% 70%;
+    --chart-1: 250 70% 70%;
+    --chart-2: 280 65% 75%;
+    --chart-3: 260 75% 80%;
+    --chart-4: 240 60% 65%;
+    --chart-5: 270 80% 85%
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

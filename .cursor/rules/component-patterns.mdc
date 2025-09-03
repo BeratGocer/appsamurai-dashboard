@@ -1,0 +1,52 @@
+---
+globs: src/components/*.tsx
+---
+
+# React Component Patterns
+
+## Component Structure
+Follow this structure for all React components:
+1. Imports (React hooks, UI components, types, utils)
+2. Interface definitions for props
+3. Component function with proper TypeScript typing
+4. Export statement
+
+## State Management
+- Use `useState` for component-level state
+- Use `useEffect` for side effects and data loading
+- Pass data down via props, lift state up when needed
+- Use contexts for global state (see [src/contexts/ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx))
+
+## UI Component Usage
+- Use shadcn/ui components from `@/components/ui/`
+- Available components: Button, Card, Tabs, Table, Dialog, Select, etc.
+- Follow shadcn/ui patterns for styling and props
+
+## Data Display Components
+- `MetricsCard` - for key performance indicators
+- `CampaignTable` - for tabular campaign data
+- `AppOverview` - for app-level summaries
+- Always include loading states and error handling
+
+## Example Component Pattern:
+```tsx
+import { useState } from 'react'
+import { Card } from '@/components/ui/card'
+import type { CampaignData } from '@/types'
+
+interface ComponentProps {
+  data: CampaignData[]
+  title: string
+}
+
+export function ComponentName({ data, title }: ComponentProps) {
+  const [loading, setLoading] = useState(false)
+  
+  return (
+    <Card>
+      <h2>{title}</h2>
+      {/* component content */}
+    </Card>
+  )
+}
+```

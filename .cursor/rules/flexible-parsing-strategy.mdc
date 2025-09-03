@@ -1,0 +1,91 @@
+---
+description: Strategy for creating flexible, future-proof CSV parsing that adapts to any format
+alwaysApply: true
+---
+
+# Flexible Parsing Strategy
+
+## Core Philosophy
+**Never hardcode format assumptions**. Always build systems that can adapt to new CSV structures without breaking existing functionality.
+
+## Multi-Format Detection Pattern
+
+### 1. Format Detection First
+```typescript
+// Always detect format before parsing
+const isStructuredFormat = campaignNetwork.includes('|') && campaignNetwork.includes(':');
+const isUnderscoreFormat = campaignNetwork.includes('_');
+
+if (isStructuredFormat) {
+  // Handle p:value|g:value format
+} else if (isUnderscoreFormat) {
+  // Handle AppSa_Game_Platform_Country_Type format
+} else {
+  // Handle plain text or other formats
+}
+```
+
+### 2. Position-Independent Scanning
+```typescript
+// DON'T assume fixed positions
+// WRONG: const platform = parts[1]; // What if position changes?
+
+// DO scan all parts for known indicators
+for (let i = 0; i < parts.length; i++) {
+  const part = parts[i];
+  if (['AND', 'iOS', 'GP', 'Android'].includes(part)) {
+    result.platform = mapPlatform(part);
+    platformIndex = i;
+  }
+}
+```
+
+### 3. Graceful Degradation
+```typescript
+// Always provide fallbacks
+const result = {
+  platform: 'Unknown',    // ← Sensible default
+  country: 'Global',      // ← Better than 'Unknown'
+  adnetwork: 'Unknown',
+  campaignType: 'Unknown'
+};
+
+// Keep original values when parsing fails
+return originalValue || 'Unknown';
+```
+
+## Testing Strategy
+
+### Test with Multiple Formats
+When implementing parsing changes, always test with:
+1. **Legacy formats**: Existing CSV structures
+2. **New formats**: Recently discovered structures  
+3. **Edge cases**: Malformed or unusual data
+
+### Example Test Cases
+```typescript
+const testCases = [
+  'p:Android|g:US|a:Network',           // Structured format
+  'AppSa_BusFrenzy_iOS_US_CPE',         // AppSamurai format
+  'ColorJelly_AND_T2_CPA_TBSDK',        // Game format
+  'SimpleGameName',                      // Plain format
+  ''                                     // Empty/invalid
+];
+```
+
+## Error Handling Pattern
+```typescript
+try {
+  const parsed = complexParsing(input);
+  return parsed;
+} catch (error) {
+  console.warn('Parsing failed for:', input, error);
+  return fallbackParsing(input);
+}
+```
+
+## Key Lessons
+- **Position independence**: Don't assume part[1] is always platform
+- **Format flexibility**: Support multiple underscore patterns
+- **Graceful failures**: Keep original values when unsure
+- **Conservative decoding**: Only decode what you're confident about

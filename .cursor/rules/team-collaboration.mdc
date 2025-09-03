@@ -1,0 +1,58 @@
+# Team Collaboration Patterns
+
+## Current Problem
+- **localStorage**: Data isolated per browser/computer
+- **No sharing**: Team members can't see each other's uploads
+- **Data loss**: Browser clear removes all data
+- **No persistence**: No centralized data storage
+
+## Solution Strategies
+
+### 1. Backend Storage (Recommended)
+- **Centralized database**: All team data in one place
+- **Real-time updates**: Changes visible to all team members
+- **Data persistence**: Survives browser clears and computer changes
+- **User management**: Track who uploaded what
+
+### 2. Export/Import Workflow (Temporary)
+- **Export data**: Download JSON files with all data
+- **Share files**: Send JSON files to team members
+- **Import data**: Load shared data into local dashboard
+- **Manual sync**: Requires manual file sharing
+
+## Implementation Priority
+
+### Phase 1: Backend Setup
+1. **Deploy backend server**: Fastify + Prisma + Database
+2. **Update frontend**: Switch from localStorage to API calls
+3. **Test data flow**: Ensure upload/retrieval works
+4. **Deploy to production**: Make accessible to team
+
+### Phase 2: Team Features
+1. **User authentication**: Identify team members
+2. **File ownership**: Track who uploaded what
+3. **Permissions**: Control who can see/edit what
+4. **Real-time updates**: Live data synchronization
+
+### Phase 3: Advanced Features
+1. **File versioning**: Track changes over time
+2. **Collaborative editing**: Multiple users editing same data
+3. **Activity logs**: Track who did what when
+4. **Data validation**: Ensure data quality
+
+## Current Workaround
+- Use Export/Import functionality for data sharing
+- Coordinate uploads through team communication
+- Document data sources and upload dates
+- Regular data backups through export
+
+## Best Practices
+- **Document uploads**: Keep track of what was uploaded when
+- **Coordinate efforts**: Avoid duplicate uploads
+- **Validate data**: Ensure CSV format consistency
+- **Backup regularly**: Export data periodically
+- **Communicate changes**: Notify team of new uploads
+description:
+globs:
+alwaysApply: true
+---

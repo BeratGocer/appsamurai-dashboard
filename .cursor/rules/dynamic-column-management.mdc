@@ -1,0 +1,161 @@
+---
+description: Dynamic column management based on CSV data structure
+---
+
+# Dynamic Column Management
+
+## Column Detection from CSV Data
+Automatically detect available columns from loaded data:
+
+```typescript
+// Get available columns from first data row
+const availableColumns = data.length > 0 ? Object.keys(data[0]).filter(key => 
+  key.startsWith('roas_') || 
+  key.startsWith('retention_rate_') || 
+  ['installs', 'ecpi', 'adjust_cost', 'ad_revenue', 'gross_profit'].includes(key)
+) : [];
+```
+
+## Settings Integration
+Add column visibility to settings data structure:
+
+```typescript
+export interface SettingsData {
+  dateRange: DateRange;
+  conditionalRules: ConditionalFormattingRule[];
+  visibleColumns?: string[]; // Add this
+}
+```
+
+## Column Toggle UI
+Provide interactive column selection in settings:
+
+```typescript
+const handleColumnToggle = (column: string) => {
+  const currentColumns = settings.visibleColumns || ['installs', 'roas_d7', 'roas_d30'];
+  const newColumns = currentColumns.includes(column)
+    ? currentColumns.filter(col => col !== column)
+    : [...currentColumns, column];
+  
+  onSettingsChange({
+    ...settings,
+    visibleColumns: newColumns,
+  });
+};
+
+// UI Component
+<div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+  {availableColumns.map((column) => {
+    const isVisible = (settings.visibleColumns || defaultColumns).includes(column);
+    return (
+      <div
+        key={column}
+        className={`flex items-center justify-between p-2 border rounded cursor-pointer ${
+          isVisible ? 'bg-primary/10 border-primary' : 'bg-muted/20'
+        }`}
+        onClick={() => handleColumnToggle(column)}
+      >
+        <span className="text-sm font-medium">{getColumnLabel(column)}</span>
+        {isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+      </div>
+    );
+  })}
+</div>
+```
+
+## Dynamic Table Headers
+Generate table headers based on visible columns:
+
+```typescript
+<TableHeader>
+  <TableRow>
+    <TableHead>Tarih</TableHead>
+    {visibleColumns.map(column => (
+      <TableHead key={column} className="text-center text-xs">
+        {getColumnLabel(column)}
+      </TableHead>
+    ))}
+  </TableRow>
+</TableHeader>
+```
+
+## Dynamic Table Cells
+Render cells based on visible columns:
+
+```typescript
+<TableBody>
+  {data.map((row, index) => (
+    <TableRow key={index}>
+      <TableCell>{formatDate(row.date)}</TableCell>
+      {visibleColumns.map(column => {
+        const value = (row as any)[column];
+        const isROAS = column.startsWith('roas_') || column.startsWith('retention_rate_');
+        const formattedValue = isROAS ? formatROAS(value || 0) : 
+                             typeof value === 'number' ? value.toLocaleString() : 
+                             value || '0';
+        
+        return (
+          <TableCell key={column} className="font-mono text-xs text-center">
+            <span style={getCellStyle(value || 0, column)}>
+              {formattedValue}
+            </span>
+          </TableCell>
+        );
+      })}
+    </TableRow>
+  ))}
+</TableBody>
+```
+
+## Column Label Mapping
+Provide user-friendly labels for all possible columns:
+
+```typescript
+const getColumnLabel = (column: string): string => {
+  const columnLabels: Record<string, string> = {
+    installs: 'Install Sayısı',
+    roas_d0: 'ROAS D0',
+    roas_d1: 'ROAS D1',
+    // ... all ROAS days
+    roas_d30: 'ROAS D30',
+    retention_rate_d1: 'Retention D1',
+    retention_rate_d7: 'Retention D7',
+    ecpi: 'eCPI',
+    adjust_cost: 'Maliyet',
+    ad_revenue: 'Reklam Geliri',
+    gross_profit: 'Brüt Kar',
+  };
+  return columnLabels[column] || column;
+};
+```
+
+## Conditional Formatting Support
+Update conditional formatting to support dynamic columns:
+
+```typescript
+export interface ConditionalFormattingRule {
+  id: string;
+  column: string; // Changed from union type to string
+  operator: '<' | '>' | '>=' | '<=' | '=';
+  value: number;
+  color: string;
+  backgroundColor: string;
+  isActive: boolean;
+}
+```
+
+## Data Type Updates
+Update type definitions to support full CSV data:
+
+```typescript
+export interface GameCountryPublisherGroup {
+  game: string;
+  country: string;
+  platform: string;
+  publisher: string;
+  dailyData: Array<CampaignData & { date: string }>; // Full data access
+}
+```
+
+## Implementation Example
+See [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) and [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx) for complete implementation.

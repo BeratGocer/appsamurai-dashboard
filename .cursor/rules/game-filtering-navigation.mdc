@@ -1,0 +1,185 @@
+---
+description: Game-based dashboard filtering and navigation patterns
+---
+
+# Game-Based Filtering and Navigation Patterns
+
+## Game Selection State Management
+
+Implement game filtering with this state pattern:
+
+```typescript
+const [selectedGame, setSelectedGame] = useState<string | null>(null);
+
+// Data filtering based on selected game
+const filteredData = data.filter((row) => {
+  // Date filtering (if applicable)
+  if (settings.dateRange.startDate && settings.dateRange.endDate) {
+    const rowDate = new Date(row.day);
+    const startDate = new Date(settings.dateRange.startDate);
+    const endDate = new Date(settings.dateRange.endDate);
+    
+    if (!(rowDate >= startDate && rowDate <= endDate)) {
+      return false;
+    }
+  }
+  
+  // Game filtering - normalize game names for comparison
+  if (selectedGame) {
+    const gameName = row.app?.replace(' Android', '').replace(' iOS', '') || '';
+    return gameName === selectedGame;
+  }
+  
+  return true;
+});
+```
+
+## Navigation Functions
+
+```typescript
+// Navigate to game-specific dashboard
+const navigateToGame = (fileId: string, game: string) => {
+  onFileSelect(fileId);           // Set active file
+  setSelectedGame(game);          // Set game filter
+  setCurrentTab('overview');      // Go to dashboard
+};
+
+// Navigate to full file dashboard
+const navigateToFile = (fileId: string) => {
+  onFileSelect(fileId);           // Set active file
+  setSelectedGame(null);          // Clear game filter
+  setCurrentTab('overview');      // Go to dashboard
+};
+```
+
+## Game Filter UI Display
+
+Show filter status when game is selected:
+
+```typescript
+{selectedGame && (
+  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <h4 className="font-medium text-blue-900 dark:text-blue-100">
+          Viewing Game: {selectedGame}
+        </h4>
+        <p className="text-sm text-blue-700 dark:text-blue-300">
+          Dashboard is filtered to show only data for this game
+        </p>
+      </div>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => setSelectedGame(null)}
+      >
+        View All Games
+      </Button>
+    </div>
+  </div>
+)}
+```
+
+## Game Name Normalization
+
+**CRITICAL**: Always normalize game names for consistent filtering:
+
+```typescript
+// Remove platform suffixes for comparison
+const normalizeGameName = (gameName: string) => {
+  return gameName?.replace(' Android', '').replace(' iOS', '') || '';
+};
+
+// Use in filtering
+const gameName = normalizeGameName(row.app);
+return gameName === selectedGame;
+```
+
+## Game List Generation
+
+Extract games from data consistently:
+
+```typescript
+export function getGamesFromData(data: CampaignData[]): string[] {
+  const games = new Set<string>();
+  
+  data.forEach(row => {
+    if (row.app) {
+      const normalizedGame = normalizeGameName(row.app);
+      if (normalizedGame) {
+        games.add(normalizedGame);
+      }
+    }
+  });
+  
+  return Array.from(games).sort();
+}
+```
+
+## Integration with Other Systems
+
+### KPI Cards
+KPI cards automatically respect game filtering through `filteredData` prop:
+
+```typescript
+<DynamicKPISection
+  data={filteredData}  // Already filtered by game
+  activeFileId={activeFileId}
+  hiddenTables={hiddenTables}
+  gameGroups={gameGroups}
+  // ...
+/>
+```
+
+### Performance Tables
+Game groups should also be filtered when game is selected:
+
+```typescript
+const gameGroups = useMemo(() => {
+  let groups = getGameCountryPublisherGroups(filteredData);
+  
+  // Apply game filtering to groups as well
+  if (selectedGame) {
+    groups = groups.filter(group => group.game === selectedGame);
+  }
+  
+  return synchronizeGroupDates(groups);
+}, [filteredData, selectedGame]);
+```
+
+## Navigation Button Patterns
+
+In accordion items, always provide both navigation options:
+
+```typescript
+<div className="flex space-x-2">
+  <Button 
+    size="sm" 
+    variant="outline"
+    onClick={() => navigateToGame(file.id, game)}
+  >
+    View Game
+  </Button>
+  <Button 
+    size="sm"
+    onClick={() => navigateToFile(file.id)}
+  >
+    View All
+  </Button>
+</div>
+```
+
+## State Dependencies
+
+Game filtering affects these components:
+- **Dashboard KPI Cards**: Show metrics for selected game only
+- **Performance Tables**: Filter to show selected game tables only  
+- **Navigation UI**: Show game filter indicator
+- **Data Export**: Export filtered data when game is selected
+
+## Reset Patterns
+
+Always provide clear reset options:
+- "View All Games" button to clear game filter
+- Automatic reset when switching files
+- Clear indication when filter is active

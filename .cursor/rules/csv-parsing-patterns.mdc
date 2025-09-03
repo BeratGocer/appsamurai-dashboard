@@ -1,0 +1,43 @@
+
+# CSV Parsing Patterns
+
+## Core Parser
+- **Main Parser**: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- **Data Types**: [src/types/index.ts](mdc:src/types/index.ts)
+
+## Key Functions
+- `parseCSV()` - Main CSV parsing function
+- `getGameCountryPublisherGroups()` - Group data by game/country/publisher
+- `getCustomers()` - Extract unique customers
+- `getAccountManagers()` - Extract unique account managers
+- `synchronizeGroupDates()` - Align date ranges across groups
+
+## Data Structure
+```typescript
+interface CampaignData {
+  app: string;
+  campaign_network: string;
+  adgroup_network: string;
+  day: string;
+  installs: number;
+  ecpi: number;
+  adjust_cost: number;
+  ad_revenue: number;
+  roas_d0: number;
+  roas_d7: number;
+  roas_d30: number;
+  roas_d45: number;
+}
+```
+
+## Processing Flow
+1. **Raw CSV** → Parse into CampaignData[]
+2. **CampaignData[]** → Group by game/country/publisher
+3. **Groups** → Calculate KPIs and metrics
+4. **Results** → Display in dashboard components
+
+## Important Notes
+- Always handle missing or invalid data gracefully
+- Use Turkish date formatting (DD.MM.YYYY)
+- Calculate ROAS as percentages (multiply by 100)
+- Handle multiple CSV formats flexibly

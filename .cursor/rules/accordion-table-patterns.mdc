@@ -1,0 +1,51 @@
+---
+description: Accordion table patterns and collapsible table implementation for dashboard tables
+---
+
+# Accordion Table Patterns
+
+## Implementation Overview
+Dashboard tables use accordion-style collapsible behavior where tables are collapsed by default and show summary information when closed. Users click to expand/collapse individual tables.
+
+## Key Components
+- Main component: [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx)
+- Uses `useState` for `expandedTables` Set to track which tables are open
+- Each table has a unique `groupId` based on `${game}-${country}-${platform}-${publisher}`
+
+## Collapsed State Requirements
+When tables are collapsed, they must show:
+- **Game name** - Primary identifier
+- **Country** - Full name format like "United States (US)"
+- **Platform** - iOS/Android extracted from app or campaign data
+- **Publisher** - Decoded from publisher codes (Prime, Fluent, etc.)
+- **Average D0 ROAS** - Calculated from available data
+- **Average D7 ROAS** - 7-day return on ad spend average
+- **Average Daily Installs** - Total installs divided by number of days
+
+## Visual Design
+- Use `ChevronRight` icon for collapsed state
+- Use `ChevronDown` icon for expanded state
+- Summary information displayed in a grid layout below publisher info
+- `GripVertical` icon for drag handle (when drag-and-drop is implemented)
+- Cards have hover effects (`hover:shadow-md transition-shadow`)
+
+## Code Pattern
+```typescript
+const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
+
+const toggleTable = (groupId: string) => {
+  const newExpanded = new Set(expandedTables);
+  if (newExpanded.has(groupId)) {
+    newExpanded.delete(groupId);
+  } else {
+    newExpanded.add(groupId);
+  }
+  setExpandedTables(newExpanded);
+};
+```
+
+## Summary Calculations
+- Calculate averages only from valid data (> 0 for ROAS)
+- Use `toFixed(0)` for daily install averages
+- Format ROAS as percentages using `formatROAS()` function
+- Handle cases where no valid data exists (show 0.00%)

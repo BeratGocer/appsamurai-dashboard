@@ -1,0 +1,78 @@
+---
+description: UI standards and component patterns for the AppSamurai Dashboard
+globs: src/components/*.tsx
+---
+
+# Dashboard UI Standards
+
+## Architecture
+- Main entry: [src/App.tsx](mdc:src/App.tsx) → [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+- Navigation: [src/components/Navbar.tsx](mdc:src/components/Navbar.tsx) with Turkish labels
+- Theme support: [src/contexts/ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
+
+## Component Library
+Use shadcn/ui components from [src/components/ui/](mdc:src/components/ui/):
+- `Card` for data containers
+- `Table` for tabular data
+- `Button` for actions
+- `Input` and `Select` for forms
+
+## Layout Patterns
+
+### KPI Cards
+Display summary metrics in a responsive grid:
+```tsx
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <MetricsCard title="Total Installs" value={totalInstalls} />
+</div>
+```
+
+### Data Tables (NOT Accordions)
+Use independent tables in grid layout, never accordion systems:
+```tsx
+<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+  {groups.map(group => (
+    <Card key={`${group.game}-${group.country}-${group.publisher}`}>
+      <Table>/* daily data */</Table>
+    </Card>
+  ))}
+</div>
+```
+
+### Navigation Tabs
+Four main sections:
+- **Anasayfa**: Overview/landing
+- **Müşteriler**: Customer management  
+- **Account Managers**: Manager data
+- **Dashboard**: Main analytics view
+
+## Data Formatting Standards
+
+### ROAS Display
+Always format as percentages: `(roas * 100).toFixed(2)}%`
+
+### Dates
+Use Turkish locale format: `DD.MM.YYYY`
+```tsx
+const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString('tr-TR', {
+    day: '2-digit', month: '2-digit', year: 'numeric'
+  });
+};
+```
+
+### Numbers
+- Install counts: No decimal places
+- ROAS: 2 decimal places as percentage
+- Financial: 2 decimal places with currency if applicable
+
+## Language Standards
+- UI labels in Turkish
+- Error messages in Turkish
+- Data labels in Turkish: "Tarih", "Install", "ROAS D7", "ROAS D30"
+- Table headers: "Toplam Install", "Gün Sayısı", "Ort. ROAS D7"
+
+## Component Naming
+- Use PascalCase for components
+- Prefix with domain: `GameTables`, `MetricsCard`, `FileUpload`
+- Group related components in same file when small

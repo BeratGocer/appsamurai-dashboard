@@ -1,0 +1,142 @@
+---
+description: File upload patterns and validation rules for CSV campaign data
+globs: src/components/FileUpload.tsx,src/components/Dashboard.tsx
+---
+
+# File Upload & Validation Patterns
+
+## Overview
+File upload system in [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx) handles CSV campaign data with customer metadata and validation.
+
+## Upload Flow
+1. **Customer Info**: Require customer name and account manager
+2. **File Drop/Select**: Support drag-and-drop and file picker
+3. **Validation**: Check CSV format and content
+4. **Parsing**: Process through [csvParser.ts](mdc:src/utils/csvParser.ts)
+5. **Storage**: Store with metadata in state
+
+## Required Customer Information
+```tsx
+interface Customer {
+  name: string;
+  accountManager: string;
+  uploadDate: string;
+}
+```
+
+Always validate customer name is provided before allowing file upload.
+
+## File Metadata Structure
+```tsx
+interface FileData {
+  id: string;
+  name: string;
+  size: number;
+  uploadDate: string;
+  customer: Customer;
+  recordCount: number;
+  data: CampaignData[];
+  isActive: boolean;
+}
+```
+
+## Validation Rules
+
+### CSV Format Validation
+- Check for required columns: `app`, `campaign_network`, `adgroup_network`, `day`, `installs`
+- Support multiple ROAS columns: `roas_d0` through `roas_d45`
+- Handle corrupted headers (e.g., `m app,` prefix)
+- Validate minimum data rows (reject empty files)
+
+### Content Validation
+```tsx
+const validateCSVContent = (csvContent: string): boolean => {
+  if (!csvContent || csvContent.trim().length === 0) return false;
+  
+  const lines = csvContent.trim().split('\n');
+  if (lines.length < 2) return false; // Need header + at least one data row
+  
+  return true;
+};
+```
+
+### Error Messages
+Display user-friendly Turkish error messages:
+- `"Müşteri adı gerekli"` - Customer name required
+- `"CSV dosyası boş veya geçersiz"` - CSV file empty or invalid  
+- `"Desteklenmeyen dosya formatı"` - Unsupported file format
+
+## File Display Patterns
+
+### File List Display
+Show uploaded files with metadata:
+```tsx
+<div className="space-y-2">
+  {uploadedFiles.map(file => (
+    <div key={file.id} className="flex items-center justify-between p-3 border rounded">
+      <div className="flex items-center space-x-3">
+        <FileIcon />
+        <div>
+          <h4 className="font-medium">{file.name}</h4>
+          <div className="text-sm text-gray-500">
+            {file.size} • {file.recordCount} records • {file.uploadDate}
+          </div>
+        </div>
+        <Badge variant={file.isActive ? "default" : "secondary"}>
+          {file.isActive ? "Active" : "Inactive"}
+        </Badge>
+      </div>
+      <Button variant="ghost" size="sm">×</Button>
+    </div>
+  ))}
+</div>
+```
+
+### Customer Info Display
+When file is selected, show associated customer information:
+```tsx
+<div className="bg-gray-50 p-3 rounded-lg">
+  <div className="grid grid-cols-2 gap-2 text-sm">
+    <div>Customer: {file.customer.name}</div>
+    <div>Manager: {file.customer.accountManager}</div>
+    <div>Upload Date: {file.customer.uploadDate}</div>
+  </div>
+  <Button className="mt-2">View Dashboard</Button>
+</div>
+```
+
+## State Management
+
+### Upload State
+```tsx
+const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
+const [isUploading, setIsUploading] = useState(false);
+const [uploadError, setUploadError] = useState<string>('');
+```
+
+### Form State  
+```tsx
+const [customerName, setCustomerName] = useState('');
+const [accountManager, setAccountManager] = useState('');
+```
+
+## File Processing
+1. **Read File**: Convert to string using FileReader
+2. **Validate**: Check format and content
+3. **Parse**: Process through CSV parser
+4. **Count Records**: Calculate data rows for display
+5. **Generate ID**: Create unique identifier
+6. **Store**: Add to uploaded files array
+
+## Multiple File Support
+- Support uploading multiple CSV files
+- Each file maintains independent customer metadata
+- Allow switching between files for analysis
+- Track active/selected file state
+
+## Error Handling
+- Catch file reading errors
+- Handle CSV parsing failures  
+- Validate required fields before processing
+- Clear error states on successful upload
+- Show loading states during processing

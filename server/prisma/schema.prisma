@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  users     Membership[]
+  files     File[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  orgs      Membership[]
+}
+
+model Membership {
+  id     String @id @default(uuid())
+  role   String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  org    Organization @relation(fields: [orgId], references: [id])
+  orgId  String
+}
+
+model File {
+  id             String   @id @default(uuid())
+  org            Organization @relation(fields: [orgId], references: [id])
+  orgId          String
+  name           String
+  size           BigInt
+  uploadedAt     DateTime @default(now())
+  storageKey     String
+  customerName   String?
+  accountManager String?
+  schemaVersion  String   @default("1.0.0")
+  rows           CampaignRow[]
+  settings       FileSettings?
+}
+
+model CampaignRow {
+  id              BigInt  @id @default(autoincrement())
+  file            File    @relation(fields: [fileId], references: [id])
+  fileId          String
+  app             String
+  campaignNetwork String
+  adgroupNetwork  String
+  day             DateTime
+  installs        Int
+  ecpi            Decimal? @db.Decimal(20,10)
+  adjustCost      Decimal? @db.Decimal(20,10)
+  adRevenue       Decimal? @db.Decimal(20,10)
+  roas_d0         Decimal? @db.Decimal(20,10)
+  roas_d7         Decimal? @db.Decimal(20,10)
+  roas_d30        Decimal? @db.Decimal(20,10)
+  roas_d45        Decimal? @db.Decimal(20,10)
+  createdAt       DateTime @default(now())
+}
+
+model FileSettings {
+  file       File   @relation(fields: [fileId], references: [id])
+  fileId     String @id
+  settings   Json
+  updatedBy  String?
+  updatedAt  DateTime @default(now())
+}
+
+

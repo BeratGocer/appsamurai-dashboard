@@ -1,0 +1,34 @@
+---
+globs: *.tsx,*.css
+---
+
+# Styling Guidelines
+
+## Tailwind CSS Usage
+- Use Tailwind utility classes for all styling
+- Follow the design system defined in [tailwind.config.js](mdc:tailwind.config.js)
+- Use CSS variables for theming (dark/light mode support)
+
+## Color Scheme
+- Primary colors: Use `hsl(var(--primary))` and variants
+- Background: `hsl(var(--background))`
+- Foreground: `hsl(var(--foreground))`
+- Muted colors for secondary text: `text-muted-foreground`
+- Card backgrounds: `hsl(var(--card))`
+
+## Component Styling Patterns
+- Container: `container mx-auto p-6 space-y-6`
+- Grid layouts: `grid gap-4 md:grid-cols-2 lg:grid-cols-4`
+- Flex layouts: `flex items-center justify-between`
+- Responsive design: Use `md:`, `lg:` prefixes
+
+## Dark Mode
+- Dark mode is supported via `class` strategy
+- Use CSS variables for all colors to support theme switching
+- Theme toggle available in [src/components/ThemeToggle.tsx](mdc:src/components/ThemeToggle.tsx)
+
+## shadcn/ui Integration
+- All UI components use the design tokens from [components.json](mdc:components.json)
+- Style: "new-york" variant
+- Base color: "neutral"
+- CSS variables enabled for theming

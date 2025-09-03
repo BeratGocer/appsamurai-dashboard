@@ -1,0 +1,78 @@
+# CSV Processing Patterns
+
+## Core Processing Pipeline
+
+### File Upload Flow
+1. **File Selection**: User selects CSV file
+2. **Validation**: Check file format and content
+3. **Parsing**: Process CSV through [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+4. **Data Transformation**: Convert to structured format
+5. **Storage**: Save to localStorage or backend
+
+### CSV Parser Functions
+Located in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts):
+- `parseCSV(csvContent)`: Main parsing function
+- `getGameCountryPublisherGroups(data)`: Group data by game/country/platform
+- `parseCampaignNetwork(network)`: Extract platform, country, adnetwork
+- `synchronizeGroupDates(groups)`: Align date ranges across groups
+
+## Data Structure
+
+### CampaignData Interface
+```typescript
+interface CampaignData {
+  app: string;
+  campaign_network: string;
+  adgroup_network: string;
+  day: string;
+  installs: number;
+  roas_d0?: number;
+  roas_d7?: number;
+  roas_d30?: number;
+  roas_d45?: number;
+  // ... other metrics
+}
+```
+
+### Grouped Data Structure
+```typescript
+interface GameCountryPublisherGroup {
+  game: string;
+  country: string;
+  platform: string;
+  publisher: string;
+  dailyData: DailyData[];
+}
+```
+
+## Flexible Parsing Strategy
+
+### Campaign Network Parsing
+- **Structured format**: `p:Android|g:US|a:Network`
+- **Underscore format**: `AppSa_Game_Platform_Country_Type`
+- **Position-independent**: Scan all parts for known indicators
+- **Graceful degradation**: Keep original values when unsure
+
+### Platform Detection
+```typescript
+const platformIndicators = ['AND', 'Android', 'GP', 'iOS', 'IOS'];
+const countryCodes = ['US', 'UK', 'GB', 'TR', 'DE', 'FR', 'KR', 'JP', 'CN', 'IN', 'BR', 'RU', 'CA', 'AU', 'MX'];
+```
+
+## Error Handling
+- Validate CSV format before processing
+- Handle missing or malformed data gracefully
+- Provide meaningful error messages
+- Log parsing errors for debugging
+- Fallback to original values when parsing fails
+
+## Performance Considerations
+- Process large files in chunks
+- Use Web Workers for heavy processing
+- Implement progress indicators
+- Cache parsed results
+- Optimize memory usage for large datasets
+description:
+globs:
+alwaysApply: true
+---

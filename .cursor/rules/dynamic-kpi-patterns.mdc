@@ -1,0 +1,136 @@
+---
+description: Dynamic KPI card implementation patterns with editable configurations and hidden table integration
+---
+
+# Dynamic KPI Implementation Patterns
+
+## Core Architecture
+
+Dynamic KPI cards are built around three main components:
+- [DynamicKPISection.tsx](mdc:src/components/DynamicKPISection.tsx) - Main container with settings integration
+- [EditableKPICard.tsx](mdc:src/components/EditableKPICard.tsx) - Individual KPI card display
+- [KPISettingsPanel.tsx](mdc:src/components/KPISettingsPanel.tsx) - Configuration interface
+
+## KPI Configuration Structure
+
+```typescript
+interface KPICardConfig {
+  id: string;
+  title: string;
+  column: string; // CSV column name
+  calculationType: 'sum' | 'average' | 'count' | 'min' | 'max';
+  format: 'number' | 'percentage' | 'currency' | 'decimal';
+  decimalPlaces?: number;
+  isVisible: boolean;
+  order: number;
+  description?: string;
+  badge?: string;
+  trend?: 'up' | 'down' | 'neutral';
+}
+```
+
+## Per-File Settings Persistence
+
+KPI configurations are stored per file in localStorage with the pattern:
+```typescript
+const storageKey = `kpi-settings-${fileId}`;
+localStorage.setItem(storageKey, JSON.stringify(settings));
+```
+
+## Hidden Table Integration
+
+**CRITICAL**: KPI calculations must exclude hidden tables using this pattern:
+
+```typescript
+export function calculateKPIValue(
+  data: CampaignData[], 
+  config: KPICardConfig, 
+  hiddenTables?: Set<string>,
+  gameGroups?: any[]
+): KPIValue {
+  let filteredData = data;
+  
+  if (hiddenTables && hiddenTables.size > 0 && gameGroups) {
+    // If all tables are hidden, return 0
+    if (hiddenTables.size >= gameGroups.length) {
+      return { raw: 0, formatted: '0' };
+    }
+    
+    // Filter visible groups and collect their data
+    const visibleGroups = gameGroups.filter(group => {
+      const tableId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+      return !hiddenTables.has(tableId);
+    });
+    
+    filteredData = visibleGroups.flatMap(group => group.dailyData);
+  }
+  
+  // Continue with calculation...
+}
+```
+
+## Calculation Types Implementation
+
+```typescript
+switch (config.calculationType) {
+  case 'sum':
+    calculatedValue = values.reduce((sum, val) => sum + val, 0);
+    break;
+  case 'average':
+    calculatedValue = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
+    break;
+  case 'count':
+    calculatedValue = validData.length;
+    break;
+  case 'min':
+    calculatedValue = values.length > 0 ? Math.min(...values) : 0;
+    break;
+  case 'max':
+    calculatedValue = values.length > 0 ? Math.max(...values) : 0;
+    break;
+}
+```
+
+## Format Types Implementation
+
+```typescript
+switch (config.format) {
+  case 'percentage':
+    return `${(calculatedValue * 100).toFixed(decimalPlaces)}%`;
+  case 'currency':
+    return `$${calculatedValue.toLocaleString(undefined, { 
+      minimumFractionDigits: decimalPlaces, 
+      maximumFractionDigits: decimalPlaces 
+    })}`;
+  case 'decimal':
+    return calculatedValue.toFixed(decimalPlaces);
+  default:
+    return calculatedValue.toLocaleString();
+}
+```
+
+## Settings Panel Integration
+
+Always pass these props to DynamicKPISection:
+```typescript
+<DynamicKPISection
+  data={filteredData}
+  activeFileId={activeFileId}
+  hiddenTables={hiddenTables}
+  gameGroups={gameGroups}
+  isEditMode={kpiEditMode}
+  onEditModeToggle={() => setKpiEditMode(!kpiEditMode)}
+/>
+```
+
+## Default KPI Configurations
+
+When no saved configuration exists, provide these defaults:
+```typescript
+const defaultConfigs: KPICardConfig[] = [
+  { id: 'installs', title: 'Total Installs', column: 'installs', calculationType: 'sum', format: 'number' },
+  { id: 'roas_d7', title: 'Average ROAS D7', column: 'adjust_roas_d7', calculationType: 'average', format: 'percentage' },
+  { id: 'apps', title: 'Active Apps', column: 'app', calculationType: 'count', format: 'number' },
+  { id: 'cost', title: 'Total Cost', column: 'adjust_cost', calculationType: 'sum', format: 'currency' }
+];
+```

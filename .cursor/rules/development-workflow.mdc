@@ -1,0 +1,42 @@
+
+# Development Workflow
+
+## Project Setup
+- Node.js project with Vite build tool
+- React 19 + TypeScript + Tailwind CSS
+- shadcn/ui component library
+- Development server runs on http://localhost:5173 (or next available port)
+
+## Development Commands
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run lint` - Run ESLint
+- `npm run preview` - Preview production build
+
+## File Organization
+- Keep components in `src/components/`
+- UI components in `src/components/ui/`
+- Types in `src/types/index.ts`
+- Utilities in `src/utils/`
+- Use absolute imports with `@/` alias
+
+## Code Quality
+- Use TypeScript strict mode
+- Follow ESLint configuration
+- Use Prettier for code formatting
+- Write meaningful component and function names
+- Add JSDoc comments for complex functions
+
+## Testing Strategy
+- Test CSV parsing with sample data
+- Verify component rendering with different data states
+- Test responsive design on different screen sizes
+- Validate theme switching functionality
+
+## Deployment
+- Build output goes to `dist/` directory
+- Static assets served from `public/`
+- Configure for production hosting (Vercel, Netlify, etc.)
+3. Build components in `src/components/`
+4. Add UI components from shadcn/ui as needed
+5. Update main dashboard integration

@@ -1,0 +1,38 @@
+# CSV Upload Flow
+
+## Frontend Process
+1. **User Input**: Customer name, Account Manager (optional)
+2. **File Selection**: CSV file via drag-drop or file picker
+3. **API Call**: `POST /files/init` with metadata
+4. **CSV Upload**: `POST /files/{id}/ingest` with CSV content
+5. **Client Parsing**: Parse CSV for immediate display
+6. **State Update**: Update React state with parsed data
+
+## Backend Process
+1. **Organization Check**: Upsert organization record
+2. **File Creation**: Create file record with metadata
+3. **CSV Processing**: Parse and validate CSV content
+4. **Data Storage**: Insert campaign rows into database
+5. **Response**: Return success/failure status
+
+## File Structure
+- **Headers**: Auto-detected from first row
+- **Data Types**: Flexible parsing for multiple CSV formats
+- **Validation**: Basic format and content validation
+- **Error Handling**: Graceful fallbacks for malformed data
+
+## Supported Formats
+- **Adjust Export**: Standard campaign performance data
+- **Custom Formats**: Flexible column mapping
+- **Encoding**: UTF-8, handles special characters
+- **Size Limits**: Configurable via backend settings
+
+## Error Scenarios
+- **Empty File**: Returns validation error
+- **Invalid Format**: Graceful degradation with warnings
+- **Large Files**: Progress indication and chunked processing
+- **Network Issues**: Retry logic and user feedback
+description:
+globs:
+alwaysApply: true
+---

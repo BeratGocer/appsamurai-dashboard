@@ -1,0 +1,43 @@
+# Backend Integration Patterns
+
+## Server Setup
+The backend server is located in the `server/` directory and uses:
+- **Fastify** framework for API endpoints
+- **Prisma** for database management
+- **SQLite** database (default)
+- **Port 8787** for development
+
+## Server Commands
+```bash
+cd server
+pnpm install
+pnpm prisma generate
+pnpm run dev
+```
+
+## API Endpoints
+- `GET /health` - Health check
+- `POST /files/init` - Initialize file upload
+- `POST /files/:id/ingest` - Ingest CSV data
+- `GET /files/:id/groups` - Get grouped data
+- `GET /files/:id/settings` - Get file settings
+- `PATCH /files/:id/settings` - Update file settings
+- `DELETE /files/:id` - Delete file
+
+## Frontend Integration
+The frontend connects to backend via [src/utils/api.ts](mdc:src/utils/api.ts):
+- Uses `VITE_API_BASE` environment variable
+- Defaults to `http://localhost:8787`
+- Handles file upload, data ingestion, and retrieval
+
+## Database Schema
+Located in [server/prisma/schema.prisma](mdc:server/prisma/schema.prisma):
+- `File` - File metadata
+- `CampaignRow` - Individual CSV rows
+- `FileSettings` - Per-file dashboard settings
+
+## Deployment Considerations
+- Backend must be deployed separately from frontend
+- Database persistence required for shared data
+- Environment variables for production URLs
+- CORS configuration for cross-origin requests

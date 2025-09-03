@@ -1,0 +1,701 @@
+import React, { useState } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "./ui/button";
+import { ChevronDown, ChevronRight, GripVertical, Eye, EyeOff } from 'lucide-react';
+import type { GameCountryPublisherGroup } from '@/types'
+import type { ConditionalFormattingRule } from './SettingsPanel'
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface GameTablesProps {
+  groups: GameCountryPublisherGroup[];
+  conditionalRules?: ConditionalFormattingRule[];
+  hiddenTables?: Set<string>;
+  onTableVisibilityChange?: (tableId: string, isHidden: boolean) => void;
+  onBulkHide?: () => void;
+  onBulkShow?: () => void;
+  visibleColumns?: string[];
+}
+
+interface SortableTableItemProps {
+  group: GameCountryPublisherGroup;
+  isExpanded: boolean;
+  onToggle: () => void;
+  conditionalRules: ConditionalFormattingRule[];
+  isHidden?: boolean;
+  onVisibilityChange?: (isHidden: boolean) => void;
+  visibleColumns?: string[];
+}
+
+interface SortableHeaderItemProps {
+  game: string;
+  country: string;
+  platform: string;
+  campaignCount: number;
+}
+
+function SortableHeaderItem({ game, country, platform, campaignCount }: SortableHeaderItemProps) {
+  const groupKey = `${game}-${country}-${platform}`;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: groupKey });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`flex-shrink-0 ${isDragging ? 'opacity-50' : ''}`}
+    >
+      <div className="bg-muted hover:bg-muted/80 p-4 rounded-lg border mb-4 min-w-[320px] cursor-pointer transition-colors shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="cursor-grab" {...attributes} {...listeners}>
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold whitespace-nowrap">
+              {game}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {platform} - {country}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {campaignCount} farklı adnetwork/publisher
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVisibilityChange, visibleColumns = ['installs', 'roas_d0', 'roas_d7'] }: SortableTableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: `${group.game}-${group.country}-${group.platform}-${group.publisher}` 
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const formatROAS = (roas: number): string => {
+    return `${(roas * 100).toFixed(2)}%`;
+  };
+
+  // Get column label for display - shorter labels for compact view
+  const getColumnLabel = (column: string): string => {
+    const columnLabels: Record<string, string> = {
+      installs: 'Install',
+      roas_d0: 'D0',
+      roas_d1: 'D1',
+      roas_d2: 'D2',
+      roas_d3: 'D3',
+      roas_d4: 'D4',
+      roas_d5: 'D5',
+      roas_d6: 'D6',
+      roas_d7: 'D7',
+      roas_d14: 'D14',
+      roas_d21: 'D21',
+      roas_d30: 'D30',
+      roas_d45: 'D45',
+      roas_d60: 'D60',
+      retention_rate_d1: 'Ret D1',
+      retention_rate_d7: 'Ret D7',
+      retention_rate_d14: 'Ret D14',
+      retention_rate_d30: 'Ret D30',
+      ecpi: 'eCPI',
+      adjust_cost: 'Cost',
+      ad_revenue: 'Revenue',
+      gross_profit: 'Profit',
+    };
+    return columnLabels[column] || column;
+  };
+
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'Invalid Date';
+    
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+    
+    // Shorter date format for compact table
+    return date.toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit'
+    });
+  };
+
+  // Conditional formatting function
+  const getCellStyle = (value: number, column: string) => {
+    if (!conditionalRules || conditionalRules.length === 0) return {};
+
+    const matchingRule = conditionalRules.find(rule => {
+      if (rule.column !== column || !rule.isActive) return false;
+
+      const compareValue = value;
+      
+      switch (rule.operator) {
+        case '>':
+          return compareValue > rule.value;
+        case '>=':
+          return compareValue >= rule.value;
+        case '<':
+          return compareValue < rule.value;
+        case '<=':
+          return compareValue <= rule.value;
+        case '=':
+          return Math.abs(compareValue - rule.value) < 0.001;
+        default:
+          return false;
+      }
+    });
+
+    if (matchingRule) {
+      return {
+        color: matchingRule.color,
+        backgroundColor: matchingRule.backgroundColor,
+        fontWeight: '700',
+        borderRadius: '3px',
+        padding: '1px 3px',
+        display: 'inline-block',
+      };
+    }
+
+    return {};
+  };
+
+  // Calculate summary statistics
+  const totalInstalls = group.dailyData.reduce((sum, day) => sum + day.installs, 0);
+  const averageDailyInstalls = group.dailyData.length > 0 ? totalInstalls / group.dailyData.length : 0;
+  
+  const validD7Roas = group.dailyData.filter(day => day.roas_d7 > 0);
+  const avgD7Roas = validD7Roas.length > 0 
+    ? validD7Roas.reduce((sum, day) => sum + day.roas_d7, 0) / validD7Roas.length 
+    : 0;
+
+  // const validD30Roas = group.dailyData.filter(day => day.roas_d30 > 0);
+  // const avgD30Roas = validD30Roas.length > 0 
+  //   ? validD30Roas.reduce((sum, day) => sum + day.roas_d30, 0) / validD30Roas.length 
+  //   : 0;
+
+  // Calculate D0 ROAS average - for now using D7 as placeholder since D0 isn't available in current data
+  const avgD0Roas = avgD7Roas;
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`${isDragging ? 'opacity-50' : ''} h-full`}
+    >
+      <Card className="hover:shadow-lg transition-all duration-200 h-full flex flex-col border-2 bg-card/95">
+        <CardHeader className="pb-3 cursor-pointer flex-shrink-0" onClick={onToggle}>
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              <div className="cursor-grab flex-shrink-0" {...attributes} {...listeners}>
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="card-title-fixed mb-3 truncate">{group.game}</CardTitle>
+                <div className="card-content-fixed text-muted-foreground space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-muted-foreground block">Ülke:</span>
+                      <span className="font-semibold truncate block">{group.country}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Platform:</span>
+                      <span className="font-semibold block">{group.platform}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block">Publisher:</span>
+                    <span className="font-semibold truncate block">{group.publisher}</span>
+                  </div>
+                  
+                  {/* Summary stats in collapsed view */}
+                  <div className="mt-3 pt-2 border-t space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-muted-foreground block">D0 ROAS:</span>
+                        <span className="font-bold text-blue-600 block">
+                          {formatROAS(avgD0Roas)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">D7 ROAS:</span>
+                        <span className="font-bold text-green-600 block">
+                          {formatROAS(avgD7Roas)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-muted-foreground block">Günlük:</span>
+                        <span className="font-bold text-purple-600 block">
+                          {averageDailyInstalls.toFixed(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Gün:</span>
+                        <span className="font-bold block">
+                          {group.dailyData.length}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVisibilityChange?.(true);
+                }}
+                title="Tabloyu gizle"
+              >
+                <EyeOff className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="sm">
+                {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        
+        {isExpanded && (
+          <CardContent className="pt-0 flex-1 flex flex-col">
+            <div className="rounded-md border flex-1">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-center table-header-fixed px-3 whitespace-nowrap min-w-[80px]">Tarih</TableHead>
+                    {visibleColumns.map(column => (
+                      <TableHead key={column} className="text-center table-header-fixed px-3 whitespace-nowrap min-w-[85px]">
+                        {getColumnLabel(column)}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {group.dailyData.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={visibleColumns.length + 1} className="text-center text-muted-foreground text-sm py-6">
+                        Bu grup için veri bulunamadı
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    group.dailyData.map((dayData, dayIndex) => (
+                      <TableRow key={`${group.game}-${group.country}-${group.publisher}-${dayIndex}`} className="hover:bg-muted/30">
+                        <TableCell className="font-medium table-cell-fixed text-center py-2 px-3 whitespace-nowrap min-w-[80px]">
+                          {formatDate(dayData.date)}
+                        </TableCell>
+                        {visibleColumns.map(column => {
+                          const value = (dayData as any)[column];
+                          const isROAS = column.startsWith('roas_') || column.startsWith('retention_rate_');
+                          const formattedValue = isROAS ? formatROAS(value || 0) : 
+                                               typeof value === 'number' ? value.toLocaleString() : 
+                                               value || '0';
+                          
+                          return (
+                            <TableCell key={column} className="font-mono table-cell-fixed text-center py-2 px-3 whitespace-nowrap min-w-[85px]">
+                              <span 
+                                className="transition-all duration-200"
+                                style={getCellStyle(value || 0, column)}
+                              >
+                                {formattedValue}
+                              </span>
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+export function GameTables({ 
+  groups, 
+  conditionalRules = [], 
+  hiddenTables = new Set(),
+  onTableVisibilityChange,
+  onBulkHide,
+  onBulkShow,
+  visibleColumns = ['installs', 'roas_d0', 'roas_d7']
+}: GameTablesProps) {
+  // DnD Sensors for React 19 compatibility
+  // const sensors = useSensors(
+  //   useSensor(PointerSensor, {
+  //     activationConstraint: {
+  //       distance: 8, // 8px movement before drag starts
+  //     },
+  //   })
+  // );
+
+  // State for expanded tables
+  const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
+  
+  // State for app-country-platform group order
+  const [groupOrder, setGroupOrder] = useState<string[]>([]);
+  
+  // State for table order
+  const [sortedGroups, setSortedGroups] = useState(() => {
+    // Smart sorting: group by platform+country, then by publisher
+    const sorted = [...groups].sort((a, b) => {
+      // First sort by platform + country
+      const aKey = `${a.platform}-${a.country}`;
+      const bKey = `${b.platform}-${b.country}`;
+      
+      if (aKey !== bKey) {
+        return aKey.localeCompare(bKey);
+      }
+      
+      // Then by publisher within same platform+country
+      return a.publisher.localeCompare(b.publisher);
+    });
+    
+    return sorted;
+  });
+
+  // Group tables by APP + COUNTRY + PLATFORM (same app, same country, same platform, different adnetworks)
+  const appCountryPlatformGroups = React.useMemo(() => {
+    const grouped = new Map<string, GameCountryPublisherGroup[]>();
+    
+    groups.forEach(group => {
+      // KEY: APP + COUNTRY + PLATFORM (same group)
+      const key = `${group.game}-${group.country}-${group.platform}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(group);
+    });
+    
+    // Sort each group's publishers/adnetworks alphabetically 
+    // (same app+country+platform, different adnetworks side by side)
+    grouped.forEach(groupArray => {
+      groupArray.sort((a, b) => a.publisher.localeCompare(b.publisher));
+    });
+    
+    // Convert to array and sort by app -> country -> platform
+    const groupEntries = Array.from(grouped.entries()).map(([key, groups]) => {
+      const [game, country, platform] = key.split('-');
+      return {
+        groupKey: key,
+        game,
+        country, 
+        platform,
+        groups
+      };
+    });
+    
+    // Apply custom order if exists (for drag & drop)
+    if (groupOrder.length > 0) {
+      const orderMap = new Map(groupOrder.map((key, index) => [key, index]));
+      groupEntries.sort((a, b) => {
+        const aOrder = orderMap.get(a.groupKey) ?? 999;
+        const bOrder = orderMap.get(b.groupKey) ?? 999;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        // Fallback to alphabetical
+        if (a.game !== b.game) return a.game.localeCompare(b.game);
+        if (a.country !== b.country) return a.country.localeCompare(b.country);
+        return a.platform.localeCompare(b.platform);
+      });
+    } else {
+      // Default sort by app -> country -> platform
+      groupEntries.sort((a, b) => {
+        if (a.game !== b.game) return a.game.localeCompare(b.game);
+        if (a.country !== b.country) return a.country.localeCompare(b.country);
+        return a.platform.localeCompare(b.platform);
+      });
+    }
+    
+    return groupEntries;
+  }, [groups, groupOrder]);
+
+  // Initialize group order when groups change
+  React.useEffect(() => {
+    const currentKeys = new Set(appCountryPlatformGroups.map(g => g.groupKey));
+    const existingOrder = groupOrder.filter(key => currentKeys.has(key));
+    const newKeys = appCountryPlatformGroups
+      .map(g => g.groupKey)
+      .filter(key => !groupOrder.includes(key));
+    
+    if (newKeys.length > 0 || existingOrder.length !== groupOrder.length) {
+      const newOrder = [...existingOrder, ...newKeys];
+      console.log('Initializing group order:', newOrder);
+      setGroupOrder(newOrder);
+    }
+  }, [appCountryPlatformGroups]);
+
+  // Update sorted groups when groups change - keep for compatibility
+  React.useEffect(() => {
+    const sorted = [...groups].sort((a, b) => {
+      const aKey = `${a.platform}-${a.country}`;
+      const bKey = `${b.platform}-${b.country}`;
+      
+      if (aKey !== bKey) {
+        return aKey.localeCompare(bKey);
+      }
+      
+      return a.publisher.localeCompare(b.publisher);
+    });
+    setSortedGroups(sorted);
+  }, [groups]);
+
+  const toggleTable = (groupId: string) => {
+    const newExpanded = new Set(expandedTables);
+    if (newExpanded.has(groupId)) {
+      newExpanded.delete(groupId);
+    } else {
+      newExpanded.add(groupId);
+    }
+    setExpandedTables(newExpanded);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    console.log('Drag end:', { activeId: active.id, overId: over?.id });
+
+    if (active.id !== over?.id && over?.id) {
+      // Check if it's a group header drag (has 2 dashes: app-country-platform)
+      if (typeof active.id === 'string' && (active.id.match(/-/g) || []).length === 2) {
+        console.log('Group header drag detected');
+        const oldIndex = groupOrder.indexOf(active.id as string);
+        const newIndex = groupOrder.indexOf(over.id as string);
+        
+        console.log('Indices:', { oldIndex, newIndex, groupOrder });
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+          setGroupOrder((items) => {
+            const newOrder = arrayMove(items, oldIndex, newIndex);
+            console.log('New group order:', newOrder);
+            return newOrder;
+          });
+        }
+      } else {
+        // Handle table item drag (has 3 dashes: game-country-platform-publisher)
+        const oldIndex = sortedGroups.findIndex(group => 
+          `${group.game}-${group.country}-${group.platform}-${group.publisher}` === active.id
+        );
+        const newIndex = sortedGroups.findIndex(group => 
+          `${group.game}-${group.country}-${group.platform}-${group.publisher}` === over.id
+        );
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          setSortedGroups((items) => arrayMove(items, oldIndex, newIndex));
+        }
+      }
+    }
+  };
+
+  const visibleGroups = sortedGroups.filter(group => {
+    const groupId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+    return !hiddenTables.has(groupId);
+  });
+
+  const hiddenCount = sortedGroups.length - visibleGroups.length;
+
+  if (groups.length === 0) {
+    return (
+      <div className="bg-card p-8 rounded-lg border text-center">
+        <p className="text-muted-foreground">Henüz veri yüklenmedi. Lütfen bir CSV dosyası yükleyin.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Performans Tabloları</h2>
+            <p className="text-muted-foreground">
+              App+Ülke+Platform bazında gruplandırılmış kampanya tabloları ({visibleGroups.length} görünen, {hiddenCount} gizli)
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              💡 Aynı app+ülke+platform'un farklı adnetwork/publisher tabloları yan yana gösterilir
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {hiddenCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onBulkShow}
+                className="flex items-center gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Tümünü Göster ({hiddenCount})
+              </Button>
+            )}
+            {visibleGroups.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onBulkHide}
+                className="flex items-center gap-2"
+              >
+                <EyeOff className="h-4 w-4" />
+                Tümünü Gizle
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* App+Country+Platform Headers - Horizontal Scrollable */}
+      <div className="relative mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className="text-lg font-semibold">App+Ülke+Platform Grupları</h3>
+          <p className="text-sm text-muted-foreground">← → Kaydırarak sırayı değiştirebilirsiniz</p>
+        </div>
+        <div className="overflow-x-auto pb-4 scroll-smooth">
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext 
+              items={appCountryPlatformGroups.map(g => g.groupKey)}
+              strategy={horizontalListSortingStrategy}
+            >
+              <div className="flex gap-4 min-w-max">
+                {appCountryPlatformGroups.map(({ groupKey, game, country, platform, groups: groupTables }) => {
+                  const visibleGroupTables = groupTables.filter(group => {
+                    const groupId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+                    return !hiddenTables.has(groupId);
+                  });
+
+                  if (visibleGroupTables.length === 0) return null;
+
+                  return (
+                    <SortableHeaderItem
+                      key={groupKey}
+                      game={game}
+                      country={country}
+                      platform={platform}
+                      campaignCount={visibleGroupTables.length}
+                    />
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+        {/* Left Scroll Indicator only */}
+        <div className="absolute left-0 top-8 bottom-0 w-8 bg-gradient-to-r from-background/90 to-transparent pointer-events-none" />
+      </div>
+
+      {/* App+Country+Platform Grouped Tables - Horizontal Scrollable */}
+      <div className="space-y-8">
+        {appCountryPlatformGroups.map(({ groupKey, game, country, platform, groups: groupTables }) => {
+          const visibleGroupTables = groupTables.filter(group => {
+            const groupId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+            return !hiddenTables.has(groupId);
+          });
+
+          if (visibleGroupTables.length === 0) return null;
+
+          // Get all different publishers/adnetworks for this app+country+platform
+          const adnetworkPublishers = visibleGroupTables.map(g => g.publisher);
+
+          return (
+            <div key={groupKey} className="space-y-4">
+              {/* Section Header with scroll indicator */}
+              <div className="bg-primary/5 p-4 rounded-lg border-l-4 border-primary">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold">
+                      {game}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {platform} - {country}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {visibleGroupTables.length} farklı adnetwork/publisher: {adnetworkPublishers.join(', ')}
+                    </p>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-background/80 px-3 py-2 rounded-full border">
+                    ← → Kaydırarak görüntüle
+                  </div>
+                </div>
+              </div>
+              
+              {/* Horizontal Scrollable Tables Container */}
+              <div className="relative">
+                <div className="overflow-x-auto pb-4 scroll-smooth">
+                  <div className="flex gap-6 min-w-max min-h-[600px] items-stretch py-2">
+                    <DndContext
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext 
+                        items={visibleGroupTables.map(group => 
+                          `${group.game}-${group.country}-${group.platform}-${group.publisher}`
+                        )}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {visibleGroupTables.map((group) => {
+                          const groupId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+                          const isExpanded = expandedTables.has(groupId);
+                          
+                          return (
+                            <div key={groupId} className="flex-shrink-0 h-full" style={{ width: `${Math.max(400, 100 + (visibleColumns.length * 95))}px` }}>
+                              <SortableTableItem
+                                group={group}
+                                isExpanded={isExpanded}
+                                onToggle={() => toggleTable(groupId)}
+                                conditionalRules={conditionalRules}
+                                isHidden={hiddenTables.has(groupId)}
+                                onVisibilityChange={(isHidden) => onTableVisibilityChange?.(groupId, isHidden)}
+                                visibleColumns={visibleColumns}
+                              />
+                            </div>
+                          );
+                        })}
+                      </SortableContext>
+                    </DndContext>
+                  </div>
+                </div>
+                
+                {/* Left Scroll Indicator only */}
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background/90 to-transparent pointer-events-none" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

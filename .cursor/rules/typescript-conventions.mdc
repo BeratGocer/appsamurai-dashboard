@@ -1,0 +1,43 @@
+
+# TypeScript Conventions
+
+## Type Definitions
+Located in [src/types/index.ts](mdc:src/types/index.ts):
+- `CampaignData`: Raw CSV row data
+- `GameGroup`: Aggregated campaign data
+- `UploadedFile`: File metadata
+- `DashboardSettings`: Configuration settings
+
+## Naming Conventions
+- **Interfaces**: PascalCase with descriptive names
+- **Types**: PascalCase, use `Type` suffix for complex types
+- **Enums**: PascalCase for constants
+- **Functions**: camelCase with descriptive verbs
+
+## Type Safety
+- **Strict Mode**: Enable all TypeScript strict options
+- **No Any**: Avoid `any` type, use proper typing
+- **Optional Properties**: Use `?` for optional fields
+- **Union Types**: Use for multiple possible values
+
+## Component Props
+```typescript
+interface ComponentProps {
+  data: CampaignData[];
+  onUpdate?: (data: CampaignData) => void;
+  className?: string;
+}
+```
+
+## API Types
+- **Request/Response**: Define interfaces for all API calls
+- **Error Handling**: Use discriminated unions for error states
+- **Loading States**: Include loading and error types
+
+## Import/Export
+- **Named Exports**: Use for utilities and types
+- **Default Exports**: Use for main components
+- **Barrel Exports**: Group related exports in index files
+- Components: PascalCase (e.g., `Dashboard.tsx`, `MetricsCard.tsx`)
+- Utils: camelCase (e.g., `csvParser.ts`)
+- Types: index.ts for main type definitions

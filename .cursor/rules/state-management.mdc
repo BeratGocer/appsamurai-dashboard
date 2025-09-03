@@ -1,0 +1,34 @@
+
+# State Management Patterns
+
+## Global State Structure
+Located in [src/App.tsx](mdc:src/App.tsx):
+- `uploadedFiles`: Array of uploaded file metadata
+- `activeFileId`: Currently selected file ID
+- `activeFileData`: Parsed data for active file
+
+## Local Storage Keys
+- `appsamurai-uploaded-files`: File metadata (JSON)
+- `appsamurai-active-file-id`: Current file ID
+- `appsamurai-dashboard-settings-{fileId}`: Per-file settings
+- `appsamurai-hidden-tables-{fileId}`: Per-file hidden tables
+
+## Component State Patterns
+- **Dashboard**: Manages active file, settings, and table visibility
+- **FileUpload**: Handles file upload and validation
+- **GameTables**: Renders grouped campaign data
+- **SettingsPanel**: Manages dashboard configuration
+
+## Data Persistence
+- **File Metadata**: Stored in localStorage
+- **Large CSV Data**: Stored in IndexedDB via [src/utils/idb.ts](mdc:src/utils/idb.ts)
+- **Settings**: Per-file localStorage with fileId suffix
+
+## State Updates
+- File upload: Update `uploadedFiles` and `activeFileId`
+- File selection: Load data and settings for selected file
+- Settings changes: Save to localStorage with fileId
+- Table visibility: Update hidden tables state
+- `filterPlatform: string` - Platform filter (android/ios/all)
+
+Apply filters in derived state, not in useEffect.

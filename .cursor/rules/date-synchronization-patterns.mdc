@@ -1,0 +1,108 @@
+---
+description: Date synchronization and formatting patterns for campaign data
+globs: *.tsx,*.ts
+---
+
+# Date Synchronization Patterns
+
+## Date Range Synchronization
+All tables must show the same date range with zero-filled missing dates:
+
+```typescript
+// Synchronize dates across all groups
+export function synchronizeGroupDates(
+  groups: GameCountryPublisherGroup[], 
+  startDate?: string, 
+  endDate?: string
+): GameCountryPublisherGroup[] {
+  if (groups.length === 0) return groups;
+
+  // Use provided date range or find overall range
+  let dateStart: Date;
+  let dateEnd: Date;
+
+  if (startDate && endDate) {
+    dateStart = new Date(startDate);
+    dateEnd = new Date(endDate);
+  } else {
+    // Find overall date range from all groups
+    const allDates = groups.flatMap(group => 
+      group.dailyData.map(day => new Date(day.date))
+    ).filter(date => !isNaN(date.getTime()));
+
+    dateStart = new Date(Math.min(...allDates.map(d => d.getTime())));
+    dateEnd = new Date(Math.max(...allDates.map(d => d.getTime())));
+  }
+
+  // Generate complete date range
+  const allDatesInRange: string[] = [];
+  const current = new Date(dateStart);
+  
+  while (current <= dateEnd) {
+    allDatesInRange.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Fill missing dates with zeros
+  return groups.map(group => {
+    const existingDataMap = new Map(group.dailyData.map(day => [day.date, day]));
+
+    const synchronizedDailyData = allDatesInRange.map(date => {
+      const existingData = existingDataMap.get(date);
+      if (existingData) {
+        return existingData;
+      } else {
+        // Create empty data for missing dates
+        return {
+          date,
+          installs: 0,
+          roas_d7: 0,
+          roas_d30: 0,
+          // ... all other metrics set to 0
+        } as any;
+      }
+    });
+
+    return { ...group, dailyData: synchronizedDailyData };
+  });
+}
+```
+
+## Date Formatting
+Use compact date format for table display:
+
+```typescript
+const formatDate = (dateString: string): string => {
+  if (!dateString) return 'Invalid Date';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Invalid Date';
+  
+  // Compact format for tables: DD.MM (no year)
+  return date.toLocaleDateString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit'
+  });
+};
+```
+
+## Settings Integration
+Apply date synchronization when settings have date range:
+
+```typescript
+// In Dashboard component
+const gameGroups = React.useMemo(() => {
+  if (settings.dateRange.startDate && settings.dateRange.endDate) {
+    return synchronizeGroupDates(rawGameGroups, settings.dateRange.startDate, settings.dateRange.endDate);
+  }
+  return synchronizeGroupDates(rawGameGroups); // Synchronize to overall date range
+}, [rawGameGroups, settings.dateRange.startDate, settings.dateRange.endDate]);
+```
+
+## Critical Requirements
+- ✅ All tables MUST have same date range for visual consistency
+- ✅ Missing dates MUST be filled with zero values
+- ✅ Use compact date format (DD.MM) to save space
+- ✅ Respect settings panel date range when specified
+- ✅ Handle invalid dates gracefully
+- ✅ Ensure chronological sorting of daily data

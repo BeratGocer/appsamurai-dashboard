@@ -1,0 +1,139 @@
+---
+description: Settings panel patterns with per-file persistence and multiple setting types
+---
+
+# Settings Panel Patterns
+
+## Settings Data Structure
+```typescript
+export interface SettingsData {
+  dateRange: DateRange;
+  conditionalRules: ConditionalFormattingRule[];
+  visibleColumns?: string[];
+}
+
+interface SettingsPanelProps {
+  settings: SettingsData;
+  onSettingsChange: (settings: SettingsData) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+  hiddenTables?: HiddenTable[];
+  onTableVisibilityChange?: (tableId: string, isHidden: boolean) => void;
+  availableColumns?: string[];
+}
+```
+
+## Per-File Settings Persistence
+Settings should be saved per active file:
+
+```typescript
+// Generate unique key per file
+const getSettingsKey = () => {
+  return activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
+};
+
+// Save settings
+const handleSettingsChange = (newSettings: SettingsData) => {
+  setSettings(newSettings);
+  const settingsKey = getSettingsKey();
+  localStorage.setItem(settingsKey, JSON.stringify(newSettings));
+};
+
+// Load settings when file changes
+useEffect(() => {
+  const settingsKey = getSettingsKey();
+  const savedSettings = localStorage.getItem(settingsKey);
+  if (savedSettings) {
+    try {
+      setSettings(JSON.parse(savedSettings));
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    }
+  }
+}, [activeFileId]);
+```
+
+## Multi-Section Settings Panel
+Organize settings into logical sections:
+
+```typescript
+<CardContent className="space-y-6">
+  {/* Date Range Settings */}
+  <div className="space-y-3">
+    <div className="flex items-center gap-2">
+      <Calendar className="h-4 w-4" />
+      <Label className="text-base font-medium">Zaman Aralığı</Label>
+    </div>
+    {/* Date controls */}
+  </div>
+
+  {/* Conditional Formatting */}
+  <div className="space-y-4">
+    <div className="flex items-center gap-2">
+      <Palette className="h-4 w-4" />
+      <Label className="text-base font-medium">Koşullu Biçimlendirme</Label>
+    </div>
+    {/* Formatting rules */}
+  </div>
+
+  {/* Column Visibility */}
+  <div className="space-y-4">
+    <div className="flex items-center gap-2">
+      <Palette className="h-4 w-4" />
+      <Label className="text-base font-medium">Tablo Sütunları</Label>
+    </div>
+    {/* Column toggles */}
+  </div>
+
+  {/* Hidden Tables Management */}
+  <div className="space-y-4">
+    <div className="flex items-center gap-2">
+      <Settings className="h-4 w-4" />
+      <Label className="text-base font-medium">Gizli Tablolar</Label>
+    </div>
+    {/* Hidden table list */}
+  </div>
+</CardContent>
+```
+
+## Dynamic Column Selection
+Support column selection based on available data:
+
+```typescript
+{availableColumns.map((column) => {
+  const isVisible = (settings.visibleColumns || defaultColumns).includes(column);
+  return (
+    <div
+      key={column}
+      className={`flex items-center justify-between p-2 border rounded cursor-pointer transition-colors ${
+        isVisible ? 'bg-primary/10 border-primary' : 'bg-muted/20 hover:bg-muted/30'
+      }`}
+      onClick={() => handleColumnToggle(column)}
+    >
+      <span className="text-sm font-medium">{getColumnLabel(column)}</span>
+      {isVisible ? (
+        <Eye className="h-3 w-3 text-primary" />
+      ) : (
+        <EyeOff className="h-3 w-3 text-muted-foreground" />
+      )}
+    </div>
+  );
+})}
+```
+
+## Settings Integration with Tables
+Pass settings to table components:
+
+```typescript
+<GameTables 
+  groups={gameGroups} 
+  conditionalRules={settings.conditionalRules.filter(rule => rule.isActive)}
+  hiddenTables={hiddenTables}
+  onTableVisibilityChange={handleTableVisibilityChange}
+  visibleColumns={settings.visibleColumns || ['installs', 'roas_d7', 'roas_d30']}
+  availableColumns={availableColumns}
+/>
+```
+
+## Complete Implementation
+See [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx) for full settings panel implementation with all sections.

@@ -1,0 +1,177 @@
+# Backend Architecture
+
+## Technology Stack
+- **Framework**: Fastify (Node.js)
+- **ORM**: Prisma
+- **Database**: PostgreSQL
+- **Storage**: Cloudflare R2 (planned)
+- **Queue**: BullMQ + Redis (planned)
+- **Auth**: Clerk (planned)
+
+## Project Structure
+```
+server/
+├── package.json          # Backend dependencies
+├── tsconfig.json         # TypeScript config
+├── prisma/
+│   └── schema.prisma     # Database schema
+├── src/
+│   └── index.ts          # Main server file
+└── .env                  # Environment variables
+```
+
+## Database Schema
+Located in [server/prisma/schema.prisma](mdc:server/prisma/schema.prisma):
+
+### Core Tables
+- `organizations`: Multi-tenant support
+- `users`: User management
+- `files`: File metadata and status
+- `campaign_rows`: Raw CSV data
+- `file_settings`: Per-file configuration
+
+### Key Relationships
+- Organizations → Users (one-to-many)
+- Files → Campaign Rows (one-to-many)
+- Files → File Settings (one-to-one)
+
+## API Endpoints
+
+### File Management
+- `POST /files/init`: Initialize file upload
+- `POST /files/:id/ingest`: Process CSV data
+- `GET /files/:id/groups`: Get aggregated campaign data
+- `PUT /files/:id/settings`: Update file settings
+- `DELETE /files/:id`: Delete file
+
+### Health Check
+- `GET /health`: Server health status
+
+## Environment Setup
+
+### Required Environment Variables
+```bash
+DATABASE_URL=postgresql://localhost:5432/appsamurai?schema=public
+PORT=8787
+```
+
+### Database Setup
+```bash
+# Install PostgreSQL
+brew install postgresql@16
+
+# Start service
+brew services start postgresql@16
+
+# Create database
+createdb appsamurai
+```
+
+## Development Commands
+
+### Backend Setup
+```bash
+cd server
+pnpm install
+pnpm prisma:generate
+pnpm prisma:migrate dev --name init
+pnpm dev
+```
+
+### Common Issues
+
+#### ES Module Compatibility
+**Problem**: ts-node-dev doesn't support ES modules
+**Solution**: Use `tsx` instead
+```json
+{
+  "scripts": {
+    "dev": "tsx watch src/index.ts"
+  }
+}
+```
+
+#### Database Connection
+**Problem**: Connection refused
+**Solution**: 
+1. Check PostgreSQL is running: `brew services list | grep postgresql`
+2. Verify database exists: `psql -l | grep appsamurai`
+3. Check connection string in `.env`
+
+#### Port Conflicts
+**Problem**: Port 8787 already in use
+**Solution**: Change PORT in `.env` or kill existing process
+
+## Data Processing Pipeline
+
+### CSV Ingestion Flow
+1. **File Upload**: Store in R2/S3
+2. **CSV Parsing**: Process through csvParser logic
+3. **Data Aggregation**: Group by game/country/platform/publisher
+4. **Database Storage**: Store in campaign_rows table
+5. **Settings Persistence**: Save per-file configuration
+
+### API Response Format
+```typescript
+interface FileGroupsResponse {
+  fileId: string;
+  groups: GameCountryPublisherGroup[];
+  summary: {
+    totalGroups: number;
+    totalRecords: number;
+    dateRange: { start: string; end: string };
+  };
+}
+```
+
+## Security Considerations
+
+### CORS Configuration
+```typescript
+await fastify.register(cors, {
+  origin: ['http://localhost:5173', 'https://ubiquitous-sherbet-b4f6bf.netlify.app'],
+  credentials: true
+});
+```
+
+### Input Validation
+- Validate CSV format before processing
+- Sanitize file names and metadata
+- Rate limit file uploads
+- Validate file size limits
+
+## Production Deployment
+
+### Environment Variables
+```bash
+DATABASE_URL=postgresql://user:pass@host:5432/db
+PORT=8787
+R2_ACCESS_KEY=your_key
+R2_SECRET_KEY=your_secret
+CLERK_SECRET_KEY=your_key
+```
+
+### Health Checks
+- Database connectivity
+- External service availability
+- Memory usage monitoring
+- Error rate tracking
+
+## Integration with Frontend
+
+### API Client
+Located in [src/utils/api.ts](mdc:src/utils/api.ts):
+- Centralized API calls
+- Error handling
+- Type-safe responses
+- Authentication headers
+
+### Data Synchronization
+- Real-time updates via WebSocket (planned)
+- Background job processing
+- File status tracking
+- Progress indicators
+description:
+globs:
+alwaysApply: true
+---

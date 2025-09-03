@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+    <script>
+      // Disable all localStorage usage (read returns null, writes are no-ops)
+      (function(){
+        try {
+          const noop = function(){};
+          const disabledStorage = {
+            getItem: function(){ return null; },
+            setItem: noop,
+            removeItem: noop,
+            clear: noop,
+            key: function(){ return null; },
+            length: 0
+          };
+          Object.defineProperty(window, 'localStorage', { value: disabledStorage, configurable: false });
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

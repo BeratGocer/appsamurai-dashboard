@@ -1,0 +1,89 @@
+---
+description: Drag and drop implementation patterns using @dnd-kit for React 19 compatibility
+---
+
+# Drag and Drop Implementation with @dnd-kit
+
+## Library Setup
+Use @dnd-kit for React 19 compatibility (avoid react-beautiful-dnd):
+```bash
+npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
+```
+
+## Import Pattern
+```typescript
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core'; // Import type separately!
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+```
+
+**CRITICAL**: Import `DragEndEvent` as a type, not as a named export to avoid module errors.
+
+## Component Structure
+
+### Sortable Item Component
+```typescript
+function SortableItem({ item, children }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`${isDragging ? 'opacity-50' : ''}`}
+    >
+      <div className="cursor-grab" {...attributes} {...listeners}>
+        <GripVertical className="h-4 w-4" />
+      </div>
+      {children}
+    </div>
+  );
+}
+```
+
+### Container Component
+```typescript
+export function DraggableList({ items }) {
+  const [sortedItems, setSortedItems] = useState(items);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = sortedItems.findIndex(item => item.id === active.id);
+      const newIndex = sortedItems.findIndex(item => item.id === over?.id);
+      setSortedItems((items) => arrayMove(items, oldIndex, newIndex));
+    }
+  };
+
+  return (
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={sortedItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-4">
+          {sortedItems.map(item => (
+            <SortableItem key={item.id} item={item}>
+              {/* Your content */}
+            </SortableItem>
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+```
+
+## Implementation Example
+See [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) for complete working implementation with table cards.

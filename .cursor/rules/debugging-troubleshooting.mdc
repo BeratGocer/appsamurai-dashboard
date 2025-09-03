@@ -1,0 +1,55 @@
+# Debugging & Troubleshooting
+
+## Network Issues
+### localhost:8787 Connection Refused
+- **Cause**: Frontend using old API base URL
+- **Solution**: Check `VITE_API_BASE` environment variable in Netlify
+- **Verify**: Network tab shows Railway URL, not localhost
+
+### 500 Internal Server Error
+- **P2003 Foreign Key**: Missing Organization record
+  - **Solution**: Redeploy backend (runs migrations)
+  - **Check**: `curl https://backend-production-80f6.up.railway.app/health`
+- **CSV Parsing**: Invalid file format
+  - **Solution**: Check CSV headers and data format
+  - **Logs**: Check Railway deployment logs
+
+## Frontend Issues
+### localStorage Errors
+- **Expected**: localStorage is disabled globally
+- **Behavior**: All calls return null or no-op
+- **Impact**: No client-side persistence (by design)
+
+### Build Failures
+- **TypeScript**: Check for type errors in [src/utils/api.ts](mdc:src/utils/api.ts)
+- **Dependencies**: Run `npm install` and rebuild
+- **Environment**: Verify Vite environment variables
+
+## Backend Issues
+### Database Connection
+- **Railway**: Check DATABASE_URL environment variable
+- **Prisma**: Run `prisma generate` and `prisma migrate deploy`
+- **Logs**: Check Railway service logs for connection errors
+
+### Migration Issues
+- **Pending**: Run `prisma migrate deploy` manually
+- **Failed**: Check migration files in [server/prisma/migrations/](mdc:server/prisma/migrations/)
+- **Reset**: Use `prisma migrate reset` (destructive)
+
+## Testing Commands
+```bash
+# Backend health check
+curl https://backend-production-80f6.up.railway.app/health
+
+# Test file init
+curl -X POST https://backend-production-80f6.up.railway.app/files/init \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"test.csv","size":123}'
+
+# Frontend build
+npm run build && grep -R "railway" dist/
+```
+description:
+globs:
+alwaysApply: true
+---

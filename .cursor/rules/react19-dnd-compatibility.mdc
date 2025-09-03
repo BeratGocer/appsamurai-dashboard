@@ -1,0 +1,88 @@
+---
+description: React 19 compatibility patterns for drag and drop functionality using @dnd-kit
+globs: src/components/GameTables.tsx,src/components/*.tsx
+---
+
+# React 19 Drag & Drop Compatibility
+
+## Required Setup for @dnd-kit with React 19
+
+### Import Required Sensors
+```typescript
+import { 
+  DndContext, 
+  closestCenter, 
+  PointerSensor, 
+  useSensor, 
+  useSensors 
+} from '@dnd-kit/core';
+```
+
+### Configure Sensors
+```typescript
+// Essential for React 19 compatibility
+const sensors = useSensors(
+  useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8, // 8px movement before drag starts
+    },
+  })
+);
+```
+
+### DndContext Setup
+```typescript
+<DndContext
+  sensors={sensors}  // ← Critical for React 19
+  collisionDetection={closestCenter}
+  onDragEnd={handleDragEnd}
+>
+  <SortableContext items={sortableItems} strategy={horizontalListSortingStrategy}>
+    {/* Sortable items */}
+  </SortableContext>
+</DndContext>
+```
+
+## Drag Handler Pattern
+```typescript
+const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+  console.log('Drag end:', { activeId: active.id, overId: over?.id });
+
+  if (active.id !== over?.id && over?.id) {
+    // Detect drag type by ID pattern
+    const dashCount = (active.id as string).match(/-/g)?.length || 0;
+    
+    if (dashCount === 2) {
+      // Group header drag: app-country-platform
+      handleGroupReorder(active.id, over.id);
+    } else if (dashCount === 3) {
+      // Table item drag: app-country-platform-publisher
+      handleTableReorder(active.id, over.id);
+    }
+  }
+};
+```
+
+## State Management Dependencies
+```typescript
+// Include all dependencies in useMemo
+const groupEntries = React.useMemo(() => {
+  // grouping logic
+  return sortedEntries;
+}, [groups, groupOrder]); // ← Include groupOrder for drag updates
+```
+
+## Common Issues & Solutions
+
+### Issue: Drag not working
+**Cause**: Missing sensors or activationConstraint  
+**Solution**: Add PointerSensor with distance constraint
+
+### Issue: State not updating after drag
+**Cause**: Missing dependency in useMemo  
+**Solution**: Include all state dependencies in dependency array
+
+### Issue: Drag conflicts with scroll
+**Cause**: No activation constraint  
+**Solution**: Set `distance: 8` to prevent accidental drags during scroll

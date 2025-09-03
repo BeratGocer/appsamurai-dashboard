@@ -1,0 +1,99 @@
+---
+description: Flexible CSV parsing patterns for handling multiple campaign data formats
+globs: src/utils/csvParser.ts,src/components/*.tsx
+---
+
+# Flexible CSV Parsing Patterns
+
+## Core Principle
+The system must handle multiple CSV formats intelligently without breaking when new formats are introduced.
+
+## Campaign Network Parsing Strategy
+
+### Format Detection
+Always detect format first, then parse accordingly:
+
+```typescript
+// 1. Structured format with pipes: p:Android|g:US|a:Network
+if (campaignNetwork.includes('|') && campaignNetwork.includes(':')) {
+  // Use key-value parsing
+}
+
+// 2. Underscore formats (multiple variants):
+// - AppSa_BusFrenzy_iOS_US_CPE (AppSamurai format)
+// - ColorJelly_AND_T2_CPA_TBSDK (Game format)
+else {
+  // Use intelligent position-based parsing
+}
+```
+
+### Platform Detection Rules
+Search ALL parts of campaign_network for platform indicators:
+
+```typescript
+const parts = campaignNetwork.split('_');
+for (let i = 0; i < parts.length; i++) {
+  const part = parts[i];
+  
+  // Platform indicators (any position)
+  if (part === 'AND' || part === 'Android' || part.toLowerCase() === 'andr') {
+    result.platform = 'Android';
+  } else if (part === 'iOS' || part === 'IOS') {
+    result.platform = 'iOS';
+  } else if (part === 'GP') {  // Google Play = Android
+    result.platform = 'Android';
+  }
+}
+```
+
+### Country Detection Rules
+Scan for known country codes in ANY position:
+
+```typescript
+const countryCodes = ['US', 'USA', 'UK', 'GB', 'TR', 'DE', 'FR', 'KR', 'JP', 'CN', 'IN', 'BR', 'RU', 'CA', 'AU', 'MX'];
+```
+
+### AdNetwork/Publisher Rules
+**CRITICAL**: Keep unrecognized codes as-is, only decode what we're confident about:
+
+```typescript
+// GOOD: Only decode known patterns
+const knownMappings = {
+  'VGVzdA==': 'Test',  // Base64 decoded
+  'SFT': 'SFT Network' // Known prefix
+};
+
+// IMPORTANT: Return original if unrecognized
+return adgroupNetwork; // Don't force decode unknown codes
+```
+
+## Header Flexibility
+Handle different column name variants:
+
+```typescript
+const getColumnIndex = (columnName: string): number => {
+  let index = headers.indexOf(columnName);
+  if (index >= 0) return index;
+  
+  // Handle variants like 'm app', 'mobile app'
+  if (columnName === 'app') {
+    const appVariants = ['m app', 'mobile app', 'app_name'];
+    for (const variant of appVariants) {
+      index = headers.indexOf(variant);
+      if (index >= 0) return index;
+    }
+  }
+  return -1;
+};
+```
+
+## Game Name Extraction
+Always use the app column value, not campaign_network parts:
+
+```typescript
+// CORRECT: Use actual app column
+const gameName = row.app.replace(' Android', '').replace(' iOS', '');
+
+// WRONG: Don't extract game name from campaign_network
+// const gameName = campaignNetwork.split('_')[1]; // DON'T DO THIS
+```

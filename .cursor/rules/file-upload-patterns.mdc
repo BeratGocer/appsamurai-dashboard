@@ -1,0 +1,47 @@
+---
+description: File upload component patterns and best practices
+---
+
+# File Upload Patterns
+
+## File Upload Component Structure
+The [FileUpload.tsx](mdc:src/components/FileUpload.tsx) component handles:
+- CSV file selection and validation
+- Customer name and account manager extraction
+- Data parsing via [csvParser.ts](mdc:src/utils/csvParser.ts)
+- File metadata generation
+
+## Upload Flow
+1. User selects CSV file
+2. Parse and validate data structure  
+3. Extract metadata (customer, manager from filename/content)
+4. Generate unique file ID and upload date
+5. Store in state + localStorage
+6. Auto-navigate to overview tab
+
+## File Metadata Extraction
+Extract customer name and account manager from:
+- Filename patterns
+- CSV content analysis  
+- User input during upload
+
+## File Storage Pattern
+```tsx
+interface UploadedFile {
+  id: string;           // Unique identifier
+  name: string;         // Original filename
+  size: number;         // File size
+  uploadDate: string;   // ISO date string
+  data: CampaignData[]; // Parsed CSV data
+  isActive: boolean;    // Currently selected
+  customerName?: string;     // Extracted customer
+  accountManager?: string;   // Extracted manager
+}
+```
+
+## File Management Actions
+- **Select**: Switch active file + navigate to overview
+- **Delete**: Remove from state + localStorage with cleanup
+- **Upload**: Add new file + set as active + auto-navigate
+
+Always maintain localStorage sync for persistence across sessions.

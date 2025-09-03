@@ -1,0 +1,50 @@
+---
+description: Replace uploaded file data while preserving per-file settings by keeping same file ID
+---
+
+# File Replace – Preserve Settings Pattern
+
+## Goal
+Allow users to replace an already uploaded CSV with a newer export while preserving all dashboard settings bound to the file (hidden tables, KPI configs, settings panel options). This is achieved by keeping the same `file.id` and overwriting only the data and file metadata.
+
+## Implementation
+
+### App-level handler
+Defined in [src/App.tsx](mdc:src/App.tsx):
+
+```tsx
+const handleFileReplace = (
+  fileId: string,
+  updated: { name: string; size: number; data: UploadedFile['data'] }
+) => {
+  const updatedFiles = uploadedFiles.map(f => {
+    if (f.id !== fileId) return f
+    return {
+      ...f,
+      name: updated.name,
+      size: updated.size,
+      uploadDate: new Date().toISOString(),
+      data: updated.data,
+    }
+  })
+  setUploadedFiles(updatedFiles)
+  localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
+}
+```
+
+### Upload UI trigger
+In [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx), a hidden input is used for replace:
+
+```tsx
+<Button onClick={() => { replaceTargetIdRef.current = file.id; replaceInputRef.current?.click(); }}>Replace</Button>
+<input ref={replaceInputRef} type="file" accept=".csv" onChange={handleReplaceChoose} className="hidden" />
+```
+
+`handleReplaceChoose` parses CSV and calls `onFileReplace(fileId, { name, size, data })`.
+
+## Why it preserves settings
+All per-file settings are keyed by `fileId` (e.g., `dashboard-settings-${fileId}`, `dashboard-hidden-tables-${fileId}`), so keeping the same `file.id` ensures settings persist while data refreshes.
+
+## Notes
+- Old data can be discarded entirely; only latest CSV is kept.
+- Active file selection remains unchanged after replace.

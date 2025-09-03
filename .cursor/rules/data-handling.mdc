@@ -1,0 +1,36 @@
+---
+description: Guidelines for handling campaign data and CSV processing
+---
+
+# Campaign Data Processing Guidelines
+
+## Data Flow Architecture
+1. **CSV Upload** → [FileUpload.tsx](mdc:src/components/FileUpload.tsx)
+2. **Parsing** → [csvParser.ts](mdc:src/utils/csvParser.ts) 
+3. **Storage** → localStorage + React state
+4. **Processing** → Utility functions (getTotalMetrics, getCustomers, etc.)
+5. **Display** → Dashboard components
+
+## Key Data Types
+- **CampaignData**: Core campaign metrics with ROAS, installs, costs
+- **UploadedFile**: File metadata + parsed campaign data
+- **Customer/AccountManager**: Aggregated views across multiple files
+
+## File Management
+- Files stored in localStorage for persistence
+- Active file tracking with automatic overview navigation
+- Support for customer name and account manager metadata extraction
+
+## Data Processing Functions
+Use these utility functions from [csvParser.ts](mdc:src/utils/csvParser.ts):
+- `getTotalMetrics()` - Overall KPI calculations
+- `getCustomers()` - Customer aggregation across all files  
+- `getAccountManagers()` - Manager aggregation
+- `getAppSummaries()` - App-level performance summary
+- `getFinancialMetrics()` - Revenue/cost analysis
+
+## Filtering & Search
+Always apply filtering to the raw data before passing to visualization components:
+- Search: app names, campaign_network, adgroup_network
+- Filters: specific apps, platforms (Android/iOS)
+- Pass `filteredData` to summary functions like `getAppSummaries(filteredData)`

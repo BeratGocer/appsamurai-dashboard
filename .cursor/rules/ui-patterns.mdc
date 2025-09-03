@@ -1,0 +1,38 @@
+
+# UI Patterns & Standards
+
+## Component Library
+- **shadcn/ui**: Primary component library
+- **Tailwind CSS**: Styling framework
+- **Lucide React**: Icon library
+
+## Layout Patterns
+- **Accordion Layouts**: Use expandable rows instead of grid cards
+- **Responsive Design**: Mobile-first approach
+- **Dark/Light Theme**: Toggle via [ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
+
+## Table Standards
+- **Default Columns**: Day, Installs, D0 ROAS, D7 ROAS
+- **Conditional Formatting**: Color-coded cells based on performance
+- **Sortable Headers**: Click to sort by column
+- **Horizontal Scroll**: Maintain 11pt font size, don't shrink text
+
+## Form Patterns
+- **File Upload**: Drag & drop with validation
+- **Settings Panel**: Collapsible configuration panel
+- **Search/Filter**: Real-time filtering with debounced input
+
+## Navigation
+- **Tab-based**: Anasayfa, Müşteriler, Account Managers, Dashboard
+- **Breadcrumbs**: Show current location
+- **Active States**: Highlight current selection
+
+## Color Scheme
+- **Primary**: Blue tones for main actions
+- **Success**: Green for positive metrics
+- **Warning**: Yellow for neutral metrics  
+- **Error**: Red for negative metrics
+- **Neutral**: Gray for secondary elements
+
+## File Navigation Behavior
+When a file is clicked → automatically navigate to 'overview' tab to show dashboard data.

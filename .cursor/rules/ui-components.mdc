@@ -1,0 +1,63 @@
+
+# UI Components (shadcn/ui)
+
+## Available Components
+Located in `src/components/ui/`:
+- `button.tsx` - Button component with variants
+- `card.tsx` - Card container component  
+- `table.tsx` - Data table component
+- `tabs.tsx` - Tab navigation component
+- `dialog.tsx` - Modal dialog component
+- `dropdown-menu.tsx` - Dropdown menu component
+- `input.tsx` - Form input component
+- `select.tsx` - Select dropdown component
+- `badge.tsx` - Badge/tag component
+- `alert.tsx` - Alert/notification component
+- `progress.tsx` - Progress bar component
+- `label.tsx` - Form label component
+
+## Usage Patterns
+- Import from `@/components/ui/component-name`
+- Use proper TypeScript props interfaces
+- Follow shadcn/ui documentation for props and variants
+
+## Customization
+- Components use CSS variables for theming
+- Extend with additional variants using `class-variance-authority`
+- Use `cn()` utility from [src/lib/utils.ts](mdc:src/lib/utils.ts) for conditional classes
+
+## Component Configuration
+- Configuration in [components.json](mdc:components.json)
+- Style: "new-york"
+- Icons: Lucide React
+- CSS Variables enabled for theming
+
+## Common Patterns
+```tsx
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+// Button variants: default, destructive, outline, secondary, ghost, link
+<Button variant="outline" size="sm">Click me</Button>
+
+// Card structure
+<Card>
+  <CardHeader>
+    <CardTitle>Title</CardTitle>
+  </CardHeader>
+  <CardContent>
+    Content here
+  </CardContent>
+</Card>
+```
+
+## Custom Components
+- `MetricsCard` - KPI display with trends
+- `CampaignTable` - Tabular campaign data
+- `AppOverview` - App summary cards
+- `GameTable` - Game performance tables
+- `Navbar` - Navigation header
+- `FileUpload` - CSV file upload interface
+  </CardContent>
+</Card>
+```

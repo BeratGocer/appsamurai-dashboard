@@ -1,0 +1,203 @@
+---
+description: Customer and Account Manager accordion patterns with game-based sub-accordions and smart file naming
+---
+
+# Customer/Manager Accordion Implementation Patterns
+
+## File Display Name Generation
+
+Use the `generateFileDisplayName()` function from [csvParser.ts](mdc:src/utils/csvParser.ts):
+
+```typescript
+export function generateFileDisplayName(
+  customerName: string | undefined, 
+  data: CampaignData[]
+): string {
+  const customer = customerName || 'Unknown Customer';
+  const games = getGamesFromData(data);
+  const dateRange = getDateRangeFromData(data);
+  
+  let gamesText = games.slice(0, 3).join(', ');
+  if (games.length > 3) {
+    gamesText += ` +${games.length - 3} more`;
+  }
+  
+  return `${customer} - ${gamesText} (${dateRange})`;
+}
+```
+
+## Accordion Structure Pattern
+
+### Customer/Manager Level
+```typescript
+<div className="space-y-2">
+  {customers.map((customer) => (
+    <div key={customer.id} className="border rounded-lg bg-card">
+      {/* Main Accordion Header */}
+      <div 
+        className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors flex items-center justify-between`}
+        onClick={() => toggleCustomerExpansion(customer.id)}
+      >
+        <div className="flex items-center space-x-3">
+          {expandedCustomers.has(customer.id) ? 
+            <ChevronDown className="h-4 w-4" /> : 
+            <ChevronRight className="h-4 w-4" />
+          }
+          <h3 className="font-semibold">{customer.name}</h3>
+        </div>
+        <Badge variant="secondary">{customer.files.length} Files</Badge>
+      </div>
+      
+      {/* Files Sub-Accordion */}
+      {expandedCustomers.has(customer.id) && (
+        <div className="border-t bg-muted/20 p-4">
+          <div className="space-y-2">
+            {customer.files.map((file) => (
+              <FileAccordion 
+                key={file.id} 
+                file={file} 
+                displayName={generateFileDisplayName(file.customerName, file.data)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+```
+
+## Game-Based Sub-Accordion Pattern
+
+```typescript
+{/* File Level Accordion */}
+<div className="border rounded-lg bg-card">
+  <div 
+    className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+    onClick={() => toggleFileExpansion(file.id)}
+  >
+    <span className="font-medium">{displayName}</span>
+  </div>
+  
+  {expandedFiles.has(file.id) && (
+    <div className="border-t bg-muted/20 p-4">
+      <div className="space-y-2">
+        {getGamesFromData(file.data).map((game) => (
+          <div key={game} className="flex items-center justify-between p-3 bg-background rounded border">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="font-medium">{game}</span>
+            </div>
+            <div className="flex space-x-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => navigateToGame(file.id, game)}
+              >
+                View Game
+              </Button>
+              <Button 
+                size="sm"
+                onClick={() => navigateToFile(file.id)}
+              >
+                View All
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+```
+
+## Navigation Functions
+
+```typescript
+// Navigate to dashboard with specific game filter
+const navigateToGame = (fileId: string, game: string) => {
+  onFileSelect(fileId);
+  setSelectedGame(game);
+  setCurrentTab('overview');
+};
+
+// Navigate to dashboard with all file data
+const navigateToFile = (fileId: string) => {
+  onFileSelect(fileId);
+  setSelectedGame(null);
+  setCurrentTab('overview');
+};
+```
+
+## Game Filter Display
+
+When a specific game is selected, show filter info:
+
+```typescript
+{selectedGame && (
+  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <h4 className="font-medium text-blue-900 dark:text-blue-100">
+          Viewing Game: {selectedGame}
+        </h4>
+        <p className="text-sm text-blue-700 dark:text-blue-300">
+          Dashboard is filtered to show only data for this game
+        </p>
+      </div>
+      <Button variant="outline" size="sm" onClick={() => setSelectedGame(null)}>
+        View All Games
+      </Button>
+    </div>
+  </div>
+)}
+```
+
+## Data Filtering for Game Selection
+
+```typescript
+const filteredData = data.filter((row) => {
+  // Date filtering
+  if (settings.dateRange.startDate && settings.dateRange.endDate) {
+    const rowDate = new Date(row.day);
+    const startDate = new Date(settings.dateRange.startDate);
+    const endDate = new Date(settings.dateRange.endDate);
+    
+    if (!(rowDate >= startDate && rowDate <= endDate)) {
+      return false;
+    }
+  }
+  
+  // Game filtering
+  if (selectedGame) {
+    const gameName = row.app?.replace(' Android', '').replace(' iOS', '') || '';
+    return gameName === selectedGame;
+  }
+  
+  return true;
+});
+```
+
+## Helper Functions
+
+Always implement these utility functions:
+
+```typescript
+// Extract unique games from data
+export function getGamesFromData(data: CampaignData[]): string[] {
+  return Array.from(new Set(
+    data.map(row => row.app?.replace(' Android', '').replace(' iOS', '')).filter(Boolean)
+  )).sort();
+}
+
+// Get date range from data
+export function getDateRangeFromData(data: CampaignData[]): string {
+  if (data.length === 0) return 'No data';
+  
+  const dates = data.map(row => new Date(row.day)).sort((a, b) => a.getTime() - b.getTime());
+  const start = dates[0].toISOString().split('T')[0];
+  const end = dates[dates.length - 1].toISOString().split('T')[0];
+  
+  return `${start} to ${end}`;
+}
+```

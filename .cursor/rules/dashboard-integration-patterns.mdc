@@ -1,0 +1,169 @@
+---
+description: Dashboard integration patterns for KPI cards, table visibility, game filtering, and file management
+---
+
+# Dashboard Integration Patterns
+
+## Core State Management Architecture
+
+The [Dashboard.tsx](mdc:src/components/Dashboard.tsx) manages these critical states:
+
+```typescript
+// File and data state
+const [data, setData] = useState<CampaignData[]>([]);
+const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+const [activeFileId, setActiveFileId] = useState<string | null>(null);
+
+// UI expansion states
+const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
+const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
+
+// Game filtering
+const [selectedGame, setSelectedGame] = useState<string | null>(null);
+
+// KPI management
+const [kpiEditMode, setKpiEditMode] = useState(false);
+
+// Table visibility
+const [hiddenTables, setHiddenTables] = useState<Set<string>>(new Set());
+```
+
+## Data Flow Integration
+
+```typescript
+// 1. Raw data filtering (date + game)
+const filteredData = data.filter((row) => {
+  // Date filtering
+  if (settings.dateRange.startDate && settings.dateRange.endDate) {
+    const rowDate = new Date(row.day);
+    const startDate = new Date(settings.dateRange.startDate);
+    const endDate = new Date(settings.dateRange.endDate);
+    if (!(rowDate >= startDate && rowDate <= endDate)) return false;
+  }
+  
+  // Game filtering
+  if (selectedGame) {
+    const gameName = row.app?.replace(' Android', '').replace(' iOS', '') || '';
+    return gameName === selectedGame;
+  }
+  
+  return true;
+});
+
+// 2. Game groups generation
+const gameGroups = useMemo(() => {
+  let groups = getGameCountryPublisherGroups(filteredData);
+  return synchronizeGroupDates(groups);
+}, [filteredData]);
+
+// 3. Customer/Manager organization
+const customers = getCustomers(uploadedFiles);
+const accountManagers = getAccountManagers(uploadedFiles);
+```
+
+## Component Integration Map
+
+```
+Dashboard.tsx (Root)
+├── DynamicKPISection
+│   ├── Uses: filteredData, hiddenTables, gameGroups
+│   ├── Calculates: KPI values excluding hidden tables
+│   └── Manages: Per-file KPI configurations
+├── GameTables  
+│   ├── Uses: gameGroups, hiddenTables
+│   ├── Controls: Table visibility (hide/show)
+│   └── Affects: KPI calculations through hiddenTables
+├── Customer/Manager Accordions
+│   ├── Uses: uploadedFiles organized by customer/manager
+│   ├── Displays: Smart file names with games and dates
+│   └── Navigation: File-level and game-level dashboard access
+└── Settings/Filters
+    ├── Date range filtering
+    ├── Game selection filtering  
+    └── Per-file settings persistence
+```
+
+## Critical Integration Points
+
+### 1. KPI ↔ Hidden Tables
+```typescript
+// KPI cards MUST receive hidden tables for proper calculation
+<DynamicKPISection
+  hiddenTables={hiddenTables}
+  gameGroups={gameGroups}
+  // ... other props
+/>
+```
+
+### 2. Game Filter ↔ Data Flow
+```typescript
+// Game filtering affects:
+// - filteredData (input to all components)
+// - gameGroups (table organization)  
+// - KPI calculations (through filteredData)
+```
+
+### 3. File Upload ↔ Organization
+```typescript
+// Optional customer/manager info affects:
+// - Customer accordion display ("Unknown Customer")
+// - Manager accordion display ("Unknown Manager")
+// - File display names generation
+```
+
+## State Update Patterns
+
+### When File Changes
+```typescript
+const handleFileSelect = (fileId: string) => {
+  setActiveFileId(fileId);
+  setSelectedGame(null);        // Clear game filter
+  setHiddenTables(new Set());   // Reset table visibility
+  setCurrentTab('overview');    // Navigate to dashboard
+};
+```
+
+### When Game Selected
+```typescript
+const navigateToGame = (fileId: string, game: string) => {
+  setActiveFileId(fileId);      // Set file
+  setSelectedGame(game);        // Set game filter
+  setHiddenTables(new Set());   // Reset table visibility
+  setCurrentTab('overview');    // Navigate to dashboard
+};
+```
+
+### When Tables Hidden/Shown
+```typescript
+// Immediate KPI recalculation through useMemo dependencies
+// No manual refresh needed - React handles updates automatically
+```
+
+## Performance Considerations
+
+- Use `useMemo` for expensive calculations that depend on:
+  - `filteredData`
+  - `hiddenTables` 
+  - `gameGroups`
+  - `selectedGame`
+
+```typescript
+const gameGroups = useMemo(() => {
+  return synchronizeGroupDates(getGameCountryPublisherGroups(filteredData));
+}, [filteredData]);
+
+const kpiValues = useMemo(() => {
+  return kpiConfigs.map(config => ({
+    id: config.id,
+    value: calculateKPIValue(data, config, hiddenTables, gameGroups)
+  }));
+}, [data, kpiConfigs, hiddenTables, gameGroups]);
+```
+
+## Error Handling Integration
+
+- File upload: Handle missing customer/manager gracefully
+- KPI calculation: Return 0 for invalid/hidden data
+- Game filtering: Handle missing/malformed game names
+- Navigation: Validate file/game existence before navigation

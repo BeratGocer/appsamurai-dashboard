@@ -1,0 +1,114 @@
+---
+description: Table display and data visualization patterns for campaign performance data
+globs: src/components/*Table*.tsx
+---
+
+# Table Display Patterns
+
+## Core Principle
+**NEVER use accordion systems** for data tables. Always use independent, standalone tables in grid layouts.
+
+## Table Structure
+Each table represents one `GameCountryPublisherGroup` with:
+- **Header**: Game name, Country, Platform, Publisher
+- **Daily Data Table**: Date, Install, ROAS D7, ROAS D30  
+- **Summary Footer**: Total installs, days count, average ROAS
+
+## Implementation Pattern
+Located in [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx):
+
+```tsx
+<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+  {groups.map(group => (
+    <Card key={`${group.game}-${group.country}-${group.platform}-${group.publisher}`}>
+      <CardHeader>
+        <CardTitle>{group.game}</CardTitle>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div>Ülke: {group.country}</div>
+          <div>Platform: {group.platform}</div>  
+          <div>Publisher: {group.publisher}</div>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tarih</TableHead>
+              <TableHead>Install</TableHead>
+              <TableHead>ROAS D7</TableHead>
+              <TableHead>ROAS D30</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {group.dailyData.map(data => (
+              <TableRow key={data.date}>
+                <TableCell>{formatDate(data.date)}</TableCell>
+                <TableCell>{data.installs}</TableCell>
+                <TableCell>{formatROAS(data.roas_d7)}</TableCell>
+                <TableCell>{formatROAS(data.roas_d30)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        
+        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <div>Toplam Install: {totalInstalls}</div>
+          <div>Gün Sayısı: {dayCount}</div>
+          <div>Ort. ROAS D7: {formatROAS(avgD7)}</div>
+          <div>Ort. ROAS D30: {formatROAS(avgD30)}</div>
+        </div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
+```
+
+## Responsive Layout
+- **Mobile**: Single column
+- **Large**: 2 columns  
+- **Extra Large**: 3 columns
+- Use `gap-6` for proper spacing
+
+## Data Formatting Utilities
+
+### Date Formatting
+```tsx
+const formatDate = (dateString: string): string => {
+  if (!dateString) return 'Invalid Date';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Invalid Date';
+  return date.toLocaleDateString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit', 
+    year: 'numeric'
+  });
+};
+```
+
+### ROAS Formatting  
+```tsx
+const formatROAS = (value: number): string => {
+  if (isNaN(value) || value === null) return '0.00%';
+  return `${(value * 100).toFixed(2)}%`;
+};
+```
+
+## Table Styling
+- Use shadcn/ui `Table` components
+- Alternate row colors for readability
+- Consistent text alignment: left for text, right for numbers
+- Proper padding and spacing with Tailwind classes
+
+## Summary Information
+Always include below each table:
+- **Toplam Install**: Sum of all installs
+- **Gün Sayısı**: Number of unique dates
+- **Ort. ROAS D7**: Average 7-day ROAS
+- **Ort. ROAS D30**: Average 30-day ROAS
+
+## Key Requirements
+- Tables must be **independent** (no accordion/collapsible behavior)
+- Each table shows **daily breakdown** (not aggregated)
+- Display **exactly as parsed** from CSV data
+- Handle edge cases: empty data, invalid dates, zero values

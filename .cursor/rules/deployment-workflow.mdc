@@ -1,0 +1,74 @@
+# Deployment Workflow
+
+## Current Setup
+- **Frontend**: Netlify deployment at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
+- **Backend**: Local development server on port 8787
+- **Database**: Local SQLite (development)
+
+## Production Deployment
+
+### Frontend (Netlify)
+```bash
+npm run build
+netlify deploy --prod --dir=dist
+```
+
+### Backend Deployment Options
+1. **Railway**: Easy deployment with database
+2. **Render**: Free tier with PostgreSQL
+3. **Heroku**: Traditional platform
+4. **Vercel**: Serverless functions
+5. **DigitalOcean**: Full control
+
+### Environment Variables
+```bash
+# Frontend (.env)
+VITE_API_BASE=https://your-backend-url.com
+
+# Backend (.env)
+DATABASE_URL=postgresql://...
+PORT=8787
+NODE_ENV=production
+```
+
+## Development Workflow
+
+### Local Development
+```bash
+# Terminal 1: Frontend
+npm run dev
+
+# Terminal 2: Backend
+cd server
+pnpm run dev
+```
+
+### Testing
+1. **Local testing**: Both frontend and backend running locally
+2. **Production testing**: Frontend on Netlify, backend deployed
+3. **Data migration**: Export from localStorage, import to backend
+
+## Database Migration
+
+### From SQLite to PostgreSQL
+1. **Update schema**: Modify [server/prisma/schema.prisma](mdc:server/prisma/schema.prisma)
+2. **Generate client**: `pnpm prisma generate`
+3. **Run migrations**: `pnpm prisma migrate deploy`
+4. **Seed data**: Import existing data
+
+### Data Backup Strategy
+- **Export current data**: Use dashboard export feature
+- **Backup database**: Regular database backups
+- **Version control**: Track schema changes
+- **Rollback plan**: Ability to revert changes
+
+## Monitoring and Maintenance
+- **Health checks**: Monitor backend availability
+- **Error tracking**: Log and alert on errors
+- **Performance monitoring**: Track response times
+- **Data validation**: Ensure data integrity
+- **Regular updates**: Keep dependencies current
+description:
+globs:
+alwaysApply: true
+---

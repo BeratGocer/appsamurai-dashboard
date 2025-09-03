@@ -1,0 +1,44 @@
+
+# Turkish UI Standards
+
+## Language
+- **Primary Language**: Turkish (Türkçe)
+- **Technical Terms**: Use Turkish equivalents when possible
+- **Consistency**: Maintain consistent terminology across components
+
+## Common UI Terms
+- **Navigation**: Anasayfa, Müşteriler, Account Managers, Dashboard
+- **Actions**: Yükle, Sil, Görüntüle, Düzenle, Kaydet
+- **Status**: Yükleniyor, Tamamlandı, Hata, Başarılı
+- **Filters**: Arama, Filtrele, Tarih Aralığı
+
+## Column Labels
+- **Day**: Gün
+- **Installs**: Kurulum
+- **ROAS**: ROAS (keep as is)
+- **Cost**: Maliyet
+- **Revenue**: Gelir
+- **Platform**: Platform
+- **Country**: Ülke
+- **Publisher**: Yayıncı
+
+## Error Messages
+- **File Upload**: "Dosya yüklenirken hata oluştu"
+- **Validation**: "Lütfen geçerli bir CSV dosyası seçin"
+- **Network**: "Bağlantı hatası"
+- **Processing**: "Veri işlenirken hata oluştu"
+
+## Settings Labels
+- **Date Range**: Tarih Aralığı
+- **Visible Columns**: Görünür Sütunlar
+- **Conditional Formatting**: Koşullu Biçimlendirme
+- **Table Settings**: Tablo Ayarları
+
+## File Management
+- **Upload**: Dosya Yükle
+- **Replace**: Dosya Değiştir
+- **Delete**: Dosya Sil
+- **View**: Görüntüle
+- Use Turkish for user-facing descriptive text
+- Maintain consistency in terminology across components
+- Use placeholder text in Turkish: "App, kampanya veya adset ara..."

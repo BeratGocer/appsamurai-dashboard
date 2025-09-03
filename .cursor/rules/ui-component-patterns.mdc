@@ -1,0 +1,46 @@
+# UI Component Patterns
+
+## Component Library
+- **shadcn/ui**: Primary component library
+- **Tailwind CSS**: Styling framework
+- **Lucide React**: Icon library
+
+## Key Components
+- **Dashboard**: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Main dashboard view
+- **FileUpload**: [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx) - File upload interface
+- **Navbar**: [src/components/Navbar.tsx](mdc:src/components/Navbar.tsx) - Navigation bar
+- **DynamicKPISection**: [src/components/DynamicKPISection.tsx](mdc:src/components/DynamicKPISection.tsx) - KPI cards
+- **GameTables**: [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Game-specific tables
+
+## Layout Patterns
+1. **Accordion Layout**: Use expandable sections instead of grid cards
+2. **Responsive Design**: Mobile-first approach with Tailwind breakpoints
+3. **Dark/Light Theme**: Implemented via [ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
+4. **Turkish Localization**: All UI text in Turkish
+
+## Styling Guidelines
+- Use Tailwind utility classes
+- Follow shadcn/ui component patterns
+- Maintain consistent spacing and typography
+- Use semantic color names (e.g., `text-primary`, `bg-secondary`)
+- Implement hover states and transitions
+
+## Component Structure
+```typescript
+// Example component structure
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+
+export function MyComponent() {
+  return (
+    <Card className="p-4">
+      <h3 className="text-lg font-semibold">Title</h3>
+      <Button variant="default">Action</Button>
+    </Card>
+  )
+}
+```
+description:
+globs:
+alwaysApply: true
+---

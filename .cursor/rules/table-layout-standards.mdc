@@ -1,0 +1,83 @@
+---
+description: Table layout and sizing standards for dashboard tables
+globs: *.tsx,*.ts
+---
+
+# Table Layout Standards
+
+## Font Size Standards
+All table components must maintain consistent font sizes:
+
+```css
+/* Table data - equivalent to 11pt */
+.table-cell-fixed {
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+}
+
+/* Table headers - equivalent to 11pt */
+.table-header-fixed {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+/* Card content - equivalent to 12pt */
+.card-content-fixed {
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+}
+
+/* Card titles - equivalent to 13.5pt */
+.card-title-fixed {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+}
+```
+
+## Dynamic Table Width
+Tables must resize dynamically based on column count to prevent internal scrolling:
+
+```typescript
+// Table container width formula
+const tableWidth = Math.max(400, 100 + (visibleColumns.length * 95));
+
+// Individual column minimum widths
+const columnMinWidths = {
+  dateColumn: 'min-w-[80px]',
+  dataColumn: 'min-w-[85px]'
+};
+```
+
+## Table Cell Structure
+All table cells must use fixed font classes and proper spacing:
+
+```tsx
+<TableHead className="text-center table-header-fixed px-3 whitespace-nowrap min-w-[85px]">
+  {getColumnLabel(column)}
+</TableHead>
+
+<TableCell className="font-mono table-cell-fixed text-center py-2 px-3 whitespace-nowrap min-w-[85px]">
+  {formattedValue}
+</TableCell>
+```
+
+## Card Content Structure
+Card headers and content must use fixed font classes:
+
+```tsx
+<CardTitle className="card-title-fixed mb-3 truncate">
+  {group.game}
+</CardTitle>
+<div className="card-content-fixed text-muted-foreground space-y-2">
+  {/* Content with 12pt font */}
+</div>
+```
+
+## Critical Requirements
+- ✅ NO internal table scrolling - tables must expand to fit all columns
+- ✅ Font sizes NEVER change regardless of column count
+- ✅ Use CSS classes with `!important` to prevent overrides
+- ✅ Minimum column widths must be respected
+- ✅ Proper padding and spacing for readability

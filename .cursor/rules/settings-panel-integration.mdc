@@ -1,0 +1,134 @@
+---
+description: Settings panel integration patterns and error handling
+globs: *SettingsPanel*,*Dashboard*
+---
+
+# Settings Panel Integration
+
+## Column Labels Definition
+Always define COLUMN_LABELS constant to prevent undefined reference errors:
+
+```typescript
+const COLUMN_LABELS: Record<string, string> = {
+  installs: 'Install',
+  roas_d0: 'D0',
+  roas_d1: 'D1',
+  roas_d2: 'D2',
+  roas_d3: 'D3',
+  roas_d4: 'D4',
+  roas_d5: 'D5',
+  roas_d6: 'D6',
+  roas_d7: 'D7',
+  roas_d14: 'D14',
+  roas_d21: 'D21',
+  roas_d30: 'D30',
+  roas_d45: 'D45',
+  roas_d60: 'D60',
+  retention_rate_d1: 'Ret D1',
+  retention_rate_d7: 'Ret D7',
+  retention_rate_d14: 'Ret D14',
+  retention_rate_d30: 'Ret D30',
+  ecpi: 'eCPI',
+  adjust_cost: 'Cost',
+  ad_revenue: 'Revenue',
+  gross_profit: 'Profit',
+};
+```
+
+## Safe Column Reference
+Always use fallback when referencing column labels:
+
+```typescript
+// CORRECT: With fallback
+<span className="text-sm">
+  {COLUMN_LABELS[rule.column] || rule.column} {rule.operator} {rule.value}
+</span>
+
+// WRONG: Without fallback - causes errors
+<span className="text-sm">
+  {COLUMN_LABELS[rule.column]} {rule.operator} {rule.value}
+</span>
+```
+
+## Settings Data Structure
+Maintain consistent settings structure with proper defaults:
+
+```typescript
+export interface SettingsData {
+  dateRange: DateRange;
+  conditionalRules: ConditionalFormattingRule[];
+  visibleColumns?: string[];
+}
+
+// Default settings
+const defaultSettings: SettingsData = {
+  dateRange: {
+    startDate: '',
+    endDate: '',
+  },
+  conditionalRules: [],
+  visibleColumns: ['installs', 'roas_d7', 'roas_d30']
+};
+```
+
+## Per-File Persistence
+Implement per-file settings persistence:
+
+```typescript
+// Settings key generation
+const getSettingsKey = () => {
+  return activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
+};
+
+// Load settings for current file
+const loadFileSettings = (fileId: string | null) => {
+  const settingsKey = fileId ? `dashboard-settings-${fileId}` : 'dashboard-settings-default';
+  const saved = localStorage.getItem(settingsKey);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      // If parsing fails, return default
+    }
+  }
+  return defaultSettings;
+};
+
+// Save settings
+const handleSettingsChange = (newSettings: SettingsData) => {
+  setSettings(newSettings);
+  const settingsKey = getSettingsKey();
+  localStorage.setItem(settingsKey, JSON.stringify(newSettings));
+};
+```
+
+## Integration with Data Processing
+Connect settings to data processing pipeline:
+
+```typescript
+// In Dashboard component
+const gameGroups = React.useMemo(() => {
+  if (settings.dateRange.startDate && settings.dateRange.endDate) {
+    return synchronizeGroupDates(rawGameGroups, settings.dateRange.startDate, settings.dateRange.endDate);
+  }
+  return synchronizeGroupDates(rawGameGroups);
+}, [rawGameGroups, settings.dateRange.startDate, settings.dateRange.endDate]);
+
+// Pass settings to components
+<GameTables 
+  groups={gameGroups} 
+  conditionalRules={settings.conditionalRules.filter(rule => rule.isActive)}
+  hiddenTables={hiddenTables}
+  visibleColumns={settings.visibleColumns || ['installs', 'roas_d7', 'roas_d30']}
+/>
+```
+
+## Critical Requirements
+- ✅ Always define COLUMN_LABELS constant in SettingsPanel
+- ✅ Use fallback pattern: `COLUMN_LABELS[key] || key`
+- ✅ Implement per-file settings persistence
+- ✅ Provide sensible default settings
+- ✅ Filter active conditional rules before passing to tables
+- ✅ Handle JSON parsing errors gracefully
+- ✅ Ensure settings updates trigger data re-processing
+- ❌ Never reference undefined COLUMN_LABELS entries

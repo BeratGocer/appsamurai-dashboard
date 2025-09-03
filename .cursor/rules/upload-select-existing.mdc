@@ -1,0 +1,43 @@
+---
+description: Upload form supports selecting existing customers/managers or typing new ones
+---
+
+# Upload – Select Existing Customer/Manager
+
+## Pattern
+Enhance the upload form to optionally pick an existing Customer or Account Manager from previously uploaded files, while still allowing free text entry for new names.
+
+## Implementation
+- Component: [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx)
+- UI: `Select` from shadcn/ui shown when there are existing values, followed by an `Input` for manual entry.
+
+```tsx
+{existingCustomers.length > 0 && (
+  <Select onValueChange={(v) => setCustomerName(v)}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Select existing customer (optional)" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectGroup>
+        <SelectLabel>Existing Customers</SelectLabel>
+        {existingCustomers.map((c) => (
+          <SelectItem key={c} value={c}>{c}</SelectItem>
+        ))}
+      </SelectGroup>
+    </SelectContent>
+  </Select>
+)}
+<Input placeholder="Or type a new customer name" ... />
+```
+
+Same approach for Account Manager selection.
+
+## Data Source
+Existing names are derived from `uploadedFiles` (unique, non-empty):
+```ts
+Array.from(new Set(uploadedFiles.map(f => f.customerName).filter(Boolean)))
+```
+
+## Notes
+- Both fields remain optional.
+- Selected or typed value is used as the metadata for the uploaded file.

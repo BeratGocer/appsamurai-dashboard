@@ -1,0 +1,61 @@
+# Data Persistence Patterns
+
+## Storage Strategies
+
+### Client-Side Storage (Current Implementation)
+- **localStorage**: File metadata and settings
+- **IndexedDB**: Large CSV data (deprecated)
+- **Pros**: Fast, works offline, no backend required
+- **Cons**: Not shared between users, data lost on browser clear
+
+### Backend Storage (Recommended)
+- **Database**: All data stored centrally
+- **Pros**: Shared between users, persistent, scalable
+- **Cons**: Requires backend server, network dependency
+
+## Current Implementation
+
+### localStorage Keys
+- `appsamurai-uploaded-files`: Array of file metadata
+- `appsamurai-active-file-id`: Currently selected file
+- `dashboard-settings-{fileId}`: Per-file dashboard settings
+- `dashboard-hidden-tables-{fileId}`: Hidden table state
+
+### Data Structure
+```typescript
+interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  uploadDate: string;
+  data: CampaignData[];
+  customerName?: string;
+  accountManager?: string;
+  isActive: boolean;
+}
+```
+
+## Migration Strategy
+
+### From localStorage to Backend
+1. **Export current data**: Use export functionality
+2. **Upload to backend**: Use API endpoints
+3. **Update frontend**: Switch from localStorage to API calls
+4. **Verify data**: Ensure all data migrated correctly
+
+### Backend Integration
+- Use [src/utils/api.ts](mdc:src/utils/api.ts) for API calls
+- Implement proper error handling
+- Add loading states for network requests
+- Cache frequently accessed data
+
+## Best Practices
+- Always validate data before saving
+- Implement proper error handling
+- Use optimistic updates for better UX
+- Provide fallback mechanisms
+- Consider data size limits (localStorage ~5MB)
+description:
+globs:
+alwaysApply: true
+---

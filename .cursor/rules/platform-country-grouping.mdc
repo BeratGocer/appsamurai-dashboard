@@ -1,0 +1,136 @@
+---
+description: Platform-country grouping and organization patterns for campaign tables
+globs: *.tsx,*.ts
+---
+
+# Platform-Country Grouping Patterns
+
+## Group Organization
+Campaign tables must be grouped by platform-country combinations:
+
+```typescript
+const platformCountryGroups = React.useMemo(() => {
+  const grouped = new Map<string, GameCountryPublisherGroup[]>();
+  
+  groups.forEach(group => {
+    const key = `${group.platform}-${group.country}`;
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key)!.push(group);
+  });
+  
+  // Sort publishers within each platform-country group
+  grouped.forEach(groupArray => {
+    groupArray.sort((a, b) => a.publisher.localeCompare(b.publisher));
+  });
+  
+  // Apply custom order or default alphabetical
+  const groupEntries = Array.from(grouped.entries()).map(([key, groups]) => ({
+    platformCountry: key,
+    groups
+  }));
+  
+  if (platformCountryOrder.length > 0) {
+    const orderMap = new Map(platformCountryOrder.map((key, index) => [key, index]));
+    groupEntries.sort((a, b) => {
+      const aOrder = orderMap.get(a.platformCountry) ?? 999;
+      const bOrder = orderMap.get(b.platformCountry) ?? 999;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return a.platformCountry.localeCompare(b.platformCountry);
+    });
+  } else {
+    groupEntries.sort((a, b) => a.platformCountry.localeCompare(b.platformCountry));
+  }
+  
+  return groupEntries;
+}, [groups, platformCountryOrder]);
+```
+
+## Reorderable Headers
+Platform-country headers must be draggable and reorderable:
+
+```typescript
+// State for custom ordering
+const [platformCountryOrder, setPlatformCountryOrder] = useState<string[]>([]);
+
+// Drag handler for headers
+const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+
+  if (active.id !== over?.id) {
+    // Check if it's a platform-country header drag
+    if (typeof active.id === 'string' && active.id.includes('-') && !active.id.includes('|')) {
+      const oldIndex = platformCountryOrder.indexOf(active.id as string);
+      const newIndex = platformCountryOrder.indexOf(over?.id as string);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setPlatformCountryOrder((items) => arrayMove(items, oldIndex, newIndex));
+      }
+    }
+  }
+};
+
+// Initialize order when groups change
+React.useEffect(() => {
+  const currentKeys = new Set(platformCountryGroups.map(g => g.platformCountry));
+  const existingOrder = platformCountryOrder.filter(key => currentKeys.has(key));
+  const newKeys = platformCountryGroups
+    .map(g => g.platformCountry)
+    .filter(key => !platformCountryOrder.includes(key));
+  
+  if (newKeys.length > 0 || existingOrder.length !== platformCountryOrder.length) {
+    setPlatformCountryOrder([...existingOrder, ...newKeys]);
+  }
+}, [platformCountryGroups]);
+```
+
+## UI Structure
+Display groups with clear section headers and scroll navigation:
+
+```tsx
+{/* Platform-Country Headers - Horizontal Scrollable */}
+<div className="relative mb-6">
+  <div className="flex items-center gap-2 mb-3">
+    <h3 className="text-lg font-semibold">Platform-Ülke Grupları</h3>
+    <p className="text-sm text-muted-foreground">← → Kaydırarak sırayı değiştirebilirsiniz</p>
+  </div>
+  {/* Scrollable headers */}
+</div>
+
+{/* Platform-Country Grouped Tables */}
+<div className="space-y-8">
+  {platformCountryGroups.map(({ platformCountry, groups: platformGroups }) => {
+    const [platform, country] = platformCountry.split('-');
+    
+    return (
+      <div key={platformCountry} className="space-y-4">
+        {/* Section Header with scroll hint */}
+        <div className="bg-primary/5 p-4 rounded-lg border-l-4 border-primary">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-semibold">{platform} - {country}</h3>
+              <p className="text-sm text-muted-foreground">{count} kampanya tablosu</p>
+            </div>
+            <div className="text-xs text-muted-foreground bg-background/80 px-3 py-2 rounded-full border">
+              ← → Kaydırarak görüntüle
+            </div>
+          </div>
+        </div>
+        
+        {/* Horizontal scrollable tables for this group */}
+        {/* ... table implementation */}
+      </div>
+    );
+  })}
+</div>
+```
+
+## Critical Requirements
+- ✅ Group by `${platform}-${country}` key format
+- ✅ Sort publishers alphabetically within each group
+- ✅ Support custom reordering of platform-country groups
+- ✅ Preserve custom order across data updates
+- ✅ Provide clear visual separation between groups
+- ✅ Include scroll navigation hints for users
+- ✅ Use consistent spacing and styling for group headers

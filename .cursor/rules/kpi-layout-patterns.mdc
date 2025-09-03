@@ -1,0 +1,97 @@
+---
+description: KPI and metrics layout patterns for consistent data presentation
+---
+
+# KPI Layout Patterns
+
+## Problem: Grid vs. List Layout
+Avoid 2x2 or 4-column grids for KPI data under publisher info. Use consistent list layout instead.
+
+## Correct Pattern: List Layout
+Use `flex justify-between` for consistent alignment like other metadata:
+
+```typescript
+{/* CORRECT: List layout like publisher info */}
+<div className="mt-3 pt-2 border-t space-y-1 text-xs">
+  <div className="flex justify-between gap-8">
+    <span className="text-muted-foreground">Ort. D0 ROAS:</span>
+    <span className="font-semibold text-blue-600">
+      {formatROAS(avgD0Roas)}
+    </span>
+  </div>
+  <div className="flex justify-between gap-8">
+    <span className="text-muted-foreground">Ort. D7 ROAS:</span>
+    <span className="font-semibold text-green-600">
+      {formatROAS(avgD7Roas)}
+    </span>
+  </div>
+  <div className="flex justify-between gap-8">
+    <span className="text-muted-foreground">Ort. Günlük Install:</span>
+    <span className="font-semibold text-purple-600">
+      {averageDailyInstalls.toFixed(0)}
+    </span>
+  </div>
+</div>
+```
+
+## Incorrect Pattern: Grid Layout
+Avoid this pattern for metadata sections:
+
+```typescript
+{/* INCORRECT: Don't use grid for metadata */}
+<div className="grid grid-cols-2 gap-2 text-xs">
+  <div>
+    <span>Ort. D0 ROAS:</span>
+    <div className="font-semibold">{formatROAS(avgD0Roas)}</div>
+  </div>
+  {/* ... */}
+</div>
+```
+
+## When to Use Grid vs. List
+
+### Use Grid Layout For:
+- Main dashboard KPI cards
+- Equal-importance metric cards
+- Independent data cards
+
+```typescript
+{/* Main dashboard metrics */}
+<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  <MetricsCard title="Total Installs" value={totalInstalls} />
+  <MetricsCard title="Average ROAS" value={avgRoas} />
+</div>
+```
+
+### Use List Layout For:
+- Metadata under main content
+- Secondary information
+- Publisher details and related KPIs
+- Any data that should align consistently
+
+```typescript
+{/* Publisher metadata */}
+<div className="space-y-1">
+  <div className="flex justify-between gap-8">
+    <span>Ülke:</span>
+    <span className="font-medium">{country}</span>
+  </div>
+  <div className="flex justify-between gap-8">
+    <span>Platform:</span>
+    <span className="font-medium">{platform}</span>
+  </div>
+  <div className="flex justify-between gap-8">
+    <span>Publisher:</span>
+    <span className="font-medium">{publisher}</span>
+  </div>
+</div>
+```
+
+## Consistent Styling
+- Use `text-muted-foreground` for labels
+- Use `font-medium` or `font-semibold` for values
+- Use `gap-8` for consistent spacing
+- Add color coding for value types (blue for D0, green for D7, etc.)
+
+## Implementation Example
+See [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) lines 150-175 for correct KPI layout implementation.

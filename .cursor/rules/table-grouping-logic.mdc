@@ -1,0 +1,72 @@
+---
+description: Correct table grouping logic for campaign performance tables
+globs: src/components/GameTables.tsx,src/components/GameTable.tsx
+---
+
+# Table Grouping Logic
+
+## Core Grouping Rule
+**PRIMARY GROUP**: APP + COUNTRY + PLATFORM (same values)  
+**SECONDARY**: Different ADNETWORK/PUBLISHER (side by side)
+
+## Example Structure
+```
+ColorJelly - Global - Android          ← Group 1 (APP+COUNTRY+PLATFORM)
+├── [TBSDK]      ← Different adnetwork
+├── [SRT]        ← Different adnetwork  
+└── [Publisher3] ← Different publisher
+
+ColorJelly - US - Android              ← Group 2 (different COUNTRY)
+├── [TBSDK]
+└── [Other]
+
+Spades - Global - Android               ← Group 3 (different APP)
+├── [Publisher1]
+└── [Publisher2]
+```
+
+## Implementation Pattern
+
+### Grouping Key Generation
+```typescript
+// GROUP KEY: APP + COUNTRY + PLATFORM
+const groupKey = `${group.game}-${group.country}-${group.platform}`;
+
+// TABLE ID: APP + COUNTRY + PLATFORM + PUBLISHER
+const tableId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+```
+
+### Sorting Logic
+```typescript
+// Sort groups by: Game → Country → Platform
+groupEntries.sort((a, b) => {
+  if (a.game !== b.game) return a.game.localeCompare(b.game);
+  if (a.country !== b.country) return a.country.localeCompare(b.country);
+  return a.platform.localeCompare(b.platform);
+});
+
+// Within each group, sort publishers/adnetworks alphabetically
+groupArray.sort((a, b) => a.publisher.localeCompare(b.publisher));
+```
+
+### Display Structure
+```typescript
+// Header shows: APP + PLATFORM + COUNTRY
+<h3>{game}</h3>
+<p>{platform} - {country}</p>
+<p>{visibleGroupTables.length} farklı adnetwork/publisher: {publishers.join(', ')}</p>
+
+// Tables: Horizontal scrollable, different publishers side by side
+<div className="flex gap-6 min-w-max">
+  {visibleGroupTables.map((group) => (
+    <SortableTableItem group={group} />
+  ))}
+</div>
+```
+
+## What NOT to Do
+❌ **WRONG**: Group by platform-country only  
+❌ **WRONG**: Mix different games in same section  
+❌ **WRONG**: Group by adnetwork/publisher primarily  
+
+✅ **CORRECT**: Group by APP+COUNTRY+PLATFORM, show different adnetworks side by side

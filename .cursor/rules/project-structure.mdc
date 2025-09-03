@@ -1,0 +1,29 @@
+---
+alwaysApply: true
+---
+
+# AppSamurai Dashboard Project Structure
+
+This is a React + TypeScript + Vite dashboard application for analyzing campaign data.
+
+## Entry Points
+- Main application entry: [src/main.tsx](mdc:src/main.tsx)
+- Root component: [src/App.tsx](mdc:src/App.tsx) 
+- Main dashboard: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+
+## Key Directories
+- `src/components/` - React components including UI components
+- `src/components/ui/` - Reusable UI components (shadcn/ui based)
+- `src/types/` - TypeScript type definitions in [src/types/index.ts](mdc:src/types/index.ts)
+- `src/utils/` - Utility functions, primarily CSV parsing in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- `src/contexts/` - React contexts for global state
+- `src/lib/` - Library utilities
+
+## Configuration Files
+- Tailwind config: [tailwind.config.js](mdc:tailwind.config.js)
+- Components config: [components.json](mdc:components.json) - shadcn/ui configuration
+- TypeScript config: [tsconfig.json](mdc:tsconfig.json) with path aliases
+- Package config: [package.json](mdc:package.json)
+
+## Data Flow
+Campaign data flows from CSV files → parsed by [csvParser.ts](mdc:src/utils/csvParser.ts) → displayed in Dashboard components

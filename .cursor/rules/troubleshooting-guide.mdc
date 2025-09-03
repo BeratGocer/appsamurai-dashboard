@@ -1,0 +1,96 @@
+# Troubleshooting Guide
+
+## Frontend Issues
+
+### "Failed to fetch" Error
+**Symptom**: Frontend trying to connect to localhost:8787
+**Solution**: 
+1. Check Netlify environment variable `VITE_API_BASE`
+2. Ensure it's set to `https://backend-production-80f6.up.railway.app`
+3. Trigger new Netlify deploy
+
+### Build Failures
+**Symptom**: TypeScript errors during build
+**Solution**:
+1. Fix all TS errors locally first
+2. Remove unused imports (TS6133)
+3. Fix type mismatches (TS2345)
+4. Run `npm run build` locally to verify
+
+### Environment Variable Not Working
+**Symptom**: Old environment still active
+**Solution**:
+1. Check Netlify deploy logs
+2. Verify environment variable is saved
+3. Wait for deploy to complete
+4. Clear browser cache
+
+## Backend Issues
+
+### Railway Deploy Fails
+**Symptom**: Docker build errors
+**Solution**:
+1. Check Railway build logs
+2. Fix Dockerfile issues
+3. Ensure Prisma generate in build script
+4. Use Debian base image for Prisma compatibility
+
+### Database Connection Issues
+**Symptom**: Prisma can't connect to database
+**Solution**:
+1. Use public Railway URL, not internal
+2. Check `DATABASE_URL` environment variable
+3. Run Prisma migrations: `railway run -- npx prisma migrate deploy`
+
+### Health Check Fails
+**Symptom**: Backend returns 404 or connection refused
+**Solution**:
+1. Check Railway service status
+2. Verify service is running
+3. Check logs for startup errors
+4. Restart service if needed
+
+## Data Issues
+
+### Files Not Appearing
+**Symptom**: Uploaded files don't show in database
+**Solution**:
+1. Check backend logs for ingest errors
+2. Verify CSV format is correct
+3. Check database connection
+4. Test API endpoints manually
+
+### Cross-Device Data Not Syncing
+**Symptom**: Data only visible on one device
+**Solution**:
+1. Verify frontend is using backend API
+2. Check database for uploaded files
+3. Ensure no local storage fallback
+4. Test with different browsers/devices
+
+## Quick Fixes
+
+### Force Redeploy
+```bash
+# Frontend
+npm run build
+# Upload dist/ to Netlify
+
+# Backend
+railway up
+```
+
+### Reset Environment
+1. Clear Netlify environment variables
+2. Re-add `VITE_API_BASE`
+3. Trigger new deploy
+
+### Database Reset
+```bash
+railway run -- npx prisma migrate reset
+railway run -- npx prisma migrate deploy
+```
+description:
+globs:
+alwaysApply: true
+---

@@ -1,0 +1,124 @@
+---
+description: File upload validation patterns and customer/manager optional handling
+---
+
+# File Upload Validation Patterns
+
+## Customer/Manager Optional Handling
+
+**CRITICAL**: Customer Name and Account Manager fields are OPTIONAL in file uploads.
+
+## Fixed Validation Pattern
+
+```typescript
+// WRONG - Old validation that caused bugs:
+if (!customerName.trim()) {
+  setError('Customer Name is required');
+  return;
+}
+
+if (!accountManager.trim()) {
+  setError('Account Manager is required');
+  return;
+}
+
+// CORRECT - Optional validation:
+// Customer name and account manager are now optional
+// No validation required
+```
+
+## Data Handling for Optional Fields
+
+```typescript
+const fileData = {
+  id: Date.now().toString(),
+  name: file.name,
+  data: parsedData,
+  customerName: customerName.trim() || undefined,  // undefined if empty
+  accountManager: accountManager.trim() || undefined  // undefined if empty
+};
+```
+
+## UI Labels
+
+Update form labels to indicate optional status:
+
+```typescript
+<Label htmlFor="customerName" className="flex items-center gap-2">
+  <User className="h-4 w-4" />
+  Customer Name (Optional)
+</Label>
+
+<Label htmlFor="accountManager" className="flex items-center gap-2">
+  <User className="h-4 w-4" />
+  Account Manager (Optional)
+</Label>
+```
+
+## Customer/Manager Fallback Handling
+
+When organizing uploaded files, handle undefined customer/manager names:
+
+```typescript
+export function getCustomers(files: UploadedFile[]): Customer[] {
+  const customerMap = new Map<string, Customer>();
+
+  files.forEach(file => {
+    // Use "Unknown Customer" if customerName is not provided
+    const customerName = file.customerName || 'Unknown Customer';
+    const customerId = customerName.toLowerCase().replace(/\s+/g, '-');
+    
+    if (!customerMap.has(customerId)) {
+      customerMap.set(customerId, {
+        id: customerId,
+        name: customerName,
+        files: []
+      });
+    }
+    // ...
+  });
+}
+
+export function getAccountManagers(files: UploadedFile[]): AccountManager[] {
+  const managerMap = new Map<string, AccountManager>();
+
+  files.forEach(file => {
+    // Use "Unknown Manager" if accountManager is not provided
+    const accountManager = file.accountManager || 'Unknown Manager';
+    const managerId = accountManager.toLowerCase().replace(/\s+/g, '-');
+    
+    if (!managerMap.has(managerId)) {
+      managerMap.set(managerId, {
+        id: managerId,
+        name: accountManager,
+        customers: []
+      });
+    }
+    // ...
+  });
+}
+```
+
+## File Upload Error Prevention
+
+- Never require customer/manager fields for CSV uploads
+- Always allow file upload with just CSV file selection
+- Provide meaningful defaults ("Unknown Customer", "Unknown Manager")
+- Handle undefined values gracefully throughout the application
+
+## Display Patterns
+
+When displaying files without customer/manager info:
+- Show "Unknown Customer" in customer accordion
+- Show "Unknown Manager" in manager accordion
+- File display names still work: `Unknown Customer - Game1, Game2 (2025-01-01 to 2025-01-31)`
+
+## Form State Management
+
+```typescript
+const [customerName, setCustomerName] = useState('');
+const [accountManager, setAccountManager] = useState('');
+
+// No validation errors for empty fields
+// Form can be submitted with empty customer/manager
+```
