@@ -179,9 +179,38 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     const lines = normalized.split('\n').filter((l: string) => l.length > 0)
     if (lines.length < 2) return reply.code(400).send({ error: 'No data rows' })
 
-    // Parse header
-    const headerLine = lines[0]
-    const headers = headerLine.split(',').map((h: string) => h.trim())
+    // CSV helpers (handle quotes and commas inside quotes)
+    const parseCsvLine = (line: string): string[] => {
+      const out: string[] = []
+      let cur = ''
+      let inQuotes = false
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i]
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            // Escaped quote
+            cur += '"'
+            i++
+          } else {
+            inQuotes = !inQuotes
+          }
+        } else if (ch === ',' && !inQuotes) {
+          out.push(cur)
+          cur = ''
+        } else {
+          cur += ch
+        }
+      }
+      out.push(cur)
+      return out
+    }
+
+    // Parse header (strip BOM if exists)
+    let headerLine = lines[0]
+    if (headerLine.charCodeAt(0) === 0xFEFF) {
+      headerLine = headerLine.slice(1)
+    }
+    const headers = parseCsvLine(headerLine).map((h: string) => h.trim())
     const idx = (name: string) => headers.indexOf(name)
     const iApp = idx('app')
     const iCN = idx('campaign_network')
@@ -209,7 +238,7 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     for (let li = 1; li < lines.length; li++) {
       const row = lines[li]
       if (!row.trim()) continue
-      const v = row.split(',')
+      const v = parseCsvLine(row)
       if (v.length < 5) continue
       rows.push({
         fileId: id,
