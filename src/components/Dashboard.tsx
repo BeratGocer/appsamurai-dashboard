@@ -15,6 +15,7 @@ import type { CampaignData, UploadedFile } from '@/types'
 import { GameTables } from './GameTables'
 import SettingsPanel, { type SettingsData } from './SettingsPanel'
 import { SettingsInfo } from './SettingsInfo'
+import ChatAssistant from './ChatAssistant'
 
 
 interface DashboardProps {
@@ -66,6 +67,7 @@ export function Dashboard({
 
   // Hidden tables state with per-file localStorage persistence
   const [hiddenTables, setHiddenTables] = useState<Set<string>>(new Set());
+  const [focusPublisher, setFocusPublisher] = useState<string | null>(null);
 
   // Get settings key for current file
   const getSettingsKey = () => {
@@ -433,6 +435,34 @@ export function Dashboard({
             onBulkHide={handleBulkHide}
             onBulkShow={handleBulkShow}
             visibleColumns={settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']}
+            focusPublisher={focusPublisher}
+          />
+
+          {/* Floating Chat Assistant */}
+          <ChatAssistant
+            onNavigateToOverview={() => setCurrentTab('overview')}
+            onSelectGame={(game) => setSelectedGame(game)}
+            onFocusPublisher={(publisher) => setFocusPublisher(publisher)}
+            getTodayContext={() => {
+              const dates = gameGroups.flatMap(g => g.dailyData.map(d => d.date))
+              if (dates.length === 0) return null
+              const latest = [...dates].sort().at(-1) as string
+              const rows = gameGroups.map(g => {
+                const d = g.dailyData.find(x => x.date === latest)
+                return d ? {
+                  game: g.game,
+                  country: g.country,
+                  platform: g.platform,
+                  publisher: g.publisher,
+                  date: d.date,
+                  installs: d.installs,
+                  roas_d0: d.roas_d0,
+                  roas_d7: d.roas_d7,
+                  roas_d30: d.roas_d30,
+                } : null
+              }).filter(Boolean)
+              return { date: latest, rows }
+            }}
           />
         </div>
       )}

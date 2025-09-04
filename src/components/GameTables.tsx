@@ -19,6 +19,7 @@ interface GameTablesProps {
   onBulkHide?: () => void;
   onBulkShow?: () => void;
   visibleColumns?: string[];
+  focusPublisher?: string | null;
 }
 
 interface SortableTableItemProps {
@@ -353,7 +354,8 @@ export function GameTables({
   onTableVisibilityChange,
   onBulkHide,
   onBulkShow,
-  visibleColumns = ['installs', 'roas_d0', 'roas_d7']
+  visibleColumns = ['installs', 'roas_d0', 'roas_d7'],
+  focusPublisher = null,
 }: GameTablesProps) {
   // DnD Sensors for React 19 compatibility
   // const sensors = useSensors(
@@ -483,6 +485,21 @@ export function GameTables({
     }
     setExpandedTables(newExpanded);
   };
+
+  // Expand and scroll to the first table matching focusPublisher
+  React.useEffect(() => {
+    if (!focusPublisher) return
+    // Expand matching tables
+    const match = sortedGroups.find(g => g.publisher && g.publisher.toLowerCase().includes(focusPublisher.toLowerCase()))
+    if (!match) return
+    const id = `${match.game}-${match.country}-${match.platform}-${match.publisher}`
+    setExpandedTables(prev => new Set(prev).add(id))
+    // Scroll into view
+    const el = document.getElementById(`table-${id}`)
+    if (el && 'scrollIntoView' in el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
+    }
+  }, [focusPublisher, sortedGroups])
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -668,7 +685,7 @@ export function GameTables({
                           const isExpanded = expandedTables.has(groupId);
                           
                           return (
-                            <div key={groupId} className="flex-shrink-0 h-full" style={{ width: `${Math.max(400, 100 + (visibleColumns.length * 95))}px` }}>
+                            <div id={`table-${groupId}`} key={groupId} className="flex-shrink-0 h-full" style={{ width: `${Math.max(400, 100 + (visibleColumns.length * 95))}px` }}>
                               <SortableTableItem
                                 group={group}
                                 isExpanded={isExpanded}

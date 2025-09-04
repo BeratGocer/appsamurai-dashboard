@@ -85,6 +85,54 @@ interface GroupAgg {
   byDate: Map<string, AggregatedDate>
 }
 
+// Chat endpoint using OpenAI
+interface ChatBody {
+  message: string
+  context?: Record<string, unknown>
+}
+
+app.post('/chat', async (req: FastifyRequest<{ Body: ChatBody }>, reply: FastifyReply) => {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    return reply.code(500).send({ error: 'missing_api_key' })
+  }
+  const { message, context } = req.body || { message: '' }
+  if (!message || typeof message !== 'string') {
+    return reply.code(400).send({ error: 'invalid_message' })
+  }
+
+  const systemPrompt = `Sen AppSamurai Dashboard icin yardimci bir assistantsin. Kisa ve net Turkce cevap ver. Kullanici mobil reklam kampanyalari performansini sorar. Verilen baglam (context) JSON icindeki metrikleri kullanarak gunluk ozet olustur. Yuzdeleri % formatinda, sayilari Turkce formatla. Gerektiginde sadece istenen yayinci/publisher hakkinda bilgi ver.`
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          context ? { role: 'user', content: `Baglam: ${JSON.stringify(context)}` } : undefined,
+          { role: 'user', content: message }
+        ].filter(Boolean)
+      })
+    })
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      req.log.error({ text }, 'openai error')
+      return reply.code(502).send({ error: 'llm_failed' })
+    }
+    const data = await res.json() as any
+    const content: string = data?.choices?.[0]?.message?.content || 'Bir cevap olusturulamadi.'
+    reply.send({ reply: content })
+  } catch (err) {
+    req.log.error({ err }, 'chat failed')
+    reply.code(500).send({ error: 'chat_failed' })
+  }
+})
+
 // Minimal files endpoints (list/init placeholders)
 app.get('/files', async (_req: FastifyRequest, reply: FastifyReply) => {
   const files = await prisma.file.findMany({ orderBy: { uploadedAt: 'desc' } })

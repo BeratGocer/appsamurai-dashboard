@@ -74,4 +74,15 @@ export async function apiDeleteFile(fileId: string): Promise<any> {
   return res.json()
 }
 
+export async function apiChat(message: string, context?: any): Promise<string> {
+  const res = await fetch(`${API_BASE}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, context })
+  })
+  if (!res.ok) throw new Error('chat failed')
+  const data = await res.json()
+  return data.reply as string
+}
+
 
