@@ -1,7 +1,7 @@
-import Fastify from 'fastify'
+import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -15,10 +15,75 @@ const app = Fastify({
 await app.register(cors, { origin: true })
 await app.register(helmet)
 
+// Ensure text uploads are parsed as strings (for CSV/chunked ingest)
+app.addContentTypeParser('text/plain', { parseAs: 'string' }, (_req, body: string, done) => {
+  done(null, body)
+})
+app.addContentTypeParser('text/csv', { parseAs: 'string' }, (_req, body: string, done) => {
+  done(null, body)
+})
+app.addContentTypeParser('application/octet-stream', { parseAs: 'string' }, (_req, body: string, done) => {
+  done(null, body)
+})
+
 app.get('/health', async () => ({ ok: true }))
 
+// Types
+interface InitBody {
+  orgId?: string
+  orgName?: string
+  name: string
+  size?: number
+  storageKey?: string
+  customerName?: string | null
+  accountManager?: string | null
+}
+
+interface SettingsBody {
+  settings: Record<string, unknown>
+  updatedBy?: string | null
+}
+
+interface IngestParams { id: string }
+interface IngestQuery { append?: string }
+
+interface CampaignRowInput {
+  fileId: string
+  app: string
+  campaignNetwork: string
+  adgroupNetwork: string
+  day: Date
+  installs: number
+  ecpi: number | string | null
+  adjustCost: number | string | null
+  adRevenue: number | string | null
+  roas_d0: number | string | null
+  roas_d7: number | string | null
+  roas_d30: number | string | null
+  roas_d45: number | string | null
+}
+
+interface AggregatedDate {
+  date: string
+  installs: number
+  roas_d0: number
+  roas_d7: number
+  roas_d30: number
+  adjustCost: number
+  adRevenue: number
+  ecpi?: number | null
+}
+
+interface GroupAgg {
+  game: string
+  country: string
+  platform: string
+  publisher: string
+  byDate: Map<string, AggregatedDate>
+}
+
 // Minimal files endpoints (list/init placeholders)
-app.get('/files', async (req, reply) => {
+app.get('/files', async (_req: FastifyRequest, reply: FastifyReply) => {
   const files = await prisma.file.findMany({ orderBy: { uploadedAt: 'desc' } })
   // Convert BigInt to string for JSON serialization
   const serializedFiles = files.map(file => ({
@@ -28,8 +93,8 @@ app.get('/files', async (req, reply) => {
   reply.send(serializedFiles)
 })
 
-app.post('/files/init', async (req, reply) => {
-  const body = req.body as any
+app.post('/files/init', async (req: FastifyRequest<{ Body: InitBody }>, reply: FastifyReply) => {
+  const body = req.body
   const orgId = body.orgId || 'demo-org'
   // Ensure organization exists to avoid FK errors in production
   await prisma.organization.upsert({
@@ -50,25 +115,25 @@ app.post('/files/init', async (req, reply) => {
   reply.send({ fileId: file.id, storageKey: file.storageKey })
 })
 
-app.get('/files/:id/settings', async (req, reply) => {
-  const { id } = req.params as any
+app.get('/files/:id/settings', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  const { id } = req.params
   const settings = await prisma.fileSettings.findUnique({ where: { fileId: id } })
   reply.send(settings ?? { fileId: id, settings: {} })
 })
 
-app.patch('/files/:id/settings', async (req, reply) => {
-  const { id } = req.params as any
-  const body = req.body as any
+app.patch('/files/:id/settings', async (req: FastifyRequest<{ Params: { id: string }, Body: SettingsBody }>, reply: FastifyReply) => {
+  const { id } = req.params
+  const body = req.body
   const saved = await prisma.fileSettings.upsert({
     where: { fileId: id },
-    update: { settings: body.settings, updatedBy: body.updatedBy || null },
-    create: { fileId: id, settings: body.settings, updatedBy: body.updatedBy || null },
+    update: { settings: body.settings as Prisma.InputJsonValue, updatedBy: body.updatedBy || null },
+    create: { fileId: id, settings: body.settings as Prisma.InputJsonValue, updatedBy: body.updatedBy || null },
   })
   reply.send(saved)
 })
 
-app.delete('/files/:id', async (req, reply) => {
-  const { id } = req.params as any
+app.delete('/files/:id', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  const { id } = req.params
   await prisma.campaignRow.deleteMany({ where: { fileId: id } })
   await prisma.fileSettings.deleteMany({ where: { fileId: id } })
   await prisma.file.delete({ where: { id } })
@@ -102,84 +167,91 @@ function normalizePublisherPrefix(adg: string): string {
   return m ? `${m[1]}_` : adg
 }
 
-app.post('/files/:id/ingest', async (req, reply) => {
-  const { id } = req.params as any
-  const { append } = (req.query as any) || {}
-  const text = typeof req.body === 'string' ? req.body : (req.body as any)?.toString?.() || ''
-  if (!text) return reply.code(400).send({ error: 'Empty body' })
+app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams, Querystring: IngestQuery }>, reply: FastifyReply) => {
+  try {
+    const { id } = req.params
+    const { append } = req.query || {}
+    const bodyText: string = typeof (req.body as unknown) === 'string' ? (req.body as string) : (req.body as { toString?: () => string })?.toString?.() || ''
+    if (!bodyText || bodyText.trim().length === 0) return reply.code(400).send({ error: 'Empty body' })
 
-  const lines = text.split(/\r?\n/).filter((l: string) => l.length > 0)
-  if (lines.length < 2) return reply.code(400).send({ error: 'No data rows' })
+    // Normalize newlines and trim trailing whitespace
+    const normalized = bodyText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim()
+    const lines = normalized.split('\n').filter((l: string) => l.length > 0)
+    if (lines.length < 2) return reply.code(400).send({ error: 'No data rows' })
 
-  // Ensure the first line is a header; reject if not present
-  const headerLine = lines[0]
-  const headers = headerLine.split(',').map((h: string) => h.trim())
-  const idx = (name: string) => headers.indexOf(name)
-  const iApp = idx('app')
-  const iCN = idx('campaign_network')
-  const iAN = idx('adgroup_network')
-  const iDay = idx('day')
-  const iInst = idx('installs')
-  const iEcpi = idx('ecpi')
-  const iCost = idx('adjust_cost') >= 0 ? idx('adjust_cost') : idx('cost')
-  const iRev = idx('ad_revenue') >= 0 ? idx('ad_revenue') : idx('all_revenue')
-  const iD0 = idx('roas_d0')
-  const iD7 = idx('roas_d7')
-  const iD30 = idx('roas_d30')
-  const iD45 = idx('roas_d45')
+    // Parse header
+    const headerLine = lines[0]
+    const headers = headerLine.split(',').map((h: string) => h.trim())
+    const idx = (name: string) => headers.indexOf(name)
+    const iApp = idx('app')
+    const iCN = idx('campaign_network')
+    const iAN = idx('adgroup_network')
+    const iDay = idx('day')
+    const iInst = idx('installs')
+    const iEcpi = idx('ecpi')
+    const iCost = idx('adjust_cost') >= 0 ? idx('adjust_cost') : idx('cost')
+    const iRev = idx('ad_revenue') >= 0 ? idx('ad_revenue') : idx('all_revenue')
+    const iD0 = idx('roas_d0')
+    const iD7 = idx('roas_d7')
+    const iD30 = idx('roas_d30')
+    const iD45 = idx('roas_d45')
 
-  if (iApp < 0 || iCN < 0 || iAN < 0 || iDay < 0 || iInst < 0) {
-    return reply.code(400).send({ error: 'Missing required headers' })
+    if (iApp < 0 || iCN < 0 || iAN < 0 || iDay < 0 || iInst < 0) {
+      return reply.code(400).send({ error: 'Missing required headers' })
+    }
+
+    const rows: CampaignRowInput[] = []
+    for (let li = 1; li < lines.length; li++) {
+      const row = lines[li]
+      if (!row.trim()) continue
+      const v = row.split(',')
+      if (v.length < 5) continue
+      rows.push({
+        fileId: id,
+        app: v[iApp] || '',
+        campaignNetwork: v[iCN] || '',
+        adgroupNetwork: v[iAN] || '',
+        day: new Date(v[iDay] || Date.now()),
+        installs: Number(v[iInst] || 0),
+        ecpi: iEcpi >= 0 ? v[iEcpi] : null,
+        adjustCost: iCost >= 0 ? v[iCost] : null,
+        adRevenue: iRev >= 0 ? v[iRev] : null,
+        roas_d0: iD0 >= 0 ? v[iD0] : null,
+        roas_d7: iD7 >= 0 ? v[iD7] : null,
+        roas_d30: iD30 >= 0 ? v[iD30] : null,
+        roas_d45: iD45 >= 0 ? v[iD45] : null,
+      })
+    }
+
+    if (rows.length === 0) return reply.code(400).send({ error: 'No valid rows' })
+
+    if (!append || append === '0' || append === 'false') {
+      await prisma.campaignRow.deleteMany({ where: { fileId: id } })
+    }
+    await prisma.campaignRow.createMany({ data: rows })
+    reply.send({ inserted: rows.length, appended: !!append && append !== '0' && append !== 'false' })
+  } catch (err) {
+    req.log.error({ err }, 'ingest failed')
+    reply.code(500).send({ error: 'ingest_failed' })
   }
-
-  const rows = [] as any[]
-  for (let li = 1; li < lines.length; li++) {
-    const row = lines[li]
-    if (!row.trim()) continue
-    const v = row.split(',')
-    if (v.length < 5) continue
-    rows.push({
-      fileId: id,
-      app: v[iApp] || '',
-      campaignNetwork: v[iCN] || '',
-      adgroupNetwork: v[iAN] || '',
-      day: new Date(v[iDay] || Date.now()),
-      installs: Number(v[iInst] || 0),
-      ecpi: iEcpi >= 0 ? v[iEcpi] : null,
-      adjustCost: iCost >= 0 ? v[iCost] : null,
-      adRevenue: iRev >= 0 ? v[iRev] : null,
-      roas_d0: iD0 >= 0 ? v[iD0] : null,
-      roas_d7: iD7 >= 0 ? v[iD7] : null,
-      roas_d30: iD30 >= 0 ? v[iD30] : null,
-      roas_d45: iD45 >= 0 ? v[iD45] : null,
-    })
-  }
-
-  if (rows.length === 0) return reply.code(400).send({ error: 'No valid rows' })
-
-  if (!append || append === '0' || append === 'false') {
-    await prisma.campaignRow.deleteMany({ where: { fileId: id } })
-  }
-  await prisma.campaignRow.createMany({ data: rows })
-  reply.send({ inserted: rows.length, appended: !!append && append !== '0' && append !== 'false' })
 })
 
 // Grouped data with weighted averages by installs and publisher prefix
-app.get('/files/:id/groups', async (req, reply) => {
-  const { id } = req.params as any
+app.get('/files/:id/groups', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  const { id } = req.params
   const rows = await prisma.campaignRow.findMany({ where: { fileId: id } })
   type Key = string
-  const map = new Map<Key, any>()
+  const map = new Map<Key, GroupAgg>()
   for (const r of rows) {
     const { platform, country } = parseCampaignNetworkBasic(r.campaignNetwork)
     const game = r.app.replace(/ Android$/, '').replace(/ iOS$/, '').trim()
     const publisher = normalizePublisherPrefix(r.adgroupNetwork)
     const key = `${game}|${country}|${platform}|${publisher}`
-    if (!map.has(key)) map.set(key, { game, country, platform, publisher, byDate: new Map<string, any>() })
-    const g = map.get(key)
+    if (!map.has(key)) map.set(key, { game, country, platform, publisher, byDate: new Map<string, AggregatedDate>() })
+    const g = map.get(key)!
     const date = new Date(r.day).toISOString().split('T')[0]
     if (!g.byDate.has(date)) g.byDate.set(date, { date, installs: 0, roas_d0: 0, roas_d7: 0, roas_d30: 0, adjustCost: 0, adRevenue: 0 })
-    const d = g.byDate.get(date)
+    const d = g.byDate.get(date)!
     const prevInst = d.installs
     const addInst = r.installs || 0
     const total = prevInst + addInst
@@ -192,12 +264,12 @@ app.get('/files/:id/groups', async (req, reply) => {
     d.adRevenue += Number(r.adRevenue||0)
     d.ecpi = d.installs > 0 ? d.adjustCost / d.installs : null
   }
-  const groups = Array.from(map.values()).map(g => ({
+  const groups = Array.from(map.values()).map((g: GroupAgg) => ({
     game: g.game,
     country: g.country,
     platform: g.platform,
     publisher: g.publisher,
-    dailyData: Array.from(g.byDate.values()).sort((a:any,b:any)=>a.date.localeCompare(b.date))
+    dailyData: Array.from(g.byDate.values()).sort((a: AggregatedDate, b: AggregatedDate)=>a.date.localeCompare(b.date))
   }))
   reply.send(groups)
 })
