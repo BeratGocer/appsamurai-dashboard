@@ -323,10 +323,9 @@ export function Dashboard({
         />
       )}
 
-      {/* Dynamic KPI Section */}
-      <div className="space-y-4">
-        {/* KPI Edit Mode Toggle - Only show in overview tab */}
-        {currentTab === 'overview' && (
+      {/* Dynamic KPI Section - Only on overview (Dashboard) tab */}
+      {currentTab === 'overview' && (
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">Key Metrics</h2>
@@ -346,18 +345,17 @@ export function Dashboard({
               {kpiEditMode ? 'Exit Edit Mode' : 'Edit KPI Cards'}
             </Button>
           </div>
-        )}
 
-        {/* Dynamic KPI Cards */}
-        <DynamicKPISection
-          data={filteredData}
-          activeFileId={activeFileId}
-          hiddenTables={hiddenTables}
-          gameGroups={gameGroups}
-          isEditMode={kpiEditMode}
-          onEditModeToggle={() => setKpiEditMode(!kpiEditMode)}
-        />
-      </div>
+          <DynamicKPISection
+            data={filteredData}
+            activeFileId={activeFileId}
+            hiddenTables={hiddenTables}
+            gameGroups={gameGroups}
+            isEditMode={kpiEditMode}
+            onEditModeToggle={() => setKpiEditMode(!kpiEditMode)}
+          />
+        </div>
+      )}
 
       {/* Search and filtering removed as requested */}
 
@@ -393,6 +391,7 @@ export function Dashboard({
               onFileSelect={onFileSelect}
               onFileDelete={onFileDelete}
               activeFileId={activeFileId}
+              onViewGame={(fileId, gameName) => handleGameSelect(fileId, gameName)}
             />
           </div>
         </div>

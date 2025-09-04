@@ -10,6 +10,7 @@ interface FileManagerProps {
   onFileSelect: (fileId: string) => void;
   onFileDelete: (fileId: string) => void;
   activeFileId: string | null;
+  onViewGame?: (fileId: string, gameName: string) => void;
 }
 
 interface GameSummary {
@@ -28,7 +29,8 @@ export function FileManager({
   uploadedFiles, 
   onFileSelect, 
   onFileDelete, 
-  activeFileId 
+  activeFileId,
+  onViewGame
 }: FileManagerProps) {
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
 
@@ -186,7 +188,10 @@ export function FileManager({
                       ? 'border-primary bg-primary/5' 
                       : 'border-border hover:bg-muted/50'
                   }`}
-                  onClick={() => onFileSelect(file.id)}
+                  onClick={() => {
+                    onFileSelect(file.id);
+                    toggleFileExpansion(file.id);
+                  }}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -297,7 +302,7 @@ export function FileManager({
                               variant="outline" 
                               size="sm" 
                               className="w-full"
-                              onClick={() => onFileSelect(file.id)}
+                              onClick={() => onViewGame ? onViewGame(file.id, game.name) : onFileSelect(file.id)}
                             >
                               <Eye className="h-4 w-4 mr-1" />
                               View Game
