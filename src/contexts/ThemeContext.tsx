@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react'
 
 type Theme = 'dark' | 'light' | 'system'
 
@@ -39,19 +39,14 @@ export function ThemeProvider({
     return defaultTheme
   })
 
-  // Apply theme to document
-  useEffect(() => {
+  // Apply theme to document before paint to avoid flicker and incorrect system fallback
+  useLayoutEffect(() => {
     const root = window.document.documentElement
 
-    // Remove existing theme classes
     root.classList.remove('light', 'dark')
 
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light'
-
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
       root.classList.add(systemTheme)
       return
     }
@@ -66,7 +61,6 @@ export function ThemeProvider({
       setTheme(newTheme)
     } catch (error) {
       console.warn('Failed to save theme to localStorage:', error)
-      // Still update the theme even if localStorage fails
       setTheme(newTheme)
     }
   }
