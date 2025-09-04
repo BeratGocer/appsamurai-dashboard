@@ -108,7 +108,10 @@ export function KPISettingsPanel({
     <>
       {/* Compact Settings Panel */}
       <Card className={`transition-all duration-300 ${isOpen ? 'shadow-lg' : ''}`}>
-        <CardHeader className="pb-3">
+        <CardHeader 
+          className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={onToggle}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -121,7 +124,10 @@ export function KPISettingsPanel({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleAddNewConfig}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddNewConfig();
+                }}
                 className="h-7 px-2"
               >
                 <Plus className="h-3 w-3 mr-1" />
@@ -130,7 +136,10 @@ export function KPISettingsPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onToggle}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle();
+                }}
                 className="h-7 px-2"
               >
                 {isOpen ? 'Hide' : 'Show'}

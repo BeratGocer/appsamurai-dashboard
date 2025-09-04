@@ -180,18 +180,24 @@ export function FileManager({
             return (
               <div key={file.id} className="space-y-3">
                 {/* Ana dosya kartı */}
-                <Card className={`transition-all duration-200 ${
-                  isActive 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border hover:bg-muted/50'
-                }`}>
+                <Card 
+                  className={`transition-all duration-200 cursor-pointer ${
+                    isActive 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:bg-muted/50'
+                  }`}
+                  onClick={() => onFileSelect(file.id)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleFileExpansion(file.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFileExpansion(file.id);
+                          }}
                           className="p-1 h-6 w-6"
                         >
                           {isExpanded ? (
@@ -238,21 +244,13 @@ export function FileManager({
                           </Badge>
                         )}
                         
-                        {!isActive && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onFileSelect(file.id)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View All
-                          </Button>
-                        )}
-                        
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onFileDelete(file.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onFileDelete(file.id);
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -271,25 +269,18 @@ export function FileManager({
                             {/* Oyun başlığı */}
                             <div className="flex items-center justify-between">
                               <h4 className="font-semibold text-base">{game.name}</h4>
-                              <div className="flex gap-1">
-                                {game.platforms.map(platform => (
-                                  <Badge key={platform} variant="secondary" className="text-xs">
-                                    {platform}
-                                  </Badge>
-                                ))}
-                              </div>
                             </div>
 
                             {/* Metrikler */}
                             <div className="grid grid-cols-2 gap-3">
                               <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">
+                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                   {game.totalInstalls.toLocaleString()}
                                 </div>
                                 <div className="text-xs text-muted-foreground">Installs</div>
                               </div>
                               <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600">
+                                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                   {(game.avgRoasD7 * 100).toFixed(1)}%
                                 </div>
                                 <div className="text-xs text-muted-foreground">ROAS D7</div>
