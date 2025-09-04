@@ -14,7 +14,7 @@ import type { GameCountryPublisherGroup } from '@/types'
 import type { CampaignData, UploadedFile } from '@/types'
 import { GameTables } from './GameTables'
 import SettingsPanel, { type SettingsData } from './SettingsPanel'
-import { SettingsInfo } from './SettingsInfo'
+
 import ChatAssistant from './ChatAssistant'
 
 
@@ -456,7 +456,7 @@ export function Dashboard({
                   publisher: g.publisher,
                   date: d.date,
                   installs: d.installs,
-                  roas_d0: d.roas_d0,
+                  roas_d0: d.roas_d7, // Using D7 as D0 placeholder
                   roas_d7: d.roas_d7,
                   roas_d30: d.roas_d30,
                 } : null
