@@ -23,16 +23,27 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
-  storageKey = 'vite-ui-theme',
+  storageKey = 'appsamurai-theme',
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  )
+  // Initialize theme from localStorage with better error handling
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      const stored = localStorage.getItem(storageKey)
+      if (stored && ['dark', 'light', 'system'].includes(stored)) {
+        return stored as Theme
+      }
+    } catch (error) {
+      console.warn('Failed to read theme from localStorage:', error)
+    }
+    return defaultTheme
+  })
 
+  // Apply theme to document
   useEffect(() => {
     const root = window.document.documentElement
 
+    // Remove existing theme classes
     root.classList.remove('light', 'dark')
 
     if (theme === 'system') {
@@ -48,12 +59,36 @@ export function ThemeProvider({
     root.classList.add(theme)
   }, [theme])
 
+  // Save theme to localStorage with error handling
+  const saveTheme = (newTheme: Theme) => {
+    try {
+      localStorage.setItem(storageKey, newTheme)
+      setTheme(newTheme)
+    } catch (error) {
+      console.warn('Failed to save theme to localStorage:', error)
+      // Still update the theme even if localStorage fails
+      setTheme(newTheme)
+    }
+  }
+
+  // Listen for system theme changes when using 'system' theme
+  useEffect(() => {
+    if (theme !== 'system') return
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => {
+      const root = window.document.documentElement
+      root.classList.remove('light', 'dark')
+      root.classList.add(mediaQuery.matches ? 'dark' : 'light')
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [theme])
+
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
-    },
+    setTheme: saveTheme,
   }
 
   return (
