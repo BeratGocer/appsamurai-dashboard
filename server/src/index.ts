@@ -235,26 +235,53 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
       const t = val.trim()
       return t === '' ? null : t
     }
+    const toNumericStringOrNull = (val: string | undefined) => {
+      const v = toNullIfEmpty(val)
+      if (v === null) return null
+      const n = Number(v)
+      if (Number.isFinite(n)) return v
+      return null
+    }
+    let skipped = 0
+    let firstError: string | null = null
     for (let li = 1; li < lines.length; li++) {
       const row = lines[li]
       if (!row.trim()) continue
       const v = parseCsvLine(row)
       if (v.length < 5) continue
-      rows.push({
-        fileId: id,
-        app: v[iApp] || '',
-        campaignNetwork: v[iCN] || '',
-        adgroupNetwork: v[iAN] || '',
-        day: new Date(v[iDay] || Date.now()),
-        installs: Number(v[iInst] || 0),
-        ecpi: iEcpi >= 0 ? toNullIfEmpty(v[iEcpi]) : null,
-        adjustCost: iCost >= 0 ? toNullIfEmpty(v[iCost]) : null,
-        adRevenue: iRev >= 0 ? toNullIfEmpty(v[iRev]) : null,
-        roas_d0: iD0 >= 0 ? toNullIfEmpty(v[iD0]) : null,
-        roas_d7: iD7 >= 0 ? toNullIfEmpty(v[iD7]) : null,
-        roas_d30: iD30 >= 0 ? toNullIfEmpty(v[iD30]) : null,
-        roas_d45: iD45 >= 0 ? toNullIfEmpty(v[iD45]) : null,
-      })
+      try {
+        const dayStr = v[iDay]
+        const d = new Date(dayStr || '')
+        if (!dayStr || Number.isNaN(d.getTime())) {
+          skipped++
+          if (!firstError) firstError = `Invalid date at line ${li+1}`
+          continue
+        }
+        const installsNum = Number(v[iInst] || 0)
+        if (!Number.isFinite(installsNum)) {
+          skipped++
+          if (!firstError) firstError = `Invalid installs at line ${li+1}`
+          continue
+        }
+        rows.push({
+          fileId: id,
+          app: v[iApp] || '',
+          campaignNetwork: v[iCN] || '',
+          adgroupNetwork: v[iAN] || '',
+          day: d,
+          installs: installsNum,
+          ecpi: iEcpi >= 0 ? toNumericStringOrNull(v[iEcpi]) : null,
+          adjustCost: iCost >= 0 ? toNumericStringOrNull(v[iCost]) : null,
+          adRevenue: iRev >= 0 ? toNumericStringOrNull(v[iRev]) : null,
+          roas_d0: iD0 >= 0 ? toNumericStringOrNull(v[iD0]) : null,
+          roas_d7: iD7 >= 0 ? toNumericStringOrNull(v[iD7]) : null,
+          roas_d30: iD30 >= 0 ? toNumericStringOrNull(v[iD30]) : null,
+          roas_d45: iD45 >= 0 ? toNumericStringOrNull(v[iD45]) : null,
+        })
+      } catch (e: any) {
+        skipped++
+        if (!firstError) firstError = `Parse error at line ${li+1}`
+      }
     }
 
     if (rows.length === 0) return reply.code(400).send({ error: 'No valid rows' })
@@ -263,12 +290,27 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
       await prisma.campaignRow.deleteMany({ where: { fileId: id } })
     }
     // Batch insert to avoid parameter limits
-    const batchSize = 1000
-    for (let i = 0; i < rows.length; i += batchSize) {
-      const slice = rows.slice(i, i + batchSize)
-      await prisma.campaignRow.createMany({ data: slice })
+    const batchSize = 500
+    try {
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const slice = rows.slice(i, i + batchSize)
+        await prisma.campaignRow.createMany({ data: slice })
+      }
+    } catch (e: any) {
+      // Fallback: insert one-by-one to skip problematic row(s)
+      let inserted = 0
+      for (const r of rows) {
+        try {
+          await prisma.campaignRow.create({ data: r as any })
+          inserted++
+        } catch (err: any) {
+          skipped++
+          if (!firstError) firstError = 'DB insert error'
+        }
+      }
+      return reply.send({ inserted, skipped, reason: firstError ?? undefined, appended: !!append && append !== '0' && append !== 'false' })
     }
-    reply.send({ inserted: rows.length, appended: !!append && append !== '0' && append !== 'false' })
+    reply.send({ inserted: rows.length, skipped, reason: firstError ?? undefined, appended: !!append && append !== '0' && append !== 'false' })
   } catch (err) {
     req.log.error({ err }, 'ingest failed')
     reply.code(500).send({ error: 'ingest_failed' })
