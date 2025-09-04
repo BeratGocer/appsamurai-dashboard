@@ -1,0 +1,20 @@
+---
+description: Ensure KPI cards render only on Dashboard/Overview tab and nowhere else
+globs: src/components/**/*.tsx
+---
+# KPI Visibility Rules
+
+- Render KPI settings and cards only when the current tab is Dashboard/Overview.
+- Gate the entire KPI block with `currentTab === 'overview'`.
+- Editing state (`kpiEditMode`) must be local to the overview section.
+
+Reference implementation: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+
+Key snippet (do not duplicate outside Overview):
+
+```tsx
+{currentTab === 'overview' && (
+  <DynamicKPISection /* ...props */ />
+)}
+```
+

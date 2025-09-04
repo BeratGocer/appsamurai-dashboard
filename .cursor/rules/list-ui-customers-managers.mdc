@@ -1,0 +1,14 @@
+---
+description: List UI standards for Customers and Account Managers sections
+globs: src/components/Dashboard.tsx
+---
+# Customers & Account Managers List UI
+
+- Use bordered, hoverable rows; avoid complex internal scrolling.
+- Use chevrons to expand per-row details; stopPropagation on chevron/button clicks.
+- Counters and KPIs use neutral colors, avoid green for impartial metrics.
+- Prefer compact spacing: `p-4`, `space-y-2`, `rounded-lg`.
+- Keep actions on the right as ghost/outline buttons.
+
+Reference structure: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+

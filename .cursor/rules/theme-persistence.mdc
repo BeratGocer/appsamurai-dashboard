@@ -1,0 +1,13 @@
+---
+description: Theme persistence and first-paint correctness
+globs: src/contexts/ThemeContext.tsx,src/components/ThemeToggle.tsx,src/main.tsx
+---
+# Theme Persistence Rules
+
+- Storage key must be `appsamurai-dashboard-theme`.
+- Read and write theme with error handling.
+- Apply theme using `useLayoutEffect` to avoid flash of system theme on refresh.
+- Listen to system theme changes only when `theme === 'system'`.
+
+References: [src/contexts/ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx), [src/main.tsx](mdc:src/main.tsx)
+

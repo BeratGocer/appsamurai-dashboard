@@ -1,0 +1,16 @@
+---
+description: FileManager UX rules for selecting, expanding, and navigating to Dashboard with a chosen game
+globs: src/components/FileManager.tsx,src/components/Dashboard.tsx
+---
+# FileManager Interaction Rules
+
+- Clicking a file card should:
+  - Select the file, and
+  - Toggle expand/collapse for quick preview.
+- Expansion chevron must stop propagation to avoid selecting when only toggling.
+- "View Game" should call an `onViewGame(fileId, gameName)` callback that:
+  - Selects the file and
+  - Navigates to Dashboard/Overview with that game pre-selected.
+
+Reference: [src/components/FileManager.tsx](mdc:src/components/FileManager.tsx), [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+
