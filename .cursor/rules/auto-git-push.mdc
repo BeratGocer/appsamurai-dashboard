@@ -1,5 +1,21 @@
 ---
 alwaysApply: true
+---
+# Auto Git Push Rule
+
+All saved edits should be committed and pushed to `origin main` automatically.
+
+Implementation snippet:
+
+```bash
+git add .
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - $(git status --porcelain | head -1 | cut -c4-)"
+git push origin main
+```
+
+If push fails: pull, resolve conflicts, and re-push.
+---
+alwaysApply: true
 description: Automatic Git push functionality - commits and pushes changes automatically when files are modified
 ---
 

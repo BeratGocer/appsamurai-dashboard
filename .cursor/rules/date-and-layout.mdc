@@ -1,0 +1,19 @@
+---
+description: Date synchronization, horizontal scrolling, platform-country grouping, and table layout standards
+globs: src/components/*.tsx,src/utils/*.ts
+---
+# Date Synchronization
+- Synchronize dates across groups using `synchronizeGroupDates` in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts).
+- Respect settings date range from `SettingsPanel` when provided.
+
+# Horizontal Scrolling
+- Use outer containers with `overflow-x-auto` and `scroll-smooth`.
+- Only left gradient as scroll hint; never right.
+
+# Platform-Country Grouping
+- Group tables by `${platform}-${country}` key.
+- Headers reorderable via DnD kit (React 19 compatible sensors).
+
+# Table Layout Standards
+- No internal table scrolling; dynamic width based on visible columns.
+- Fixed font classes for headers and cells.

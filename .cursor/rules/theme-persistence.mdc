@@ -1,5 +1,16 @@
 ---
 description: Theme persistence and first-paint correctness
+globs: *.tsx,*.html
+---
+# Theme Persistence Rules
+
+- Storage key must be `appsamurai-dashboard-theme`.
+- Apply theme before React hydration in [index.html](mdc:index.html) using a pre-hydration script that sets `document.documentElement` class to `dark` or `light`.
+- Use `useLayoutEffect` in [src/contexts/ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx) to apply class changes without flicker.
+- Listen to system theme changes only when `theme === 'system'`.
+- Toggle component: [src/components/ThemeToggle.tsx](mdc:src/components/ThemeToggle.tsx).
+---
+description: Theme persistence and first-paint correctness
 globs: src/contexts/ThemeContext.tsx,src/components/ThemeToggle.tsx,src/main.tsx
 ---
 # Theme Persistence Rules

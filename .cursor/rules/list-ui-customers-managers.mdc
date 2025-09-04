@@ -4,6 +4,17 @@ globs: src/components/Dashboard.tsx
 ---
 # Customers & Account Managers List UI
 
+- Use bordered, hoverable rows with chevrons for expansion.
+- Inside expanded file content, render game entries as metric cards with:
+  - Installs, ROAS D7 (%), date range, platforms badges, and a View Game button.
+- Keep spacing compact: `p-4`, `rounded-lg`, `space-y-*`.
+- Buttons on the right as `ghost/outline` variants where applicable.
+---
+description: List UI standards for Customers and Account Managers sections
+globs: src/components/Dashboard.tsx
+---
+# Customers & Account Managers List UI
+
 - Use bordered, hoverable rows; avoid complex internal scrolling.
 - Use chevrons to expand per-row details; stopPropagation on chevron/button clicks.
 - Counters and KPIs use neutral colors, avoid green for impartial metrics.
