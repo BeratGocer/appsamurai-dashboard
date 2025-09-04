@@ -4,113 +4,36 @@ import { Dashboard } from './components/Dashboard'
 import { FileUpload } from './components/FileUpload'
 import { ThemeToggle } from './components/ThemeToggle'
 import type { UploadedFile } from './types'
-import { apiGetFiles, apiGetGroups } from './utils/api'
-import type { CampaignData } from './types'
+
 
 function App() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [activeFileId, setActiveFileId] = useState<string | null>(null)
   const [showUploadPage, setShowUploadPage] = useState(false)
 
-  // Load data from backend on startup
+
+  // Load data from localStorage on startup
   useEffect(() => {
-    const loadFilesFromBackend = async () => {
-      try {
-        const backendFiles = await apiGetFiles();
-        console.log('App: Loaded files from backend:', backendFiles);
-        
-        // Convert backend files to frontend format
-        const convertedFiles: UploadedFile[] = await Promise.all(
-          backendFiles.map(async (backendFile) => {
-            try {
-              // Load groups data for each file
-              const groups = await apiGetGroups(backendFile.id);
-              
-              // Convert groups back to campaign data format
-              const campaignData: CampaignData[] = groups.flatMap(group => 
-                group.dailyData.map(day => ({
-                  app: group.game,
-                  campaign_network: `${group.platform}_${group.country}`,
-                  adgroup_network: group.publisher,
-                  day: day.date,
-                  installs: day.installs,
-                  ecpi: (day as any).ecpi,
-                  adjust_cost: (day as any).adjust_cost,
-                  ad_revenue: (day as any).ad_revenue,
-                  roas_d0: (day as any).roas_d0 || 0,
-                  roas_d1: 0,
-                  roas_d2: 0,
-                  roas_d3: 0,
-                  roas_d4: 0,
-                  roas_d5: 0,
-                  roas_d6: 0,
-                  roas_d7: day.roas_d7 || 0,
-                  roas_d14: 0,
-                  roas_d21: 0,
-                  roas_d30: day.roas_d30 || 0,
-                  roas_d45: (day as any).roas_d45 || 0,
-                }))
-              );
-              
-              return {
-                id: backendFile.id,
-                name: backendFile.name,
-                size: Number(backendFile.size),
-                uploadDate: backendFile.uploadedAt,
-                data: campaignData,
-                isActive: false,
-                customerName: backendFile.customerName || undefined,
-                accountManager: backendFile.accountManager || undefined
-              };
-            } catch (error) {
-              console.error(`Failed to load groups for file ${backendFile.id}:`, error);
-              return {
-                id: backendFile.id,
-                name: backendFile.name,
-                size: Number(backendFile.size),
-                uploadDate: backendFile.uploadedAt,
-                data: [],
-                isActive: false,
-                customerName: backendFile.customerName || undefined,
-                accountManager: backendFile.accountManager || undefined
-              };
-            }
-          })
-        );
-        
-        // Set all files at once
-        console.log('Setting uploaded files:', convertedFiles);
-        setUploadedFiles(convertedFiles);
-        
-        // Set first file as active if available
-        if (convertedFiles.length > 0) {
-          console.log('Setting active file ID:', convertedFiles[0].id);
-          setActiveFileId(convertedFiles[0].id);
-        }
-        
-      } catch (error) {
-        console.error('Failed to load files from backend:', error);
-        // Fallback to localStorage if backend fails
-        const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
-        const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
-        
-        if (savedFiles) {
-          try {
-            const files = JSON.parse(savedFiles) as UploadedFile[];
-            setUploadedFiles(files);
-            if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
-              setActiveFileId(savedActiveFileId);
-            } else if (files.length > 0) {
-              setActiveFileId(files[0].id);
-            }
-          } catch (error) {
-            console.error('Failed to load saved files:', error);
+    const loadFilesFromLocalStorage = () => {
+      const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
+      const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
+      
+      if (savedFiles) {
+        try {
+          const files = JSON.parse(savedFiles) as UploadedFile[];
+          setUploadedFiles(files);
+          if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
+            setActiveFileId(savedActiveFileId);
+          } else if (files.length > 0) {
+            setActiveFileId(files[0].id);
           }
+        } catch (error) {
+          console.error('Failed to load saved files:', error);
         }
       }
     };
     
-    loadFilesFromBackend();
+    loadFilesFromLocalStorage();
   }, [])
 
   const handleFileUpload = async (file: UploadedFile) => {
@@ -225,7 +148,7 @@ function App() {
         const importData = JSON.parse(e.target?.result as string)
         if (importData.files && Array.isArray(importData.files)) {
           setUploadedFiles(importData.files)
-          if (importData.activeFileId && importData.files.some((f: any) => f.id === importData.activeFileId)) {
+          if (importData.activeFileId && importData.files.some((f: UploadedFile) => f.id === importData.activeFileId)) {
             setActiveFileId(importData.activeFileId)
           } else if (importData.files.length > 0) {
             setActiveFileId(importData.files[0].id)
