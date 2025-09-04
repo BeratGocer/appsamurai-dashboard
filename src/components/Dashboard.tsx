@@ -424,9 +424,6 @@ export function Dashboard({
             </div>
           )}
           
-          {/* Settings Info - Always show active settings */}
-          <SettingsInfo settings={settings} />
-          
           {/* Game Tables */}
           <GameTables 
             groups={gameGroups} 

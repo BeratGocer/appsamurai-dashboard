@@ -542,10 +542,7 @@ export function GameTables({
           <div>
             <h2 className="text-2xl font-bold">Performans Tabloları</h2>
             <p className="text-muted-foreground">
-              App+Ülke+Platform bazında gruplandırılmış kampanya tabloları ({visibleGroups.length} görünen, {hiddenCount} gizli)
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              💡 Aynı app+ülke+platform'un farklı adnetwork/publisher tabloları yan yana gösterilir
+              ({visibleGroups.length} görünen, {hiddenCount} gizli)
             </p>
           </div>
           <div className="flex gap-2">
