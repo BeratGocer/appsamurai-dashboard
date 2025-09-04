@@ -318,14 +318,14 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
         const slice = rows.slice(i, i + batchSize)
         await prisma.campaignRow.createMany({ data: slice })
       }
-    } catch (e: any) {
+    } catch {
       // Fallback: insert one-by-one to skip problematic row(s)
       let inserted = 0
       for (const r of rows) {
         try {
-          await prisma.campaignRow.create({ data: r as any })
+          await prisma.campaignRow.create({ data: r })
           inserted++
-        } catch (err: any) {
+        } catch {
           skipped++
           if (!firstError) firstError = 'DB insert error'
         }
