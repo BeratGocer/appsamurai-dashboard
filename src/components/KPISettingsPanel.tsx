@@ -106,73 +106,77 @@ export function KPISettingsPanel({
 
   return (
     <>
-      {/* Settings Panel */}
+      {/* Compact Settings Panel */}
       <Card className={`transition-all duration-300 ${isOpen ? 'shadow-lg' : ''}`}>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              <CardTitle className="text-lg">KPI Settings</CardTitle>
-              <Badge variant="outline">
-                {visibleConfigs}/{totalConfigs} visible
+              <Settings className="h-4 w-4" />
+              <CardTitle className="text-base">KPI Settings</CardTitle>
+              <Badge variant="outline" className="text-xs">
+                {visibleConfigs}/{totalConfigs}
               </Badge>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggle}
-            >
-              {isOpen ? 'Hide' : 'Show'} Settings
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddNewConfig}
+                className="h-7 px-2"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Add
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggle}
+                className="h-7 px-2"
+              >
+                {isOpen ? 'Hide' : 'Show'}
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
         {isOpen && (
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">
-                Configure your dashboard KPI cards
-              </p>
-              <Button onClick={handleAddNewConfig} size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Add KPI
-              </Button>
-            </div>
-
-            {/* KPI List */}
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+          <CardContent className="pt-0 pb-3">
+            {/* Compact KPI List */}
+            <div className="space-y-1 max-h-64 overflow-y-auto">
               {configs
                 .sort((a, b) => a.order - b.order)
                 .map((config) => (
                   <div
                     key={config.id}
-                    className={`p-3 border rounded-lg ${
+                    className={`p-2 border rounded-md text-sm ${
                       config.isVisible ? 'bg-card' : 'bg-muted/20 opacity-60'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-sm">{config.title}</h4>
-                          <Badge variant="secondary" className="text-xs">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium truncate">{config.title}</h4>
+                          <Badge variant="secondary" className="text-xs px-1 py-0">
                             {config.calculationType}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs px-1 py-0">
                             {config.column}
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {config.description || `${config.calculationType} of ${config.column}`}
-                        </p>
+                        {config.description && (
+                          <p className="text-xs text-muted-foreground truncate mt-1">
+                            {config.description}
+                          </p>
+                        )}
                       </div>
                       
-                      <div className="flex items-center gap-1 ml-2">
+                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                         {/* Move buttons */}
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleMoveConfig(config.id, 'up')}
-                          className="p-1 h-7 w-7"
+                          className="p-1 h-6 w-6"
                         >
                           <ArrowUp className="h-3 w-3" />
                         </Button>
@@ -180,7 +184,7 @@ export function KPISettingsPanel({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleMoveConfig(config.id, 'down')}
-                          className="p-1 h-7 w-7"
+                          className="p-1 h-6 w-6"
                         >
                           <ArrowDown className="h-3 w-3" />
                         </Button>
@@ -190,7 +194,7 @@ export function KPISettingsPanel({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleToggleVisibility(config.id)}
-                          className="p-1 h-7 w-7"
+                          className="p-1 h-6 w-6"
                         >
                           {config.isVisible ? 
                             <Eye className="h-3 w-3" /> : 
@@ -203,7 +207,7 @@ export function KPISettingsPanel({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditConfig(config)}
-                          className="p-1 h-7 w-7"
+                          className="p-1 h-6 w-6"
                         >
                           <Edit3 className="h-3 w-3" />
                         </Button>
@@ -213,7 +217,7 @@ export function KPISettingsPanel({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteConfig(config.id)}
-                          className="p-1 h-7 w-7 text-red-600 hover:text-red-700"
+                          className="p-1 h-6 w-6 text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -223,8 +227,8 @@ export function KPISettingsPanel({
                 ))}
                 
               {configs.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No KPI cards configured yet.</p>
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">No KPI cards configured yet.</p>
                   <Button onClick={handleAddNewConfig} className="mt-2" size="sm">
                     Add your first KPI
                   </Button>
@@ -235,20 +239,20 @@ export function KPISettingsPanel({
         )}
       </Card>
 
-      {/* Edit Dialog */}
+      {/* Compact Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg">
               {editingConfig?.isNew ? 'Add New KPI' : 'Edit KPI'}
             </DialogTitle>
           </DialogHeader>
 
           {editingConfig && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Title */}
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
+              <div className="space-y-1">
+                <Label htmlFor="title" className="text-sm">Title</Label>
                 <Input
                   id="title"
                   value={editingConfig.title}
@@ -257,12 +261,13 @@ export function KPISettingsPanel({
                     title: e.target.value
                   })}
                   placeholder="Enter KPI title"
+                  className="h-8"
                 />
               </div>
 
               {/* Column Selection */}
-              <div className="space-y-2">
-                <Label>Data Column</Label>
+              <div className="space-y-1">
+                <Label className="text-sm">Data Column</Label>
                 <Select
                   value={editingConfig.column}
                   onValueChange={(value) => setEditingConfig({
@@ -270,7 +275,7 @@ export function KPISettingsPanel({
                     column: value
                   })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -293,8 +298,8 @@ export function KPISettingsPanel({
               </div>
 
               {/* Calculation Type */}
-              <div className="space-y-2">
-                <Label>Calculation Type</Label>
+              <div className="space-y-1">
+                <Label className="text-sm">Calculation Type</Label>
                 <Select
                   value={editingConfig.calculationType}
                   onValueChange={(value: KPICalculationType) => setEditingConfig({
@@ -302,7 +307,7 @@ export function KPISettingsPanel({
                     calculationType: value
                   })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -316,8 +321,8 @@ export function KPISettingsPanel({
               </div>
 
               {/* Format Type */}
-              <div className="space-y-2">
-                <Label>Format</Label>
+              <div className="space-y-1">
+                <Label className="text-sm">Format</Label>
                 <Select
                   value={editingConfig.format}
                   onValueChange={(value: KPIFormatType) => setEditingConfig({
@@ -325,7 +330,7 @@ export function KPISettingsPanel({
                     format: value
                   })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -338,8 +343,8 @@ export function KPISettingsPanel({
               </div>
 
               {/* Decimal Places */}
-              <div className="space-y-2">
-                <Label htmlFor="decimalPlaces">Decimal Places</Label>
+              <div className="space-y-1">
+                <Label htmlFor="decimalPlaces" className="text-sm">Decimal Places</Label>
                 <Input
                   id="decimalPlaces"
                   type="number"
@@ -350,12 +355,13 @@ export function KPISettingsPanel({
                     ...editingConfig,
                     decimalPlaces: parseInt(e.target.value) || 0
                   })}
+                  className="h-8"
                 />
               </div>
 
               {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="description" className="text-sm">Description (Optional)</Label>
                 <Input
                   id="description"
                   value={editingConfig.description || ''}
@@ -364,12 +370,13 @@ export function KPISettingsPanel({
                     description: e.target.value
                   })}
                   placeholder="Brief description of this KPI"
+                  className="h-8"
                 />
               </div>
 
               {/* Badge */}
-              <div className="space-y-2">
-                <Label htmlFor="badge">Badge (Optional)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="badge" className="text-sm">Badge (Optional)</Label>
                 <Input
                   id="badge"
                   value={editingConfig.badge || ''}
@@ -378,21 +385,23 @@ export function KPISettingsPanel({
                     badge: e.target.value
                   })}
                   placeholder="Badge text (e.g., Total, Avg)"
+                  className="h-8"
                 />
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-end gap-2 pt-3">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setEditingConfig(null);
                     setShowEditDialog(false);
                   }}
+                  size="sm"
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleSaveConfig}>
+                <Button onClick={handleSaveConfig} size="sm">
                   {editingConfig.isNew ? 'Add KPI' : 'Save Changes'}
                 </Button>
               </div>

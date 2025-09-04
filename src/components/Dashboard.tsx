@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, Edit3 } from "lucide-react"
 import { DynamicKPISection } from './DynamicKPISection'
 
 import { FileUpload } from './FileUpload'
+import { FileManager } from './FileManager'
 import { Navbar } from './Navbar'
 import { getCustomers, getAccountManagers, getGameCountryPublisherGroups, synchronizeGroupDates, generateFileDisplayName, getGamesFromData } from '@/utils/csvParser'
 
@@ -386,76 +387,16 @@ export function Dashboard({
                 </Button>
               </div>
             </div>
-            {uploadedFiles.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No files uploaded yet.</p>
-                <Button className="mt-4" onClick={onShowUpload}>
-                  Upload First File
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {uploadedFiles.map((file) => {
-                  const fileDisplayName = generateFileDisplayName(file.customerName, file.data);
-                  const fileGames = getGamesFromData(file.data);
-                  
-                  return (
-                    <div key={file.id} className="border rounded-lg bg-card">
-                      {/* File Accordion Header */}
-                      <div 
-                        className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors flex items-center justify-between ${
-                          file.id === activeFileId ? 'bg-primary/5 border-primary' : ''
-                        }`}
-                        onClick={() => toggleFileExpansion(file.id)}
-                      >
-                        <div className="flex items-center space-x-3">
-                          {expandedFiles.has(file.id) ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                          <div>
-                            <h4 className="font-semibold">{fileDisplayName}</h4>
-                            <span className="text-sm text-muted-foreground">
-                              {file.data.length} records • {fileGames.length} games
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleGameSelect(file.id);
-                            }}
-                          >
-                            View All
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onFileDelete(file.id);
-                            }}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            ×
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      {/* File Accordion Content */}
-                      {expandedFiles.has(file.id) && (
-                        <div className="px-4 pb-4 border-t bg-muted/20">
-                          <div className="space-y-3 pt-3">
-                            {/* File Info */}
-                            <div className="flex flex-wrap gap-4 text-sm">
-                              {file.customerName && (
-                                <div className="flex items-center gap-1">
-                                  <span className="font-medium">Customer:</span>
-                                  <span>{file.customerName}</span>
+            
+            <FileManager
+              uploadedFiles={uploadedFiles}
+              onFileSelect={onFileSelect}
+              onFileDelete={onFileDelete}
+              activeFileId={activeFileId}
+            />
+          </div>
+        </div>
+      )}
                                 </div>
                               )}
                               {file.accountManager && (
