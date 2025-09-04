@@ -24,8 +24,13 @@ export async function apiInitFile(payload: {
   return res.json()
 }
 
-export async function apiIngestCsv(fileId: string, csvText: string): Promise<{ inserted: number }> {
-  const res = await fetch(`${API_BASE}/files/${fileId}/ingest`, {
+export async function apiIngestCsv(
+  fileId: string,
+  csvText: string,
+  options?: { append?: boolean }
+): Promise<{ inserted: number; appended?: boolean }> {
+  const append = options?.append ? '1' : '0'
+  const res = await fetch(`${API_BASE}/files/${fileId}/ingest?append=${append}`, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: csvText,

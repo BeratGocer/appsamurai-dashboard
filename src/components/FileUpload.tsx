@@ -89,8 +89,30 @@ export function FileUpload({
         accountManager: accountManager.trim() || undefined
       });
 
-      // Upload CSV data to backend
-      await apiIngestCsv(fileId, text);
+      // Upload CSV data to backend in chunks to avoid 413
+      const headerEnd = text.indexOf('\n');
+      const header = headerEnd >= 0 ? text.slice(0, headerEnd) : '';
+      const body = headerEnd >= 0 ? text.slice(headerEnd + 1) : text;
+      const chunkSize = 200_000; // ~200KB chunks
+      let offset = 0;
+      let first = true;
+      while (offset < body.length) {
+        const next = Math.min(offset + chunkSize, body.length);
+        // slice on newline boundary to avoid splitting rows
+        let chunk = body.slice(offset, next);
+        const lastNewline = chunk.lastIndexOf('\n');
+        if (lastNewline !== -1 && next < body.length) {
+          chunk = chunk.slice(0, lastNewline);
+          offset += lastNewline + 1;
+        } else {
+          offset = next;
+        }
+        const payload = header ? `${header}\n${chunk}` : chunk;
+        await apiIngestCsv(fileId, payload, { append: !first });
+        first = false;
+        // advance progress superficially
+        setUploadProgress(p => Math.min(90, p + 5));
+      }
 
       // Client-side CSV parsing for immediate display
       const data = parseCSV(text);

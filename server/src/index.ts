@@ -104,11 +104,16 @@ function normalizePublisherPrefix(adg: string): string {
 
 app.post('/files/:id/ingest', async (req, reply) => {
   const { id } = req.params as any
+  const { append } = (req.query as any) || {}
   const text = typeof req.body === 'string' ? req.body : (req.body as any)?.toString?.() || ''
   if (!text) return reply.code(400).send({ error: 'Empty body' })
-  const lines = text.trim().split(/\r?\n/)
+
+  const lines = text.split(/\r?\n/).filter((l: string) => l.length > 0)
   if (lines.length < 2) return reply.code(400).send({ error: 'No data rows' })
-  const headers = lines[0].split(',').map((h: string) => h.trim())
+
+  // Ensure the first line is a header; reject if not present
+  const headerLine = lines[0]
+  const headers = headerLine.split(',').map((h: string) => h.trim())
   const idx = (name: string) => headers.indexOf(name)
   const iApp = idx('app')
   const iCN = idx('campaign_network')
@@ -123,10 +128,16 @@ app.post('/files/:id/ingest', async (req, reply) => {
   const iD30 = idx('roas_d30')
   const iD45 = idx('roas_d45')
 
+  if (iApp < 0 || iCN < 0 || iAN < 0 || iDay < 0 || iInst < 0) {
+    return reply.code(400).send({ error: 'Missing required headers' })
+  }
+
   const rows = [] as any[]
   for (let li = 1; li < lines.length; li++) {
-    const v = lines[li].split(',')
-    if (v.length < 4) continue
+    const row = lines[li]
+    if (!row.trim()) continue
+    const v = row.split(',')
+    if (v.length < 5) continue
     rows.push({
       fileId: id,
       app: v[iApp] || '',
@@ -145,9 +156,12 @@ app.post('/files/:id/ingest', async (req, reply) => {
   }
 
   if (rows.length === 0) return reply.code(400).send({ error: 'No valid rows' })
-  await prisma.campaignRow.deleteMany({ where: { fileId: id } })
+
+  if (!append || append === '0' || append === 'false') {
+    await prisma.campaignRow.deleteMany({ where: { fileId: id } })
+  }
   await prisma.campaignRow.createMany({ data: rows })
-  reply.send({ inserted: rows.length })
+  reply.send({ inserted: rows.length, appended: !!append && append !== '0' && append !== 'false' })
 })
 
 // Grouped data with weighted averages by installs and publisher prefix
