@@ -1,35 +1,60 @@
----
-description: Settings panel patterns with per-file persistence and multiple setting types
----
 
 # Settings Panel Patterns
 
-## Settings Data Structure
-```typescript
-export interface SettingsData {
-  dateRange: DateRange;
-  conditionalRules: ConditionalFormattingRule[];
-  visibleColumns?: string[];
-}
+## Column Label Function
+Always define `getColumnLabel()` function in SettingsPanel:
 
-interface SettingsPanelProps {
-  settings: SettingsData;
-  onSettingsChange: (settings: SettingsData) => void;
-  isOpen: boolean;
-  onToggle: () => void;
-  hiddenTables?: HiddenTable[];
-  onTableVisibilityChange?: (tableId: string, isHidden: boolean) => void;
-  availableColumns?: string[];
-}
+```tsx
+const getColumnLabel = (column: string): string => {
+  const columnLabels: Record<string, string> = {
+    installs: 'Install',
+    roas_d0: 'ROAS D0',
+    roas_d1: 'ROAS D1',
+    roas_d2: 'ROAS D2',
+    roas_d3: 'ROAS D3',
+    roas_d4: 'ROAS D4',
+    roas_d5: 'ROAS D5',
+    roas_d6: 'ROAS D6',
+    roas_d7: 'ROAS D7',
+    roas_d14: 'ROAS D14',
+    roas_d21: 'ROAS D21',
+    roas_d30: 'ROAS D30',
+    roas_d45: 'ROAS D45',
+    roas_d60: 'ROAS D60',
+    retention_rate_d1: 'Retention D1',
+    retention_rate_d7: 'Retention D7',
+    retention_rate_d14: 'Retention D14',
+    retention_rate_d30: 'Retention D30',
+    ecpi: 'eCPI',
+    adjust_cost: 'Maliyet',
+    ad_revenue: 'Gelir',
+    gross_profit: 'Kar',
+  };
+  return columnLabels[column] || column;
+};
 ```
 
 ## Per-File Settings Persistence
-Settings should be saved per active file:
+Reference: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
 
-```typescript
-// Generate unique key per file
+```tsx
+// Settings key generation
 const getSettingsKey = () => {
   return activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
+};
+
+// Load settings for current file
+const loadFileSettings = (fileId: string | null) => {
+  const settingsKey = fileId ? `dashboard-settings-${fileId}` : 'dashboard-settings-default';
+  const saved = localStorage.getItem(settingsKey);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      // If parsing fails, return default
+    }
+  }
+  return defaultSettings;
 };
 
 // Save settings
@@ -38,102 +63,61 @@ const handleSettingsChange = (newSettings: SettingsData) => {
   const settingsKey = getSettingsKey();
   localStorage.setItem(settingsKey, JSON.stringify(newSettings));
 };
-
-// Load settings when file changes
-useEffect(() => {
-  const settingsKey = getSettingsKey();
-  const savedSettings = localStorage.getItem(settingsKey);
-  if (savedSettings) {
-    try {
-      setSettings(JSON.parse(savedSettings));
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    }
-  }
-}, [activeFileId]);
 ```
 
-## Multi-Section Settings Panel
-Organize settings into logical sections:
+## Settings Data Structure
+```tsx
+export interface SettingsData {
+  dateRange: DateRange;
+  conditionalRules: ConditionalFormattingRule[];
+  visibleColumns?: string[];
+}
 
-```typescript
-<CardContent className="space-y-6">
-  {/* Date Range Settings */}
-  <div className="space-y-3">
-    <div className="flex items-center gap-2">
-      <Calendar className="h-4 w-4" />
-      <Label className="text-base font-medium">Zaman Aralığı</Label>
-    </div>
-    {/* Date controls */}
-  </div>
+export interface DateRange {
+  startDate: string;
+  endDate: string;
+}
 
-  {/* Conditional Formatting */}
-  <div className="space-y-4">
-    <div className="flex items-center gap-2">
-      <Palette className="h-4 w-4" />
-      <Label className="text-base font-medium">Koşullu Biçimlendirme</Label>
-    </div>
-    {/* Formatting rules */}
-  </div>
-
-  {/* Column Visibility */}
-  <div className="space-y-4">
-    <div className="flex items-center gap-2">
-      <Palette className="h-4 w-4" />
-      <Label className="text-base font-medium">Tablo Sütunları</Label>
-    </div>
-    {/* Column toggles */}
-  </div>
-
-  {/* Hidden Tables Management */}
-  <div className="space-y-4">
-    <div className="flex items-center gap-2">
-      <Settings className="h-4 w-4" />
-      <Label className="text-base font-medium">Gizli Tablolar</Label>
-    </div>
-    {/* Hidden table list */}
-  </div>
-</CardContent>
+export interface ConditionalFormattingRule {
+  id: string;
+  column: string;
+  operator: '<' | '>' | '>=' | '<=' | '=';
+  value: number;
+  color: string;
+  backgroundColor: string;
+  isActive: boolean;
+}
 ```
 
-## Dynamic Column Selection
-Support column selection based on available data:
+## Compact UI Standards
+- Card: `mb-4` (not `mb-6`)
+- Header: `pb-2` (not `pb-3`)
+- Content: `space-y-4` (not `space-y-6`)
+- Buttons: `h-7` for presets, `h-8` for inputs
+- Text: `text-xs` for labels, `text-sm` for content
+- Padding: `p-2` for compact, `p-3` for standard
 
-```typescript
-{availableColumns.map((column) => {
-  const isVisible = (settings.visibleColumns || defaultColumns).includes(column);
-  return (
-    <div
-      key={column}
-      className={`flex items-center justify-between p-2 border rounded cursor-pointer transition-colors ${
-        isVisible ? 'bg-primary/10 border-primary' : 'bg-muted/20 hover:bg-muted/30'
-      }`}
-      onClick={() => handleColumnToggle(column)}
-    >
-      <span className="text-sm font-medium">{getColumnLabel(column)}</span>
-      {isVisible ? (
-        <Eye className="h-3 w-3 text-primary" />
-      ) : (
-        <EyeOff className="h-3 w-3 text-muted-foreground" />
-      )}
-    </div>
-  );
-})}
+## Color Presets
+```tsx
+const COLOR_PRESETS = [
+  { name: 'Yeşil', color: '#16a34a', backgroundColor: '#dcfce7' },
+  { name: 'Kırmızı', color: '#dc2626', backgroundColor: '#fee2e2' },
+  { name: 'Sarı', color: '#ca8a04', backgroundColor: '#fef3c7' },
+  { name: 'Mavi', color: '#2563eb', backgroundColor: '#dbeafe' },
+  { name: 'Mor', color: '#9333ea', backgroundColor: '#f3e8ff' },
+  { name: 'Turuncu', color: '#ea580c', backgroundColor: '#fed7aa' },
+  { name: 'Pembe', color: '#db2777', backgroundColor: '#fce7f3' },
+  { name: 'Gri', color: '#6b7280', backgroundColor: '#f3f4f6' },
+];
 ```
 
-## Settings Integration with Tables
-Pass settings to table components:
-
-```typescript
-<GameTables 
-  groups={gameGroups} 
-  conditionalRules={settings.conditionalRules.filter(rule => rule.isActive)}
-  hiddenTables={hiddenTables}
-  onTableVisibilityChange={handleTableVisibilityChange}
-  visibleColumns={settings.visibleColumns || ['installs', 'roas_d7', 'roas_d30']}
-  availableColumns={availableColumns}
-/>
-```
+## Critical Requirements
+- ✅ Always define `getColumnLabel()` function
+- ✅ Use per-file settings persistence
+- ✅ Provide sensible default settings
+- ✅ Handle JSON parsing errors gracefully
+- ✅ Use compact UI patterns
+- ✅ Remove unnecessary explanatory text
 
 ## Complete Implementation
 See [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx) for full settings panel implementation with all sections.

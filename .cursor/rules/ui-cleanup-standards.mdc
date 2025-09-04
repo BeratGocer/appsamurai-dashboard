@@ -1,0 +1,52 @@
+# UI Cleanup Standards
+
+## Dashboard Text Guidelines
+- **Remove explanatory text** under section headers
+- Keep only essential information: counts, status, actions
+- Example: "Performans Tabloları" should show only "(X görünen, Y gizli)"
+- Remove "💡" tip text and lengthy explanations
+
+## Settings Panel Compact Design
+- Use `space-y-4` instead of `space-y-6` for main content
+- Button heights: `h-7` for preset buttons, `h-8` for form inputs
+- Text sizes: `text-xs` for labels, `text-sm` for content
+- Padding: `p-2` for compact items, `p-3` for rule containers
+- Remove unnecessary explanatory paragraphs
+
+## Column Label Standards
+- Use concise Turkish labels that match CSV headers
+- `installs` → "Install" (not "Install Sayısı")
+- `ad_revenue` → "Gelir" (not "Reklam Geliri")  
+- `gross_profit` → "Kar" (not "Brüt Kar")
+- Keep ROAS labels as "ROAS D7", "ROAS D30"
+- Financial: "Maliyet", "Gelir", "Kar"
+
+## Component Spacing
+- Card headers: `pb-2` for compact, `pb-3` for standard
+- Grid gaps: `gap-1` for compact, `gap-2` for standard, `gap-3` for spacious
+- Button spacing: `gap-1` for compact actions, `gap-2` for standard
+
+## Settings Panel Structure
+Reference: [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx)
+
+```tsx
+<Card className="mb-4">
+  <CardHeader className="pb-2">
+    <CardTitle className="text-lg">Ayarlar</CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    {/* Compact sections */}
+  </CardContent>
+</Card>
+```
+
+## Table Header Standards
+Reference: [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx)
+
+- Remove explanatory paragraphs under headers
+- Keep only essential info: counts, navigation hints
+- Use compact text: `text-sm text-muted-foreground`
+description:
+globs:
+alwaysApply: true
+---
