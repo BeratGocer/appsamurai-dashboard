@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Folder, FileText, Calendar, User, Building, ChevronDown, ChevronRight, Eye, Download, Trash2 } from "lucide-react";
-import type { UploadedFile, CampaignData } from '@/types';
+import { Folder, FileText, Calendar, User, Building, ChevronDown, ChevronRight, Eye, Trash2 } from "lucide-react";
+import type { UploadedFile } from '@/types';
 
 interface FileManagerProps {
   uploadedFiles: UploadedFile[];

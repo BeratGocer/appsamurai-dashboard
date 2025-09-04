@@ -397,69 +397,6 @@ export function Dashboard({
           </div>
         </div>
       )}
-                                </div>
-                              )}
-                              {file.accountManager && (
-                                <div className="flex items-center gap-1">
-                                  <span className="font-medium">Manager:</span>
-                                  <span>{file.accountManager}</span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <span className="font-medium">Upload:</span>
-                                <span>{new Date(file.uploadDate).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                            
-                            {/* Games in File */}
-                            <div>
-                              <span className="text-sm font-medium mb-2 block">Games:</span>
-                              <div className="space-y-2">
-                                {fileGames.map((game) => (
-                                  <div 
-                                    key={`${file.id}-${game.name}`}
-                                    className="border rounded-md bg-background/50 hover:bg-background/80 transition-colors"
-                                  >
-                                    <div className="p-3 flex items-center justify-between">
-                                      <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <h6 className="font-medium text-sm">{game.name}</h6>
-                                          <div className="flex gap-1">
-                                            {game.platforms.map(platform => (
-                                              <span key={platform} className="text-xs bg-secondary px-1 rounded">
-                                                {platform}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        </div>
-                                        <div className="flex gap-4 text-xs text-muted-foreground">
-                                          <span>{game.totalInstalls.toLocaleString()} installs</span>
-                                          <span>ROAS D7: {(game.avgRoasD7 * 100).toFixed(1)}%</span>
-                                        </div>
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleGameSelect(file.id, game.name)}
-                                        className="ml-2"
-                                      >
-                                        View Game
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {currentTab === 'overview' && (
         <div className="space-y-6">
