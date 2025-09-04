@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { ChevronDown, ChevronRight, Edit3 } from "lucide-react"
 import { DynamicKPISection } from './DynamicKPISection'
 
@@ -588,39 +589,46 @@ export function Dashboard({
                                     </div>
                                     
                                     {/* Games List */}
-                                    <div className="space-y-2">
+                                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                                       {fileGames.map((game) => (
-                                        <div 
-                                          key={`${file.id}-${game.name}`}
-                                          className="border rounded-md bg-background/50 hover:bg-background/80 transition-colors"
-                                        >
-                                          <div className="p-3 flex items-center justify-between">
-                                            <div className="flex-1">
-                                              <div className="flex items-center gap-2 mb-1">
-                                                <h6 className="font-medium text-sm">{game.name}</h6>
-                                                <div className="flex gap-1">
-                                                  {game.platforms.map(platform => (
-                                                    <span key={platform} className="text-xs bg-secondary px-1 rounded">
-                                                      {platform}
-                                                    </span>
-                                                  ))}
-                                                </div>
+                                        <Card key={`${file.id}-${game.name}`} className="bg-card border">
+                                          <CardHeader className="pb-2">
+                                            <CardTitle className="text-base flex items-center justify-between">
+                                              <span className="truncate">{game.name}</span>
+                                              <div className="flex gap-1 ml-2">
+                                                {game.platforms.map(platform => (
+                                                  <span key={platform} className="text-[10px] bg-secondary px-1 rounded">
+                                                    {platform}
+                                                  </span>
+                                                ))}
                                               </div>
-                                              <div className="flex gap-4 text-xs text-muted-foreground">
-                                                <span>{game.totalInstalls.toLocaleString()} installs</span>
-                                                <span>ROAS D7: {(game.avgRoasD7 * 100).toFixed(1)}%</span>
-                                                <span>{game.dateRange.start} to {game.dateRange.end}</span>
+                                            </CardTitle>
+                                          </CardHeader>
+                                          <CardContent className="pt-0">
+                                            <div className="grid grid-cols-2 gap-2 items-end">
+                                              <div className="text-center">
+                                                <div className="text-xl font-semibold text-primary">
+                                                  {game.totalInstalls.toLocaleString()}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">Installs</div>
+                                              </div>
+                                              <div className="text-center">
+                                                <div className="text-xl font-semibold text-purple-400">
+                                                  {(game.avgRoasD7 * 100).toFixed(1)}%
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">ROAS D7</div>
                                               </div>
                                             </div>
-                                            <Button
-                                              size="sm"
-                                              onClick={() => handleGameSelect(file.id, game.name)}
-                                              className="ml-2"
-                                            >
+                                            <div className="mt-3 text-center text-xs text-muted-foreground">
+                                              {game.dateRange.start} - {game.dateRange.end}
+                                            </div>
+                                          </CardContent>
+                                          <CardFooter>
+                                            <Button size="sm" className="w-full" onClick={() => handleGameSelect(file.id, game.name)}>
                                               View Game
                                             </Button>
-                                          </div>
-                                        </div>
+                                          </CardFooter>
+                                        </Card>
                                       ))}
                                     </div>
                                   </div>
@@ -788,39 +796,46 @@ export function Dashboard({
                                     </div>
                                     
                                     {/* Games List */}
-                                    <div className="space-y-2">
+                                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                                       {fileGames.map((game) => (
-                                        <div 
-                                          key={`${file.id}-${game.name}`}
-                                          className="border rounded-md bg-background/50 hover:bg-background/80 transition-colors"
-                                        >
-                                          <div className="p-3 flex items-center justify-between">
-                                            <div className="flex-1">
-                                              <div className="flex items-center gap-2 mb-1">
-                                                <h6 className="font-medium text-sm">{game.name}</h6>
-                                                <div className="flex gap-1">
-                                                  {game.platforms.map(platform => (
-                                                    <span key={platform} className="text-xs bg-secondary px-1 rounded">
-                                                      {platform}
-                                                    </span>
-                                                  ))}
-                                                </div>
+                                        <Card key={`${file.id}-${game.name}`} className="bg-card border">
+                                          <CardHeader className="pb-2">
+                                            <CardTitle className="text-base flex items-center justify-between">
+                                              <span className="truncate">{game.name}</span>
+                                              <div className="flex gap-1 ml-2">
+                                                {game.platforms.map(platform => (
+                                                  <span key={platform} className="text-[10px] bg-secondary px-1 rounded">
+                                                    {platform}
+                                                  </span>
+                                                ))}
                                               </div>
-                                              <div className="flex gap-4 text-xs text-muted-foreground">
-                                                <span>{game.totalInstalls.toLocaleString()} installs</span>
-                                                <span>ROAS D7: {(game.avgRoasD7 * 100).toFixed(1)}%</span>
-                                                <span>{game.dateRange.start} to {game.dateRange.end}</span>
+                                            </CardTitle>
+                                          </CardHeader>
+                                          <CardContent className="pt-0">
+                                            <div className="grid grid-cols-2 gap-2 items-end">
+                                              <div className="text-center">
+                                                <div className="text-xl font-semibold text-primary">
+                                                  {game.totalInstalls.toLocaleString()}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">Installs</div>
+                                              </div>
+                                              <div className="text-center">
+                                                <div className="text-xl font-semibold text-purple-400">
+                                                  {(game.avgRoasD7 * 100).toFixed(1)}%
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">ROAS D7</div>
                                               </div>
                                             </div>
-                                            <Button
-                                              size="sm"
-                                              onClick={() => handleGameSelect(file.id, game.name)}
-                                              className="ml-2"
-                                            >
+                                            <div className="mt-3 text-center text-xs text-muted-foreground">
+                                              {game.dateRange.start} - {game.dateRange.end}
+                                            </div>
+                                          </CardContent>
+                                          <CardFooter>
+                                            <Button size="sm" className="w-full" onClick={() => handleGameSelect(file.id, game.name)}>
                                               View Game
                                             </Button>
-                                          </div>
-                                        </div>
+                                          </CardFooter>
+                                        </Card>
                                       ))}
                                     </div>
                                   </div>
