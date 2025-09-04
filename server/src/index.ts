@@ -7,7 +7,10 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const prisma = new PrismaClient()
-const app = Fastify({ logger: true })
+const app = Fastify({ 
+  logger: true,
+  bodyLimit: 50 * 1024 * 1024 // 50MB limit
+})
 
 await app.register(cors, { origin: true })
 await app.register(helmet)
