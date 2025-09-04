@@ -1,0 +1,105 @@
+# Backend Error Handling Patterns
+
+## Concurrent Operation Protection
+Always implement locking mechanisms for operations that could have race conditions:
+
+```typescript
+// In-memory lock for file-level operations
+const activeIngests = new Set<string>()
+
+app.post('/files/:id/ingest', async (req, reply) => {
+  const { id } = req.params
+  
+  // Check for concurrent operations
+  if (activeIngests.has(id)) {
+    return reply.code(409).send({ 
+      error: 'ingest_in_progress', 
+      message: 'File ingest already in progress' 
+    })
+  }
+  
+  // Lock the resource
+  activeIngests.add(id)
+  
+  try {
+    // Operation logic here
+  } catch (err) {
+    // Handle errors
+  } finally {
+    // Always release lock
+    activeIngests.delete(id)
+  }
+})
+```
+
+## Error Response Standards
+Use consistent error response format:
+
+```typescript
+// Success response
+reply.send({ 
+  inserted: rows.length, 
+  skipped, 
+  reason: firstError ?? undefined, 
+  appended: !!append 
+})
+
+// Error responses
+reply.code(400).send({ error: 'Missing required headers' })
+reply.code(409).send({ error: 'ingest_in_progress', message: 'Operation in progress' })
+reply.code(500).send({ error: 'ingest_failed' })
+```
+
+## Database Transaction Safety
+Always handle database operations with proper error handling:
+
+```typescript
+// Batch operations with fallback
+const batchSize = 500
+try {
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const slice = rows.slice(i, i + batchSize)
+    await prisma.campaignRow.createMany({ data: slice })
+  }
+} catch {
+  // Fallback: insert one-by-one to skip problematic rows
+  let inserted = 0
+  for (const r of rows) {
+    try {
+      await prisma.campaignRow.create({ data: r })
+      inserted++
+    } catch {
+      skipped++
+      if (!firstError) firstError = 'DB insert error'
+    }
+  }
+  return reply.send({ inserted, skipped, reason: firstError })
+}
+```
+
+## Type Safety
+Avoid `any` types and use proper error handling:
+
+```typescript
+// GOOD: Proper error handling
+} catch {
+  // Handle error without unused variables
+}
+
+// BAD: Using any types
+} catch (e: any) {
+  // e is unused and any is unsafe
+}
+```
+
+## Critical Requirements
+- ✅ Always implement locks for concurrent operations
+- ✅ Use consistent error response formats
+- ✅ Provide fallback mechanisms for database operations
+- ✅ Avoid `any` types in error handling
+- ✅ Always release locks in finally blocks
+- ✅ Log errors with context for debugging
+description:
+globs:
+alwaysApply: true
+---

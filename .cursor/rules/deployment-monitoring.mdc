@@ -1,0 +1,262 @@
+# Deployment & Monitoring Patterns
+
+## Railway Deployment Configuration
+Configure Railway for optimal deployment:
+
+```json
+// railway.json
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "npm start",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
+```
+
+## Health Check Endpoints
+Implement health checks for monitoring:
+
+```typescript
+// Backend health check
+app.get('/health', async () => ({ 
+  ok: true, 
+  timestamp: new Date().toISOString(),
+  version: process.env.npm_package_version || '1.0.0'
+}))
+
+// Database health check
+app.get('/health/db', async (req, reply) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    reply.send({ ok: true, database: 'connected' })
+  } catch (error) {
+    req.log.error({ error }, 'Database health check failed')
+    reply.code(503).send({ ok: false, database: 'disconnected' })
+  }
+})
+```
+
+## Error Logging and Monitoring
+Implement comprehensive error logging:
+
+```typescript
+// Structured error logging
+app.post('/files/:id/ingest', async (req, reply) => {
+  const { id } = req.params
+  const startTime = Date.now()
+  
+  try {
+    // Operation logic
+    const result = await processIngest(id, req.body)
+    
+    // Log success with metrics
+    req.log.info({
+      fileId: id,
+      duration: Date.now() - startTime,
+      rowsProcessed: result.inserted,
+      rowsSkipped: result.skipped
+    }, 'Ingest completed successfully')
+    
+    reply.send(result)
+  } catch (error) {
+    // Log error with context
+    req.log.error({
+      fileId: id,
+      duration: Date.now() - startTime,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    }, 'Ingest failed')
+    
+    activeIngests.delete(id)
+    reply.code(500).send({ error: 'ingest_failed' })
+  }
+})
+```
+
+## Performance Monitoring
+Track key performance metrics:
+
+```typescript
+// Request timing middleware
+app.addHook('onRequest', async (request, reply) => {
+  request.startTime = Date.now()
+})
+
+app.addHook('onResponse', async (request, reply) => {
+  const duration = Date.now() - request.startTime
+  
+  // Log slow requests
+  if (duration > 5000) {
+    request.log.warn({
+      method: request.method,
+      url: request.url,
+      duration,
+      statusCode: reply.statusCode
+    }, 'Slow request detected')
+  }
+  
+  // Track metrics
+  trackMetric('request_duration', duration, {
+    method: request.method,
+    statusCode: reply.statusCode,
+    endpoint: request.routerPath
+  })
+})
+
+// Database query monitoring
+const trackQueryPerformance = async (queryName: string, fn: () => Promise<any>) => {
+  const startTime = Date.now()
+  try {
+    const result = await fn()
+    const duration = Date.now() - startTime
+    
+    if (duration > 1000) {
+      console.warn(`Slow query: ${queryName} took ${duration}ms`)
+    }
+    
+    return result
+  } catch (error) {
+    console.error(`Query failed: ${queryName}`, error)
+    throw error
+  }
+}
+```
+
+## Environment Configuration
+Manage environment variables properly:
+
+```typescript
+// Environment validation
+const requiredEnvVars = [
+  'DATABASE_URL',
+  'PORT',
+  'NODE_ENV'
+]
+
+const validateEnvironment = () => {
+  const missing = requiredEnvVars.filter(env => !process.env[env])
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
+  }
+}
+
+// Configuration object
+const config = {
+  port: Number(process.env.PORT || 8787),
+  databaseUrl: process.env.DATABASE_URL!,
+  environment: process.env.NODE_ENV || 'development',
+  isProduction: process.env.NODE_ENV === 'production',
+  logLevel: process.env.LOG_LEVEL || 'info'
+}
+
+// Initialize with validation
+validateEnvironment()
+```
+
+## Deployment Scripts
+Create deployment automation:
+
+```json
+// package.json scripts
+{
+  "scripts": {
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "deploy": "npm run build && railway up",
+    "migrate": "prisma migrate deploy",
+    "seed": "prisma db seed"
+  }
+}
+```
+
+## Monitoring Dashboard
+Set up monitoring alerts:
+
+```typescript
+// Custom metrics tracking
+const metrics = {
+  activeIngests: 0,
+  totalFiles: 0,
+  averageIngestTime: 0,
+  errorRate: 0
+}
+
+// Update metrics
+const updateMetrics = () => {
+  metrics.activeIngests = activeIngests.size
+  metrics.totalFiles = await prisma.file.count()
+  
+  // Send to monitoring service
+  if (process.env.METRICS_ENDPOINT) {
+    fetch(process.env.METRICS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(metrics)
+    }).catch(console.error)
+  }
+}
+
+// Update metrics every minute
+setInterval(updateMetrics, 60000)
+```
+
+## Error Alerting
+Implement error alerting for critical issues:
+
+```typescript
+// Critical error alerting
+const alertCriticalError = async (error: Error, context: any) => {
+  const alert = {
+    level: 'critical',
+    message: error.message,
+    stack: error.stack,
+    context,
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  }
+  
+  // Send to alerting service
+  if (process.env.ALERT_WEBHOOK) {
+    await fetch(process.env.ALERT_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(alert)
+    })
+  }
+  
+  // Log locally
+  console.error('CRITICAL ERROR:', alert)
+}
+
+// Use in error handlers
+} catch (error) {
+  if (error instanceof Error && error.message.includes('database')) {
+    await alertCriticalError(error, { fileId: id })
+  }
+  throw error
+}
+```
+
+## Critical Requirements
+- ✅ Implement health check endpoints
+- ✅ Use structured logging with context
+- ✅ Track performance metrics
+- ✅ Validate environment variables
+- ✅ Monitor database connections
+- ✅ Set up error alerting for critical issues
+- ✅ Use Railway deployment configuration
+- ✅ Track slow queries and requests
+- ✅ Implement graceful error handling
+- ✅ Monitor memory usage and cleanup
+description:
+globs:
+alwaysApply: true
+---

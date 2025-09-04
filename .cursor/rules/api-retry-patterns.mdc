@@ -1,0 +1,142 @@
+# API Retry Patterns
+
+## Retry Logic for Concurrent Operations
+Implement intelligent retry mechanisms for operations that might conflict:
+
+```typescript
+export async function apiIngestCsv(
+  fileId: string,
+  csvText: string,
+  options?: { append?: boolean }
+): Promise<{ inserted: number; appended?: boolean }> {
+  const append = options?.append ? '1' : '0'
+  const res = await fetch(`${API_BASE}/files/${fileId}/ingest?append=${append}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: csvText,
+  })
+  
+  if (res.status === 409) {
+    // Ingest already in progress, wait and retry
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return apiIngestCsv(fileId, csvText, options)
+  }
+  
+  if (!res.ok) throw new Error('ingest failed')
+  return res.json()
+}
+```
+
+## Status Code Handling
+Handle different HTTP status codes appropriately:
+
+```typescript
+// 409 Conflict - Retry after delay
+if (res.status === 409) {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  return retryOperation()
+}
+
+// 400 Bad Request - Don't retry, show user error
+if (res.status === 400) {
+  const error = await res.json()
+  throw new Error(error.error || 'Invalid request')
+}
+
+// 500 Server Error - Retry with exponential backoff
+if (res.status === 500) {
+  return retryWithBackoff(operation, maxRetries = 3)
+}
+```
+
+## Exponential Backoff Pattern
+Implement exponential backoff for server errors:
+
+```typescript
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation()
+    } catch (error) {
+      lastError = error as Error
+      
+      if (attempt === maxRetries) {
+        throw lastError
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = baseDelay * Math.pow(2, attempt)
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+  
+  throw lastError!
+}
+```
+
+## Chunked Upload Retry
+Handle retries for chunked file uploads:
+
+```typescript
+const handleChunkedUpload = async (fileId: string, chunks: string[]) => {
+  let successfulChunks = 0
+  let totalChunks = 0
+  
+  for (const chunk of chunks) {
+    try {
+      await apiIngestCsv(fileId, chunk, { append: totalChunks > 0 })
+      successfulChunks++
+      totalChunks++
+    } catch (error) {
+      console.error(`Chunk ${totalChunks + 1} failed:`, error)
+      // Continue with next chunk instead of failing completely
+      totalChunks++
+    }
+  }
+  
+  if (successfulChunks === 0) {
+    throw new Error('No chunks were successfully uploaded')
+  }
+  
+  return { successfulChunks, totalChunks }
+}
+```
+
+## Error Message Standards
+Use consistent error messages across the application:
+
+```typescript
+// Turkish error messages for user-facing errors
+const errorMessages = {
+  'ingest_failed': 'Dosya yükleme başarısız oldu',
+  'ingest_in_progress': 'Dosya zaten yükleniyor, lütfen bekleyin',
+  'Missing required headers': 'CSV dosyası geçersiz format',
+  'No valid rows': 'CSV dosyasında geçerli veri bulunamadı'
+}
+
+// Handle error responses
+if (!res.ok) {
+  const errorData = await res.json()
+  const message = errorMessages[errorData.error] || errorData.message || 'Bilinmeyen hata'
+  throw new Error(message)
+}
+```
+
+## Critical Requirements
+- ✅ Always handle 409 status codes with retry logic
+- ✅ Use exponential backoff for 500 errors
+- ✅ Don't retry 400 errors (user input issues)
+- ✅ Provide user-friendly Turkish error messages
+- ✅ Log failed operations for debugging
+- ✅ Continue processing on partial failures (chunked uploads)
+- ✅ Set reasonable timeout limits for retries
+description:
+globs:
+alwaysApply: true
+---

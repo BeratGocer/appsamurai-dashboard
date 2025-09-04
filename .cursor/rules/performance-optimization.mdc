@@ -1,104 +1,222 @@
-# Performance Optimization Guidelines
+# Performance Optimization Patterns
 
-## React Performance
-- **React.memo**: Use for expensive components
-- **useMemo**: Memoize expensive calculations
-- **useCallback**: Memoize event handlers
-- **Lazy Loading**: Implement code splitting
-- **Virtual Scrolling**: For large datasets
+## Chunked File Upload
+Implement chunked uploads to handle large files efficiently:
 
-## Bundle Optimization
-- **Tree Shaking**: Remove unused code
-- **Code Splitting**: Split code into chunks
-- **Dynamic Imports**: Use dynamic imports for large components
-- **Bundle Analysis**: Regular bundle size analysis
-
-## Data Processing
-- **Pagination**: Implement pagination for large datasets
-- **Filtering**: Efficient filtering algorithms
-- **Caching**: Cache processed data
-- **Debouncing**: Debounce search inputs
-
-## CSV Processing Optimization
 ```typescript
-// Optimized CSV processing
-const processCSVOptimized = (csvData: string) => {
-  // Use Web Workers for large files
-  if (csvData.length > 1000000) {
-    return new Promise((resolve) => {
-      const worker = new Worker('/workers/csv-processor.js');
-      worker.postMessage(csvData);
-      worker.onmessage = (e) => resolve(e.data);
-    });
+// Upload CSV data to backend in chunks to avoid 413
+const headerEnd = text.indexOf('\n')
+const header = headerEnd >= 0 ? text.slice(0, headerEnd) : ''
+const body = headerEnd >= 0 ? text.slice(headerEnd + 1) : text
+const chunkSize = 150_000 // ~150KB chunks for better reliability
+
+let offset = 0
+let first = true
+let totalChunks = 0
+let successfulChunks = 0
+
+while (offset < body.length) {
+  const next = Math.min(offset + chunkSize, body.length)
+  // slice on newline boundary to avoid splitting rows
+  let chunk = body.slice(offset, next)
+  const lastNewline = chunk.lastIndexOf('\n')
+  if (lastNewline !== -1 && next < body.length) {
+    chunk = chunk.slice(0, lastNewline)
+    offset += lastNewline + 1
+  } else {
+    offset = next
   }
   
-  // Process in chunks for large datasets
-  const chunks = chunkData(csvData, 10000);
-  return processChunks(chunks);
-};
+  if (chunk.trim()) { // Only send non-empty chunks
+    const payload = header ? `${header}\n${chunk}` : chunk
+    try {
+      await apiIngestCsv(fileId, payload, { append: !first })
+      successfulChunks++
+      totalChunks++
+    } catch (error) {
+      console.error(`Chunk ${totalChunks + 1} failed:`, error)
+      // Continue with next chunk instead of failing completely
+      totalChunks++
+    }
+    first = false
+  }
+}
 ```
 
-## Table Performance
-- **Virtual Scrolling**: For large tables
-- **Column Virtualization**: For wide tables
-- **Row Virtualization**: For tall tables
-- **Efficient Sorting**: Optimized sorting algorithms
+## Database Batch Operations
+Use batch operations to improve database performance:
+
+```typescript
+// Batch insert to avoid parameter limits
+const batchSize = 500
+try {
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const slice = rows.slice(i, i + batchSize)
+    await prisma.campaignRow.createMany({ data: slice })
+  }
+} catch {
+  // Fallback: insert one-by-one to skip problematic row(s)
+  let inserted = 0
+  for (const r of rows) {
+    try {
+      await prisma.campaignRow.create({ data: r })
+      inserted++
+    } catch {
+      skipped++
+      if (!firstError) firstError = 'DB insert error'
+    }
+  }
+  return reply.send({ inserted, skipped, reason: firstError })
+}
+```
 
 ## Memory Management
-- **Cleanup**: Clean up event listeners
-- **Memory Leaks**: Prevent memory leaks
-- **Garbage Collection**: Optimize for GC
-- **Object Pooling**: For frequently created objects
+Optimize memory usage for large datasets:
 
-## Network Optimization
-- **API Caching**: Cache API responses
-- **Request Batching**: Batch multiple requests
-- **Compression**: Use gzip compression
-- **CDN**: Use CDN for static assets
+```typescript
+// Process data in streams rather than loading everything into memory
+const processLargeFile = async (filePath: string) => {
+  const stream = fs.createReadStream(filePath, { encoding: 'utf8' })
+  const rl = readline.createInterface({ input: stream })
+  
+  let isFirstLine = true
+  let headers: string[] = []
+  const batchSize = 1000
+  let batch: any[] = []
+  
+  for await (const line of rl) {
+    if (isFirstLine) {
+      headers = line.split(',').map(h => h.trim())
+      isFirstLine = false
+      continue
+    }
+    
+    const row = parseRow(line, headers)
+    batch.push(row)
+    
+    if (batch.length >= batchSize) {
+      await processBatch(batch)
+      batch = []
+    }
+  }
+  
+  // Process remaining rows
+  if (batch.length > 0) {
+    await processBatch(batch)
+  }
+}
+```
 
-## Image Optimization
-- **Lazy Loading**: Lazy load images
-- **Responsive Images**: Use appropriate image sizes
-- **WebP Format**: Use modern image formats
-- **Image Compression**: Compress images
+## Caching Strategies
+Implement caching for frequently accessed data:
 
-## CSS Performance
-- **Critical CSS**: Inline critical CSS
-- **CSS Optimization**: Remove unused CSS
-- **CSS-in-JS**: Optimize CSS-in-JS usage
-- **Animation Performance**: Use transform/opacity
+```typescript
+// In-memory cache for file metadata
+const fileCache = new Map<string, { data: any, timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
-## JavaScript Performance
-- **Event Delegation**: Use event delegation
-- **Throttling**: Throttle frequent events
-- **Debouncing**: Debounce search inputs
-- **Web Workers**: Use workers for heavy tasks
+const getCachedFile = async (fileId: string) => {
+  const cached = fileCache.get(fileId)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data
+  }
+  
+  const data = await prisma.file.findUnique({ where: { id: fileId } })
+  fileCache.set(fileId, { data, timestamp: Date.now() })
+  return data
+}
 
-## Database Performance
-- **Indexing**: Proper database indexing
-- **Query Optimization**: Optimize database queries
-- **Connection Pooling**: Use connection pooling
-- **Caching**: Implement database caching
+// Clear cache on file updates
+const clearFileCache = (fileId: string) => {
+  fileCache.delete(fileId)
+}
+```
 
-## Monitoring & Metrics
-- **Core Web Vitals**: Monitor Core Web Vitals
-- **Performance Budgets**: Set performance budgets
-- **Real User Monitoring**: Monitor real user performance
-- **Error Tracking**: Track performance errors
+## Query Optimization
+Optimize database queries for better performance:
 
-## Optimization Checklist
-- [ ] React components optimized
-- [ ] Bundle size minimized
-- [ ] Data processing optimized
-- [ ] Table performance improved
-- [ ] Memory leaks prevented
-- [ ] Network requests optimized
-- [ ] Images optimized
-- [ ] CSS optimized
-- [ ] JavaScript optimized
-- [ ] Database queries optimized
-- [ ] Performance monitored
-description:
-globs:
-alwaysApply: true
----
+```typescript
+// Use indexes for frequently queried fields
+// In Prisma schema:
+model CampaignRow {
+  id            String   @id @default(cuid())
+  fileId        String
+  app           String
+  campaignNetwork String
+  day           DateTime
+  
+  @@index([fileId]) // Index for file-based queries
+  @@index([app])    // Index for app-based filtering
+  @@index([day])    // Index for date-based queries
+}
+
+// Use selective field queries
+const getFileSummary = async (fileId: string) => {
+  return await prisma.campaignRow.findMany({
+    where: { fileId },
+    select: {
+      app: true,
+      installs: true,
+      roas_d7: true,
+      day: true
+    },
+    orderBy: { day: 'asc' }
+  })
+}
+```
+
+## Frontend Performance
+Optimize frontend rendering and data processing:
+
+```typescript
+// Use React.memo for expensive components
+const ExpensiveTable = React.memo(({ data }: { data: CampaignData[] }) => {
+  return (
+    <Table>
+      {data.map(row => (
+        <TableRow key={row.id}>
+          {/* Table content */}
+        </TableRow>
+      ))}
+    </Table>
+  )
+})
+
+// Use useMemo for expensive calculations
+const processedData = React.useMemo(() => {
+  return rawData.map(row => ({
+    ...row,
+    roasPercentage: (row.roas_d7 * 100).toFixed(2) + '%'
+  }))
+}, [rawData])
+
+// Virtual scrolling for large datasets
+const VirtualizedTable = ({ data }: { data: CampaignData[] }) => {
+  return (
+    <FixedSizeList
+      height={600}
+      itemCount={data.length}
+      itemSize={50}
+      itemData={data}
+    >
+      {({ index, style, data }) => (
+        <div style={style}>
+          <TableRow data={data[index]} />
+        </div>
+      )}
+    </FixedSizeList>
+  )
+}
+```
+
+## Critical Requirements
+- ✅ Use chunked uploads for files > 200KB
+- ✅ Implement batch database operations (500-1000 rows)
+- ✅ Provide fallback mechanisms for failed operations
+- ✅ Use appropriate cache TTLs (5-15 minutes)
+- ✅ Index frequently queried database fields
+- ✅ Use selective field queries to reduce data transfer
+- ✅ Implement virtual scrolling for large datasets
+- ✅ Use React.memo for expensive components
+- ✅ Process data in streams for very large files
+- ✅ Monitor memory usage and implement cleanup
