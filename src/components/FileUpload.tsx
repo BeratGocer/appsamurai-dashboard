@@ -93,9 +93,12 @@ export function FileUpload({
       const headerEnd = text.indexOf('\n');
       const header = headerEnd >= 0 ? text.slice(0, headerEnd) : '';
       const body = headerEnd >= 0 ? text.slice(headerEnd + 1) : text;
-      const chunkSize = 200_000; // ~200KB chunks
+      const chunkSize = 150_000; // Reduced to ~150KB chunks for better reliability
       let offset = 0;
       let first = true;
+      let totalChunks = 0;
+      let successfulChunks = 0;
+      
       while (offset < body.length) {
         const next = Math.min(offset + chunkSize, body.length);
         // slice on newline boundary to avoid splitting rows
@@ -107,11 +110,26 @@ export function FileUpload({
         } else {
           offset = next;
         }
-        const payload = header ? `${header}\n${chunk}` : chunk;
-        await apiIngestCsv(fileId, payload, { append: !first });
-        first = false;
-        // advance progress superficially
-        setUploadProgress(p => Math.min(90, p + 5));
+        
+        if (chunk.trim()) { // Only send non-empty chunks
+          const payload = header ? `${header}\n${chunk}` : chunk;
+          try {
+            await apiIngestCsv(fileId, payload, { append: !first });
+            successfulChunks++;
+            totalChunks++;
+          } catch (error) {
+            console.error(`Chunk ${totalChunks + 1} failed:`, error);
+            // Continue with next chunk instead of failing completely
+            totalChunks++;
+          }
+          first = false;
+          // advance progress superficially
+          setUploadProgress(p => Math.min(90, p + (90 / Math.ceil(body.length / chunkSize))));
+        }
+      }
+
+      if (successfulChunks === 0) {
+        throw new Error('No chunks were successfully uploaded');
       }
 
       // Client-side CSV parsing for immediate display

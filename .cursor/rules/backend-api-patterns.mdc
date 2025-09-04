@@ -1,0 +1,46 @@
+# Backend API Patterns
+
+## Server Architecture
+- **Framework**: Fastify with TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Entry Point**: [server/src/index.ts](mdc:server/src/index.ts)
+- **Schema**: [server/prisma/schema.prisma](mdc:server/prisma/schema.prisma)
+
+## Key Endpoints
+1. **File Management**:
+   - `GET /files` - List all files
+   - `POST /files` - Create new file
+   - `DELETE /files/:id` - Delete file
+   - `GET /files/:id/ingest` - Ingest CSV data
+
+2. **Data Retrieval**:
+   - `GET /groups` - Get grouped campaign data
+   - `GET /campaigns` - Get raw campaign data
+
+## File Upload Flow
+1. **Create File**: POST to `/files` with metadata
+2. **Ingest Data**: POST to `/files/:id/ingest` with CSV content
+3. **Chunked Upload**: Large files split into chunks with `append` parameter
+4. **Validation**: Headers and data validation on backend
+5. **Database Insert**: Batched inserts with error handling
+
+## Configuration
+- **Body Limit**: 50MB for large file uploads
+- **Content Types**: `text/plain`, `text/csv`, `application/octet-stream`
+- **Batching**: 1000 rows per database batch
+- **Error Handling**: Skip problematic rows, log errors
+
+## Database Schema
+- **File**: File metadata and upload info
+- **CampaignRow**: Individual campaign data rows
+- **Group**: Grouped campaign data for dashboard
+
+## Error Handling
+- **413**: Payload too large (handled by chunking)
+- **500**: Internal server error (CSV parsing issues)
+- **Validation**: Missing headers or invalid data
+- **Database**: Connection or constraint errors
+description:
+globs:
+alwaysApply: true
+---

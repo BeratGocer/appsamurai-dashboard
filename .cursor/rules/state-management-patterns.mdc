@@ -1,42 +1,43 @@
 # State Management Patterns
 
-## Core State Structure
-- **App Level**: [src/App.tsx](mdc:src/App.tsx) manages uploaded files and active file
-- **Dashboard Level**: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) manages view state
-- **Component Level**: Individual components manage their own UI state
+## File State Management
+- **Main State**: Managed in [App.tsx](mdc:src/App.tsx) with `useState`
+- **File Operations**: Create, delete, select files
+- **Backend Sync**: Always sync with backend API calls
 
-## Key State Variables
+## State Structure
 ```typescript
-// App.tsx
-const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-const [activeFileId, setActiveFileId] = useState<string>('')
-const [showUploadPage, setShowUploadPage] = useState(false)
-
-// Dashboard.tsx
-const [currentTab, setCurrentTab] = useState<'overview' | 'customers' | 'managers'>('overview')
-const [selectedGame, setSelectedGame] = useState<string | null>(null)
-const [hiddenTables, setHiddenTables] = useState<Set<string>>(new Set())
+interface AppState {
+  files: UploadedFile[];
+  selectedFile: string | null;
+  groups: Group[];
+  customers: string[];
+  accountManagers: string[];
+  loading: boolean;
+  error: string | null;
+}
 ```
 
+## File Lifecycle
+1. **Upload**: Create file → Ingest data → Update state
+2. **Select**: Update selectedFile → Load data → Update groups
+3. **Delete**: Remove from backend → Update local state
+4. **Refresh**: Load from backend → Sync state
+
 ## Data Flow
-1. **File Upload**: FileUpload → App → Backend → Database
-2. **File Loading**: App → Backend → App → Dashboard → Components
-3. **State Updates**: User actions → Component state → App state → Backend
-4. **Persistence**: Backend stores data, localStorage as fallback
+1. **File Upload**: [FileUpload.tsx](mdc:src/components/FileUpload.tsx) → [App.tsx](mdc:src/App.tsx)
+2. **Data Processing**: [csvParser.ts](mdc:src/utils/csvParser.ts) → State
+3. **Display**: State → [Dashboard.tsx](mdc:src/components/Dashboard.tsx)
 
-## State Management Rules
-- Keep state as close to where it's used as possible
-- Use React Context for theme and global settings
-- Pass data down through props, not through context
-- Use localStorage for user preferences only
-- Always handle loading and error states
+## State Updates
+- **File Operations**: Always call backend API first
+- **Data Loading**: Use `useEffect` for initial load
+- **Error Handling**: Set error state for user feedback
+- **Loading States**: Show loading indicators during operations
 
-## Performance Considerations
-- Memoize expensive calculations with useMemo
-- Use React.memo for components that don't need frequent updates
-- Lazy load components when possible
-- Debounce search and filter operations
-description:
-globs:
-alwaysApply: true
----
+## Best Practices
+- Keep state minimal and derived
+- Always validate data before state updates
+- Handle loading and error states
+- Use TypeScript for type safety
+- Sync with backend for persistence

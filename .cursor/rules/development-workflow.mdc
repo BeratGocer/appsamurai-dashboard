@@ -1,42 +1,55 @@
 
 # Development Workflow
 
-## Project Setup
-- Node.js project with Vite build tool
-- React 19 + TypeScript + Tailwind CSS
-- shadcn/ui component library
-- Development server runs on http://localhost:5173 (or next available port)
+## Project Structure
+- **Frontend**: React + TypeScript + Vite in root directory
+- **Backend**: Fastify + Prisma in `server/` directory
+- **Database**: PostgreSQL with Prisma migrations
 
-## Development Commands
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+## Development Setup
+```bash
+# Install dependencies
+pnpm install
+cd server && pnpm install
 
-## File Organization
-- Keep components in `src/components/`
-- UI components in `src/components/ui/`
-- Types in `src/types/index.ts`
-- Utilities in `src/utils/`
-- Use absolute imports with `@/` alias
+# Start development servers
+pnpm dev          # Frontend (Vite)
+cd server && pnpm dev  # Backend (Fastify)
+```
 
-## Code Quality
-- Use TypeScript strict mode
-- Follow ESLint configuration
-- Use Prettier for code formatting
-- Write meaningful component and function names
-- Add JSDoc comments for complex functions
-
-## Testing Strategy
-- Test CSV parsing with sample data
-- Verify component rendering with different data states
-- Test responsive design on different screen sizes
-- Validate theme switching functionality
+## Key Commands
+- **Build**: `pnpm build` - Build frontend for production
+- **Dev**: `pnpm dev` - Start development server
+- **Backend**: `cd server && pnpm dev` - Start backend server
+- **Database**: `cd server && pnpm prisma migrate dev` - Run migrations
 
 ## Deployment
-- Build output goes to `dist/` directory
-- Static assets served from `public/`
-- Configure for production hosting (Vercel, Netlify, etc.)
-3. Build components in `src/components/`
-4. Add UI components from shadcn/ui as needed
-5. Update main dashboard integration
+- **Frontend**: Deployed to Netlify at `https://ubiquitous-sherbet-b4f6bf.netlify.app`
+- **Backend**: Deployed to Railway/Cloudflare
+- **Database**: PostgreSQL hosted on Railway
+
+## File Upload Testing
+1. **Test File**: Use `2025-9-4_9_57_adjust_report_export.csv`
+2. **Customer**: "test müşteri" or "CrayzLabs"
+3. **Manager**: "test Account Manager" or "Eylül"
+4. **Expected**: Successful upload without "ingest failed" error
+
+## Debugging Process
+1. **Check Backend Logs**: Look for specific error messages
+2. **Test API Endpoints**: Use curl or Postman
+3. **Validate CSV Format**: Check headers and data structure
+4. **Check Database**: Verify data insertion
+5. **Frontend Console**: Look for JavaScript errors
+
+## Common Issues
+- **413 Error**: Increase `bodyLimit` in backend
+- **500 Error**: Check CSV parsing and database constraints
+- **File Reappearing**: Ensure proper state management
+- **Empty Files**: Validate CSV data before processing
+
+## Best Practices
+- Always test with real CSV files
+- Check server logs for errors
+- Validate data at multiple levels
+- Use TypeScript for type safety
+- Implement proper error handling

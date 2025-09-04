@@ -1,47 +1,35 @@
----
-description: File upload component patterns and best practices
----
 
 # File Upload Patterns
 
-## File Upload Component Structure
-The [FileUpload.tsx](mdc:src/components/FileUpload.tsx) component handles:
-- CSV file selection and validation
-- Customer name and account manager extraction
-- Data parsing via [csvParser.ts](mdc:src/utils/csvParser.ts)
-- File metadata generation
-
 ## Upload Flow
-1. User selects CSV file
-2. Parse and validate data structure  
-3. Extract metadata (customer, manager from filename/content)
-4. Generate unique file ID and upload date
-5. Store in state + localStorage
-6. Auto-navigate to overview tab
+1. **File Selection**: Users select CSV files through [FileUpload.tsx](mdc:src/components/FileUpload.tsx)
+2. **Customer/Manager Input**: Users provide customer and account manager names
+3. **Chunked Upload**: Large files are split into ~200KB chunks for upload
+4. **Backend Processing**: Files are processed via `/ingest` endpoint in [server/src/index.ts](mdc:server/src/index.ts)
 
-## File Metadata Extraction
-Extract customer name and account manager from:
-- Filename patterns
-- CSV content analysis  
-- User input during upload
+## Key Components
+- **FileUpload Component**: [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx)
+- **API Functions**: [src/utils/api.ts](mdc:src/utils/api.ts)
+- **Backend Handler**: [server/src/index.ts](mdc:server/src/index.ts) - `/files/:id/ingest` endpoint
 
-## File Storage Pattern
-```tsx
-interface UploadedFile {
-  id: string;           // Unique identifier
-  name: string;         // Original filename
-  size: number;         // File size
-  uploadDate: string;   // ISO date string
-  data: CampaignData[]; // Parsed CSV data
-  isActive: boolean;    // Currently selected
-  customerName?: string;     // Extracted customer
-  accountManager?: string;   // Extracted manager
-}
-```
+## Upload Process
+1. **Chunking**: Files > 200KB are split into chunks
+2. **First Chunk**: Sent with `append=0` to clear existing data
+3. **Subsequent Chunks**: Sent with `append=1` to append data
+4. **Progress Tracking**: Shows upload progress to user
 
-## File Management Actions
-- **Select**: Switch active file + navigate to overview
-- **Delete**: Remove from state + localStorage with cleanup
+## Error Handling
+- **413 Payload Too Large**: Handled by chunked upload
+- **500 Internal Server Error**: Usually CSV parsing issues
+- **Validation**: Required headers checked on backend
+- **Sanitization**: Numeric fields converted to null if invalid
+
+## Best Practices
+- Always validate CSV headers before processing
+- Handle BOM characters and quoted fields
+- Sanitize numeric data to prevent database errors
+- Use batching for database inserts (1000 rows per batch)
+- Provide fallback for failed batch inserts
 - **Upload**: Add new file + set as active + auto-navigate
 
 Always maintain localStorage sync for persistence across sessions.

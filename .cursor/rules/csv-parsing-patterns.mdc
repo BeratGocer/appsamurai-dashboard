@@ -1,18 +1,8 @@
 
 # CSV Parsing Patterns
 
-## Core Parser
-- **Main Parser**: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
-- **Data Types**: [src/types/index.ts](mdc:src/types/index.ts)
-
-## Key Functions
-- `parseCSV()` - Main CSV parsing function
-- `getGameCountryPublisherGroups()` - Group data by game/country/publisher
-- `getCustomers()` - Extract unique customers
-- `getAccountManagers()` - Extract unique account managers
-- `synchronizeGroupDates()` - Align date ranges across groups
-
 ## Data Structure
+Campaign data follows this structure defined in [src/types/index.ts](mdc:src/types/index.ts):
 ```typescript
 interface CampaignData {
   app: string;
@@ -20,24 +10,32 @@ interface CampaignData {
   adgroup_network: string;
   day: string;
   installs: number;
-  ecpi: number;
-  adjust_cost: number;
-  ad_revenue: number;
-  roas_d0: number;
-  roas_d7: number;
-  roas_d30: number;
-  roas_d45: number;
+  ecpi: number | null;
+  cost: number | null;
+  all_revenue: number | null;
+  roas_d0: number | null;
+  roas_d1: number | null;
+  // ... additional roas fields
 }
 ```
 
-## Processing Flow
-1. **Raw CSV** → Parse into CampaignData[]
-2. **CampaignData[]** → Group by game/country/publisher
-3. **Groups** → Calculate KPIs and metrics
-4. **Results** → Display in dashboard components
+## Parsing Logic
+- **Frontend**: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) handles initial parsing
+- **Backend**: [server/src/index.ts](mdc:server/src/index.ts) handles robust parsing with error handling
 
-## Important Notes
-- Always handle missing or invalid data gracefully
-- Use Turkish date formatting (DD.MM.YYYY)
-- Calculate ROAS as percentages (multiply by 100)
-- Handle multiple CSV formats flexibly
+## Key Parsing Features
+1. **Header Validation**: Required fields checked before processing
+2. **BOM Handling**: Byte Order Mark characters removed
+3. **Quote Handling**: Proper parsing of quoted fields with commas
+4. **Numeric Sanitization**: Empty/invalid values converted to null
+5. **Batching**: Database inserts in chunks of 1000 rows
+
+## Error Handling
+- **Malformed CSV**: Skip problematic rows, log errors
+- **Missing Headers**: Return validation error
+- **Invalid Data**: Sanitize to null values
+- **Database Limits**: Use batching with fallback to individual inserts
+
+## Data Validation
+Required headers: `app`, `campaign_network`, `adgroup_network`, `day`, `installs`
+Numeric fields: `ecpi`, `cost`, `all_revenue`, `roas_d*` (all ROAS fields)

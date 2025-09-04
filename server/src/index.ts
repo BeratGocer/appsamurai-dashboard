@@ -278,7 +278,7 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
           roas_d30: iD30 >= 0 ? toNumericStringOrNull(v[iD30]) : null,
           roas_d45: iD45 >= 0 ? toNumericStringOrNull(v[iD45]) : null,
         })
-      } catch (e: any) {
+      } catch {
         skipped++
         if (!firstError) firstError = `Parse error at line ${li+1}`
       }

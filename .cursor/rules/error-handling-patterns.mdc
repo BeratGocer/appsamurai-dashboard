@@ -1,232 +1,47 @@
 # Error Handling Patterns
 
-## Common Error Types
+## Common Upload Errors
 
-### TypeScript Build Errors
-- **TS6133**: Unused imports/variables
-- **TS2345**: Type mismatches
-- **TS1128**: Syntax errors in commented code
-- **TS7053**: Index signature issues
+### 413 Payload Too Large
+- **Cause**: File size exceeds server body limit
+- **Solution**: Implement chunked upload in [FileUpload.tsx](mdc:src/components/FileUpload.tsx)
+- **Backend Fix**: Increase `bodyLimit` in [server/src/index.ts](mdc:server/src/index.ts)
 
-### Runtime Errors
-- **QuotaExceededError**: localStorage limits
-- **ERR_CONNECTION_REFUSED**: Backend not running
-- **CORS Errors**: Cross-origin issues
-- **File Upload Errors**: Invalid CSV format
+### 500 Internal Server Error
+- **Cause**: CSV parsing failures or database errors
+- **Solution**: Robust parsing with error handling
+- **Debug**: Check server logs for specific error details
 
-## Error Prevention Strategies
+### "ingest failed" Error
+- **Common Causes**:
+  - Malformed CSV data
+  - Missing required headers
+  - Invalid numeric values
+  - Database constraint violations
+- **Solution**: Implement data sanitization and validation
 
-### Import Management
-```typescript
-// CORRECT: Remove unused imports
-import { useState, useEffect } from 'react';
-// import React from 'react'; // Remove if unused
+## File Management Issues
 
-// CORRECT: Use underscore prefix for unused parameters
-const handleEditKPI = (_configId: string) => {
-  // Implementation
-};
-```
+### Deleted Files Reappearing
+- **Cause**: Frontend state not synced with backend
+- **Solution**: Proper state management in [App.tsx](mdc:src/App.tsx)
+- **Pattern**: Always call backend API for file operations
 
-### Type Safety
-```typescript
-// CORRECT: Use proper type assertions
-const columnLabel = COLUMN_LABELS[rule.column as keyof typeof COLUMN_LABELS] || rule.column;
+### Empty Files After Upload
+- **Cause**: CSV parsing failed silently
+- **Solution**: Validate data before database insert
+- **Debug**: Check server logs for parsing errors
 
-// CORRECT: Handle optional properties
-interface Props {
-  data?: CampaignData[];
-  onUpdate?: (data: CampaignData) => void;
-}
-```
+## Debugging Steps
+1. **Check Server Logs**: Look for specific error messages
+2. **Validate CSV Format**: Ensure proper headers and data structure
+3. **Test with Small File**: Verify upload process works
+4. **Check Database**: Verify data was inserted correctly
+5. **Frontend Console**: Look for JavaScript errors
 
-### Commented Code
-```typescript
-// CORRECT: Comment entire blocks
-// const sensors = useSensors(
-//   useSensor(PointerSensor, {
-//     activationConstraint: {
-//       distance: 8,
-//     },
-//   })
-// );
-
-// WRONG: Partial comments cause syntax errors
-// const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
-```
-
-## Debugging Workflow
-
-### 1. Build Error Resolution
-```bash
-# Check for TypeScript errors
-pnpm build
-
-# Fix errors in order:
-# 1. Remove unused imports
-# 2. Fix type mismatches
-# 3. Fix syntax errors
-# 4. Update type definitions
-```
-
-### 2. Runtime Error Investigation
-```bash
-# Check backend status
-curl http://localhost:8787/health
-
-# Check database connection
-psql -d appsamurai -c "SELECT 1;"
-
-# Check process status
-ps aux | grep -E "(vite|fastify|postgres)"
-```
-
-### 3. Browser Debugging
-```javascript
-// Console debugging
-console.log('Data:', data);
-console.log('Settings:', settings);
-
-// Network tab
-// Check API calls and responses
-
-// Application tab
-// Check localStorage/IndexedDB
-```
-
-## Error Recovery Patterns
-
-### localStorage Quota Management
-```typescript
-// Handle storage limits
-try {
-  localStorage.setItem('key', JSON.stringify(largeData));
-} catch (error) {
-  if (error.name === 'QuotaExceededError') {
-    // Fallback to IndexedDB
-    await idb.saveFile(fileId, data);
-  }
-}
-```
-
-### API Error Handling
-```typescript
-// Graceful API failure
-const fetchData = async () => {
-  try {
-    const response = await api.getFileGroups(fileId);
-    return response.data;
-  } catch (error) {
-    console.warn('API failed, using local data:', error);
-    return getLocalData(fileId);
-  }
-};
-```
-
-### File Upload Validation
-```typescript
-// Validate before processing
-const validateCSV = (content: string): boolean => {
-  if (!content || content.trim().length === 0) {
-    throw new Error('CSV dosyası boş');
-  }
-  
-  const lines = content.trim().split('\n');
-  if (lines.length < 2) {
-    throw new Error('CSV dosyası geçersiz');
-  }
-  
-  return true;
-};
-```
-
-## Error Reporting
-
-### User-Friendly Messages
-```typescript
-const errorMessages = {
-  'QuotaExceededError': 'Dosya çok büyük, lütfen daha küçük bir dosya deneyin',
-  'ERR_CONNECTION_REFUSED': 'Sunucu bağlantısı kurulamadı',
-  'CORS_ERROR': 'Güvenlik hatası, lütfen sayfayı yenileyin',
-  'INVALID_CSV': 'CSV formatı geçersiz',
-};
-```
-
-### Error Logging
-```typescript
-// Log errors for debugging
-const logError = (error: Error, context: string) => {
-  console.error(`[${context}] Error:`, error);
-  
-  // Send to error tracking service (future)
-  // errorTracker.captureException(error);
-};
-```
-
-## Testing Error Scenarios
-
-### Build Testing
-```bash
-# Test build process
-pnpm build
-
-# Test development server
-pnpm dev
-
-# Test production build
-pnpm build && npx serve dist
-```
-
-### Runtime Testing
-```bash
-# Test backend connectivity
-curl http://localhost:8787/health
-
-# Test file upload
-# Upload large CSV file
-
-# Test localStorage limits
-# Upload multiple large files
-```
-
-## Critical Error Patterns
-
-### Must Fix Before Deploy
-- [ ] All TypeScript build errors
-- [ ] Unused imports removed
-- [ ] Type mismatches resolved
-- [ ] Syntax errors in comments fixed
-- [ ] localStorage quota handling implemented
-
-### Monitor in Production
-- [ ] API response times
-- [ ] File upload success rates
-- [ ] User error reports
-- [ ] Browser console errors
-- [ ] Network request failures
-
-## Error Prevention Checklist
-
-### Code Review
-- [ ] No unused imports
-- [ ] Proper type definitions
-- [ ] Error boundaries implemented
-- [ ] Graceful fallbacks
-- [ ] User-friendly error messages
-
-### Testing
-- [ ] Build succeeds
-- [ ] Development server runs
-- [ ] File upload works
-- [ ] Dashboard displays correctly
-- [ ] Settings persist properly
-description:
-globs:
-alwaysApply: true
----
+## Best Practices
+- Always log errors with context
+- Provide user-friendly error messages
+- Implement graceful degradation
+- Validate data at multiple levels
+- Use TypeScript for type safety
