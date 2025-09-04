@@ -12,6 +12,9 @@ const app = Fastify({
   bodyLimit: 50 * 1024 * 1024 // 50MB limit
 })
 
+// Simple in-memory lock to prevent concurrent ingest for same fileId
+const activeIngests = new Set<string>()
+
 await app.register(cors, { origin: true })
 await app.register(helmet)
 
@@ -168,16 +171,31 @@ function normalizePublisherPrefix(adg: string): string {
 }
 
 app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams, Querystring: IngestQuery }>, reply: FastifyReply) => {
+  const { id } = req.params
   try {
-    const { id } = req.params
     const { append } = req.query || {}
+    
+    // Check if ingest is already in progress for this fileId
+    if (activeIngests.has(id)) {
+      return reply.code(409).send({ error: 'ingest_in_progress', message: 'File ingest already in progress' })
+    }
+    
+    // Lock this fileId
+    activeIngests.add(id)
+    
     const bodyText: string = typeof (req.body as unknown) === 'string' ? (req.body as string) : (req.body as { toString?: () => string })?.toString?.() || ''
-    if (!bodyText || bodyText.trim().length === 0) return reply.code(400).send({ error: 'Empty body' })
+    if (!bodyText || bodyText.trim().length === 0) {
+      activeIngests.delete(id) // Release lock
+      return reply.code(400).send({ error: 'Empty body' })
+    }
 
     // Normalize newlines and trim trailing whitespace
     const normalized = bodyText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim()
     const lines = normalized.split('\n').filter((l: string) => l.length > 0)
-    if (lines.length < 2) return reply.code(400).send({ error: 'No data rows' })
+    if (lines.length < 2) {
+      activeIngests.delete(id) // Release lock
+      return reply.code(400).send({ error: 'No data rows' })
+    }
 
     // CSV helpers (handle quotes and commas inside quotes)
     const parseCsvLine = (line: string): string[] => {
@@ -226,6 +244,7 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     const iD45 = idx('roas_d45')
 
     if (iApp < 0 || iCN < 0 || iAN < 0 || iDay < 0 || iInst < 0) {
+      activeIngests.delete(id) // Release lock
       return reply.code(400).send({ error: 'Missing required headers' })
     }
 
@@ -284,7 +303,10 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
       }
     }
 
-    if (rows.length === 0) return reply.code(400).send({ error: 'No valid rows' })
+    if (rows.length === 0) {
+      activeIngests.delete(id) // Release lock
+      return reply.code(400).send({ error: 'No valid rows' })
+    }
 
     if (!append || append === '0' || append === 'false') {
       await prisma.campaignRow.deleteMany({ where: { fileId: id } })
@@ -313,7 +335,11 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     reply.send({ inserted: rows.length, skipped, reason: firstError ?? undefined, appended: !!append && append !== '0' && append !== 'false' })
   } catch (err) {
     req.log.error({ err }, 'ingest failed')
+    activeIngests.delete(id) // Release lock on error
     reply.code(500).send({ error: 'ingest_failed' })
+  } finally {
+    // Always release lock when done
+    activeIngests.delete(id)
   }
 })
 

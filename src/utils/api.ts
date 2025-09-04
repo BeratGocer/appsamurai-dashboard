@@ -35,6 +35,11 @@ export async function apiIngestCsv(
     headers: { 'Content-Type': 'text/plain' },
     body: csvText,
   })
+  if (res.status === 409) {
+    // Ingest already in progress, wait a bit and retry
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return apiIngestCsv(fileId, csvText, options)
+  }
   if (!res.ok) throw new Error('ingest failed')
   return res.json()
 }
