@@ -201,6 +201,11 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     }
 
     const rows: CampaignRowInput[] = []
+    const toNullIfEmpty = (val: string | undefined) => {
+      if (val === undefined) return null
+      const t = val.trim()
+      return t === '' ? null : t
+    }
     for (let li = 1; li < lines.length; li++) {
       const row = lines[li]
       if (!row.trim()) continue
@@ -213,13 +218,13 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
         adgroupNetwork: v[iAN] || '',
         day: new Date(v[iDay] || Date.now()),
         installs: Number(v[iInst] || 0),
-        ecpi: iEcpi >= 0 ? v[iEcpi] : null,
-        adjustCost: iCost >= 0 ? v[iCost] : null,
-        adRevenue: iRev >= 0 ? v[iRev] : null,
-        roas_d0: iD0 >= 0 ? v[iD0] : null,
-        roas_d7: iD7 >= 0 ? v[iD7] : null,
-        roas_d30: iD30 >= 0 ? v[iD30] : null,
-        roas_d45: iD45 >= 0 ? v[iD45] : null,
+        ecpi: iEcpi >= 0 ? toNullIfEmpty(v[iEcpi]) : null,
+        adjustCost: iCost >= 0 ? toNullIfEmpty(v[iCost]) : null,
+        adRevenue: iRev >= 0 ? toNullIfEmpty(v[iRev]) : null,
+        roas_d0: iD0 >= 0 ? toNullIfEmpty(v[iD0]) : null,
+        roas_d7: iD7 >= 0 ? toNullIfEmpty(v[iD7]) : null,
+        roas_d30: iD30 >= 0 ? toNullIfEmpty(v[iD30]) : null,
+        roas_d45: iD45 >= 0 ? toNullIfEmpty(v[iD45]) : null,
       })
     }
 
@@ -228,7 +233,12 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     if (!append || append === '0' || append === 'false') {
       await prisma.campaignRow.deleteMany({ where: { fileId: id } })
     }
-    await prisma.campaignRow.createMany({ data: rows })
+    // Batch insert to avoid parameter limits
+    const batchSize = 1000
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const slice = rows.slice(i, i + batchSize)
+      await prisma.campaignRow.createMany({ data: slice })
+    }
     reply.send({ inserted: rows.length, appended: !!append && append !== '0' && append !== 'false' })
   } catch (err) {
     req.log.error({ err }, 'ingest failed')
