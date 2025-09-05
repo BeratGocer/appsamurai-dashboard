@@ -11,6 +11,9 @@ export function parseCSV(csvContent: string): CampaignData[] {
   } else if (firstLine.startsWith('gönder app,')) {
     firstLine = firstLine.replace('gönder app,', 'app,'); // Fix corrupted header
     lines[0] = firstLine;
+  } else if (firstLine.startsWith('gönderapp,')) {
+    firstLine = firstLine.replace('gönderapp,', 'app,'); // Fix corrupted header without space
+    lines[0] = firstLine;
   }
   
   const headers = firstLine.split(',').map(h => h.trim());
