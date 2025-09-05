@@ -92,9 +92,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   availableColumns = [],
 }) => {
   // Simple local state - no complex dependencies
-  const [newRule, setNewRule] = useState({
+  const [newRule, setNewRule] = useState<Partial<ConditionalFormattingRule>>({
     column: 'installs',
-    operator: '>' as const,
+    operator: '>',
     value: 100,
     color: COLOR_PRESETS[0].color,
     backgroundColor: COLOR_PRESETS[0].backgroundColor,
@@ -159,11 +159,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const addConditionalRule = () => {
     const rule: ConditionalFormattingRule = {
       id: Date.now().toString(),
-      column: newRule.column,
-      operator: newRule.operator,
-      value: newRule.value,
-      color: newRule.color,
-      backgroundColor: newRule.backgroundColor,
+      column: newRule.column as string,
+      operator: newRule.operator as ConditionalFormattingRule['operator'],
+      value: newRule.value || 0,
+      color: newRule.color || COLOR_PRESETS[0].color,
+      backgroundColor: newRule.backgroundColor || COLOR_PRESETS[0].backgroundColor,
       isActive: true,
     };
 
@@ -216,11 +216,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     
     const updatedRule: ConditionalFormattingRule = {
       id: editingRule,
-      column: newRule.column,
-      operator: newRule.operator,
-      value: newRule.value,
-      color: newRule.color,
-      backgroundColor: newRule.backgroundColor,
+      column: newRule.column as string,
+      operator: newRule.operator as ConditionalFormattingRule['operator'],
+      value: newRule.value || 0,
+      color: newRule.color || COLOR_PRESETS[0].color,
+      backgroundColor: newRule.backgroundColor || COLOR_PRESETS[0].backgroundColor,
       isActive: true,
     };
 
