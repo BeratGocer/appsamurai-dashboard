@@ -378,6 +378,190 @@ function normalizePublisherPrefix(adg: string): string {
   return decodedAdNetwork;
 }
 
+// Comprehensive Prisma error analysis
+function analyzePrismaError(error: any, sampleRows: CampaignRowInput[]): {
+  code: string
+  message: string
+  meta: any
+  sampleRows: any[]
+  diagnosis: string
+} {
+  const code = error.code || 'UNKNOWN'
+  const message = error.message || 'Unknown error'
+  const meta = error.meta || {}
+  
+  let diagnosis = 'Unknown error'
+  
+  // Analyze specific Prisma error codes
+  switch (code) {
+    case 'P2000':
+      diagnosis = `String length exceeded limit. Field: ${meta.target || 'unknown'}, Max length: ${meta.max_length || 'unknown'}`
+      break
+    case 'P2001':
+      diagnosis = `Record not found. Constraint: ${meta.constraint || 'unknown'}`
+      break
+    case 'P2002':
+      diagnosis = `Unique constraint violation. Constraint: ${meta.constraint || 'unknown'}, Fields: ${meta.target || 'unknown'}`
+      break
+    case 'P2003':
+      diagnosis = `Foreign key constraint violation. Field: ${meta.field_name || 'unknown'}`
+      break
+    case 'P2004':
+      diagnosis = `Constraint violation. Constraint: ${meta.constraint || 'unknown'}`
+      break
+    case 'P2005':
+      diagnosis = `Invalid value for field. Field: ${meta.field_name || 'unknown'}, Value: ${meta.field_value || 'unknown'}`
+      break
+    case 'P2006':
+      diagnosis = `Invalid value for field. Field: ${meta.field_name || 'unknown'}, Expected: ${meta.expected || 'unknown'}`
+      break
+    case 'P2007':
+      diagnosis = `Data validation error. Field: ${meta.field_name || 'unknown'}`
+      break
+    case 'P2008':
+      diagnosis = `Query parsing error. Details: ${meta.details || 'unknown'}`
+      break
+    case 'P2009':
+      diagnosis = `Query validation error. Details: ${meta.details || 'unknown'}`
+      break
+    default:
+      diagnosis = `Unhandled error code: ${code}`
+  }
+  
+  return {
+    code,
+    message,
+    meta,
+    sampleRows: sampleRows.slice(0, 4), // Show first 4 rows for analysis
+    diagnosis
+  }
+}
+
+// Comprehensive data validation and normalization
+function validateAndNormalizeRow(row: CampaignRowInput, rowNumber: number): CampaignRowInput {
+  const errors: string[] = []
+  
+  // Normalize string fields
+  const normalizedRow: CampaignRowInput = {
+    ...row,
+    fileId: row.fileId?.trim() || '',
+    app: row.app?.trim() || '',
+    campaignNetwork: row.campaignNetwork?.trim() || '',
+    adgroupNetwork: row.adgroupNetwork?.trim() || '',
+  }
+  
+  // Validate NOT NULL fields
+  if (!normalizedRow.fileId) {
+    errors.push('fileId is required')
+  }
+  if (!normalizedRow.app) {
+    errors.push('app is required')
+  }
+  if (!normalizedRow.campaignNetwork) {
+    errors.push('campaignNetwork is required')
+  }
+  if (!normalizedRow.adgroupNetwork) {
+    errors.push('adgroupNetwork is required')
+  }
+  if (!normalizedRow.day) {
+    errors.push('day is required')
+  }
+  if (normalizedRow.installs === undefined || normalizedRow.installs === null) {
+    errors.push('installs is required')
+  }
+  
+  // Validate string lengths (PostgreSQL limits)
+  if (normalizedRow.fileId.length > 255) {
+    errors.push(`fileId too long: ${normalizedRow.fileId.length} chars (max 255)`)
+  }
+  if (normalizedRow.app.length > 255) {
+    errors.push(`app too long: ${normalizedRow.app.length} chars (max 255)`)
+  }
+  if (normalizedRow.campaignNetwork.length > 255) {
+    errors.push(`campaignNetwork too long: ${normalizedRow.campaignNetwork.length} chars (max 255)`)
+  }
+  if (normalizedRow.adgroupNetwork.length > 255) {
+    errors.push(`adgroupNetwork too long: ${normalizedRow.adgroupNetwork.length} chars (max 255)`)
+  }
+  
+  // Validate and normalize date
+  if (normalizedRow.day) {
+    try {
+      const date = new Date(normalizedRow.day)
+      if (isNaN(date.getTime())) {
+        errors.push(`Invalid date format: ${normalizedRow.day}`)
+      } else {
+        // Normalize to ISO date string
+        normalizedRow.day = date
+      }
+    } catch (error) {
+      errors.push(`Date parsing error: ${error}`)
+    }
+  }
+  
+  // Validate and normalize numeric fields
+  const numericFields = ['installs', 'ecpi', 'adjustCost', 'adRevenue', 'roas_d0', 'roas_d1', 'roas_d2', 'roas_d3', 'roas_d4', 'roas_d5', 'roas_d6', 'roas_d7', 'roas_d14', 'roas_d21', 'roas_d30', 'roas_d45']
+  
+  for (const field of numericFields) {
+    const value = normalizedRow[field as keyof CampaignRowInput]
+    if (value !== null && value !== undefined) {
+      if (typeof value === 'string') {
+        const numValue = parseFloat(value)
+        if (isNaN(numValue)) {
+          errors.push(`${field} is not a valid number: ${value}`)
+        } else {
+          // Convert to number for numeric fields, keep as string for decimal fields
+          if (field === 'installs') {
+            (normalizedRow as any)[field] = Math.round(numValue)
+          } else {
+            (normalizedRow as any)[field] = numValue
+          }
+        }
+      } else if (typeof value === 'number') {
+        if (!isFinite(value)) {
+          errors.push(`${field} is not a finite number: ${value}`)
+        } else if (field === 'installs' && !Number.isInteger(value)) {
+          errors.push(`${field} must be an integer: ${value}`)
+        }
+      }
+    }
+  }
+  
+  // Validate installs is positive integer
+  if (normalizedRow.installs < 0) {
+    errors.push(`installs must be non-negative: ${normalizedRow.installs}`)
+  }
+  
+  // Validate decimal precision (max 10 decimal places for Decimal(20,10))
+  const decimalFields = ['ecpi', 'adjustCost', 'adRevenue', 'roas_d0', 'roas_d1', 'roas_d2', 'roas_d3', 'roas_d4', 'roas_d5', 'roas_d6', 'roas_d7', 'roas_d14', 'roas_d21', 'roas_d30', 'roas_d45']
+  
+  for (const field of decimalFields) {
+    const value = normalizedRow[field as keyof CampaignRowInput]
+    if (value !== null && value !== undefined) {
+      const numValue = typeof value === 'string' ? parseFloat(value) : (typeof value === 'number' ? value : 0)
+      if (isFinite(numValue)) {
+        // Check decimal places
+        const decimalPlaces = (numValue.toString().split('.')[1] || '').length
+        if (decimalPlaces > 10) {
+          errors.push(`${field} has too many decimal places: ${decimalPlaces} (max 10)`)
+        }
+        
+        // Check magnitude (max 20 digits total)
+        const magnitude = Math.abs(numValue)
+        if (magnitude >= Math.pow(10, 20)) {
+          errors.push(`${field} value too large: ${magnitude} (max 10^20)`)
+        }
+      }
+    }
+  }
+  
+  if (errors.length > 0) {
+    throw new Error(`Row ${rowNumber} validation failed: ${errors.join(', ')}`)
+  }
+  
+  return normalizedRow
+}
+
 app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams, Querystring: IngestQuery }>, reply: FastifyReply) => {
   const { id } = req.params
   try {
@@ -594,30 +778,116 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     if (!append || append === '0' || append === 'false') {
       await prisma.campaignRow.deleteMany({ where: { fileId: id } })
     }
-    // Batch insert to avoid parameter limits
-    const batchSize = 500
-    try {
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const slice = rows.slice(i, i + batchSize)
-        await prisma.campaignRow.createMany({ data: slice })
+    // Comprehensive data validation and normalization
+    const validatedRows = rows.map((row, index) => {
+      try {
+        return validateAndNormalizeRow(row, index + 1)
+      } catch (error) {
+        const err = error as Error
+        skipped++
+        if (!firstError) firstError = `Validation error at row ${index + 1}: ${err.message}`
+        req.log.warn({ error: err.message, row, index: index + 1 }, 'Row validation failed')
+        return null
       }
-    } catch (error) {
-      req.log.error({ error, fileId: id }, 'Batch insert failed, falling back to individual inserts');
+    }).filter(Boolean) as CampaignRowInput[]
+
+    // Batch insert with comprehensive error handling
+    const batchSize = 500
+    let inserted = 0
+    let batchErrors: Array<{ batch: number, error: any, rows: CampaignRowInput[] }> = []
+    
+    try {
+      for (let i = 0; i < validatedRows.length; i += batchSize) {
+        const slice = validatedRows.slice(i, i + batchSize)
+        const batchIndex = Math.floor(i / batchSize) + 1
+        
+        try {
+          await prisma.campaignRow.createMany({ 
+            data: slice,
+            skipDuplicates: true // Skip duplicates instead of failing
+          })
+          inserted += slice.length
+          req.log.info({ batchIndex, batchSize: slice.length, fileId: id }, 'Batch insert successful')
+        } catch (batchError) {
+          batchErrors.push({ batch: batchIndex, error: batchError, rows: slice })
+          req.log.error({ batchIndex, error: batchError, fileId: id }, 'Batch insert failed, analyzing error')
+          
+          // Analyze Prisma error in detail
+          const prismaError = batchError as any
+          const errorAnalysis = analyzePrismaError(prismaError, slice)
+          req.log.error({ 
+            batchIndex, 
+            errorCode: errorAnalysis.code,
+            errorMessage: errorAnalysis.message,
+            meta: errorAnalysis.meta,
+            sampleRows: errorAnalysis.sampleRows,
+            fileId: id 
+          }, 'Detailed Prisma error analysis')
+          
+          // Try individual inserts for this batch
+          for (const row of slice) {
+            try {
+              await prisma.campaignRow.create({ data: row })
+              inserted++
+            } catch (individualError) {
+              skipped++
+              const individualAnalysis = analyzePrismaError(individualError, [row])
+              req.log.error({ 
+                individualError: individualAnalysis,
+                row,
+                fileId: id 
+              }, 'Individual row insert failed')
+              
+              if (!firstError) {
+                firstError = `Row insert failed: ${individualAnalysis.message} (Code: ${individualAnalysis.code})`
+              }
+            }
+          }
+        }
+      }
+    } catch (globalError) {
+      req.log.error({ globalError, fileId: id }, 'Global batch insert failed')
       // Fallback: insert one-by-one to skip problematic row(s)
-      let inserted = 0
-      for (const r of rows) {
+      for (const r of validatedRows) {
         try {
           await prisma.campaignRow.create({ data: r })
           inserted++
         } catch (insertError) {
           skipped++
-          if (!firstError) firstError = `DB insert error: ${insertError.message}`
-          req.log.warn({ insertError, row: r }, 'Failed to insert individual row');
+          const errorAnalysis = analyzePrismaError(insertError, [r])
+          if (!firstError) firstError = `DB insert error: ${errorAnalysis.message} (Code: ${errorAnalysis.code})`
+          req.log.warn({ insertError: errorAnalysis, row: r }, 'Failed to insert individual row');
         }
       }
-      return reply.send({ inserted, skipped, reason: firstError ?? undefined, appended: !!append && append !== '0' && append !== 'false' })
     }
-    reply.send({ inserted: rows.length, skipped, reason: firstError ?? undefined, appended: !!append && append !== '0' && append !== 'false' })
+    // Final response with detailed results
+    const totalProcessed = rows.length
+    const validationSkipped = totalProcessed - validatedRows.length
+    const finalSkipped = skipped + validationSkipped
+    
+    req.log.info({ 
+      fileId: id, 
+      totalProcessed, 
+      validatedRows: validatedRows.length,
+      inserted, 
+      validationSkipped,
+      finalSkipped,
+      batchErrors: batchErrors.length,
+      reason: firstError ?? undefined 
+    }, 'CSV ingest completed')
+    
+    reply.send({ 
+      inserted, 
+      skipped: finalSkipped, 
+      reason: firstError ?? undefined, 
+      appended: !!append && append !== '0' && append !== 'false',
+      details: {
+        totalProcessed,
+        validatedRows: validatedRows.length,
+        validationSkipped,
+        batchErrors: batchErrors.length
+      }
+    })
   } catch (err) {
     req.log.error({ err }, 'ingest failed')
     activeIngests.delete(id) // Release lock on error
