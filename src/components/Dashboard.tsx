@@ -332,7 +332,7 @@ export function Dashboard({
         {/* Main Content Area */}
         <div className="flex-1 container mx-auto p-6 space-y-6">
 
-      {/* Settings Panel - Only show in overview tab */}
+      {/* Settings Panel - Show in overview tab */}
       {currentTab === 'overview' && (
         <SettingsPanel
           settings={settings}

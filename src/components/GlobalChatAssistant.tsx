@@ -115,13 +115,13 @@ export default function GlobalChatAssistant() {
 
       {/* Full Chat Panel - Takes up the right side of Dashboard */}
       {isOpen && !isMinimized && (
-        <div className="fixed top-0 right-0 h-full w-80 md:w-96 bg-card border-l shadow-xl z-40 flex flex-col">
+        <div className="fixed top-0 right-0 h-full w-80 md:w-96 bg-card border-l shadow-xl z-50 flex flex-col">
           {/* Header */}
           <div className="p-4 border-b flex items-center justify-between bg-primary/5">
             <div className="font-semibold text-lg">Yardımcı</div>
             <div className="flex items-center gap-1">
               <button 
-                className="text-sm opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted"
+                className="text-sm opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted relative z-10"
                 onClick={() => setIsMinimized(true)}
                 title="Küçült"
               >
