@@ -6,25 +6,35 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
+// Check for required environment variables
+const databaseUrl = process.env.DATABASE_URL
+if (!databaseUrl) {
+  console.error('❌ DATABASE_URL environment variable is required but not set')
+  console.error('Please set DATABASE_URL in your Railway environment variables')
+  console.error('Example: postgresql://username:password@host:port/database')
+  process.exit(1)
+}
+
 const prisma = new PrismaClient()
 
 // Run migrations on startup
 try {
   await prisma.$executeRaw`SELECT 1`
-  console.log('Database connection successful')
+  console.log('✅ Database connection successful')
   
   // Check if tables exist, if not run migrations
   try {
     await prisma.$executeRaw`SELECT * FROM "CampaignRow" LIMIT 1`
-    console.log('Tables already exist')
+    console.log('✅ Tables already exist')
   } catch (error) {
-    console.log('Tables do not exist, running migrations...')
+    console.log('🔄 Tables do not exist, running migrations...')
     const { execSync } = require('child_process')
     execSync('npx prisma migrate deploy', { stdio: 'inherit' })
-    console.log('Migrations completed')
+    console.log('✅ Migrations completed')
   }
 } catch (error) {
-  console.error('Database connection failed:', error)
+  console.error('❌ Database connection failed:', error)
+  console.error('Please check your DATABASE_URL environment variable')
   process.exit(1)
 }
 
@@ -50,7 +60,12 @@ app.addContentTypeParser('application/octet-stream', { parseAs: 'string' }, (_re
   done(null, body)
 })
 
-app.get('/health', async () => ({ ok: true }))
+app.get('/health', async () => ({ 
+  ok: true, 
+  timestamp: new Date().toISOString(),
+  database: databaseUrl ? 'configured' : 'missing',
+  version: '1.0.0'
+}))
 
 // Types
 interface InitBody {
