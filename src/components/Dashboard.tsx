@@ -57,12 +57,14 @@ export function Dashboard({
   // Settings state with per-file localStorage persistence
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<SettingsData>(() => {
+    // Initialize with default settings
     return {
       dateRange: {
         startDate: '',
         endDate: '',
       },
       conditionalRules: [],
+      visibleColumns: ['installs', 'roas_d0', 'roas_d7'],
     };
   });
 
@@ -72,12 +74,18 @@ export function Dashboard({
 
 
   // Load settings for current file
-  const loadFileSettings = (fileId: string | null) => {
+  const loadFileSettings = useCallback((fileId: string | null) => {
     const settingsKey = fileId ? `dashboard-settings-${fileId}` : 'dashboard-settings-default';
     const saved = localStorage.getItem(settingsKey);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Ensure all required fields exist
+        return {
+          dateRange: parsed.dateRange || { startDate: '', endDate: '' },
+          conditionalRules: parsed.conditionalRules || [],
+          visibleColumns: parsed.visibleColumns || ['installs', 'roas_d0', 'roas_d7'],
+        };
       } catch {
         // If parsing fails, return default
       }
@@ -88,8 +96,9 @@ export function Dashboard({
         endDate: '',
       },
       conditionalRules: [],
+      visibleColumns: ['installs', 'roas_d0', 'roas_d7'],
     };
-  };
+  }, []);
 
   // Save settings to localStorage for current file
   const handleSettingsChange = useCallback((newSettings: SettingsData) => {
@@ -137,6 +146,12 @@ export function Dashboard({
   const handleSettingsToggle = useCallback(() => {
     setShowSettings(prev => !prev);
   }, []);
+
+  // Load settings when activeFileId changes
+  useEffect(() => {
+    const loadedSettings = loadFileSettings(activeFileId);
+    setSettings(loadedSettings);
+  }, [activeFileId, loadFileSettings]);
 
 
 
@@ -278,7 +293,7 @@ export function Dashboard({
     } else {
       setHiddenTables(new Set());
     }
-  }, [uploadedFiles, activeFileId]);
+  }, [uploadedFiles, activeFileId, loadFileSettings]);
 
   // Set navigation functions for chat
   useEffect(() => {
