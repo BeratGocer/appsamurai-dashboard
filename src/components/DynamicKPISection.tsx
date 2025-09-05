@@ -81,7 +81,8 @@ export function DynamicKPISection({
 
   return (
     <div className="space-y-6">
-      {/* KPI Settings Panel */}
+      {/* KPI Settings Panel - HIDDEN BUT FUNCTIONALITY PRESERVED */}
+      {/* 
       <KPISettingsPanel
         configs={kpiConfigs}
         availableColumns={availableColumns}
@@ -89,6 +90,7 @@ export function DynamicKPISection({
         isOpen={showKPISettings || isEditMode}
         onToggle={() => setShowKPISettings(!showKPISettings)}
       />
+      */}
 
       {/* KPI Cards Grid */}
       {visibleKPIConfigs.length > 0 && (

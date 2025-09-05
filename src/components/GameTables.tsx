@@ -820,7 +820,8 @@ export function GameTables({
               )}
             </div>
             
-            {/* Settings and Edit KPI Cards buttons */}
+            {/* Settings and Edit KPI Cards buttons - HIDDEN BUT FUNCTIONALITY PRESERVED */}
+            {/* 
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -841,6 +842,7 @@ export function GameTables({
                 {kpiEditMode ? 'Exit Edit Mode' : 'Edit KPI Cards'}
               </Button>
             </div>
+            */}
             {hiddenCount > 0 && (
               <Button
                 variant="outline"
