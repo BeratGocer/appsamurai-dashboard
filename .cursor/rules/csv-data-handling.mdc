@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+description: CSV data handling patterns and rules for AppSamurai Dashboard
+---
+
+# CSV Data Handling Rules
+
+## Core Principle
+**NEVER compute values that already exist in CSV**. Always use CSV data directly when available.
+
+## CSV Column Mapping Rules
+
+### ✅ Use CSV Values Directly
+When CSV contains these columns, use them as-is:
+- `ecpi` - Use directly from CSV
+- `cost` - Use directly from CSV  
+- `all_revenue` - Use directly from CSV
+- `roas_d0, roas_d1, ..., roas_d45` - Use directly from CSV
+- `installs` - Use directly from CSV
+- `day` - Use directly from CSV
+
+### ❌ Map Missing Columns
+When CSV doesn't contain these columns, create mappings:
+- `roas` ← map from `roas_d7` (use roas_d7 as roas)
+- `gross_profit` ← map from `all_revenue` (use all_revenue as gross_profit approximation)
+- `adjust_cost` ← map from `cost` (map cost to adjust_cost)
+- `ad_revenue` ← map from `all_revenue` (map all_revenue to ad_revenue)
+
+## Implementation Pattern
+```typescript
+// ✅ CORRECT - Use CSV value directly
+ecpi: parseFloat(values[5]) || 0,
+
+// ✅ CORRECT - Map missing column
+roas: parseFloat(values[15]) || 0, // Use roas_d7 as roas
+
+// ❌ WRONG - Don't recompute existing values
+ecpi: (cost / installs), // Don't compute if CSV has ecpi column
+```
+
+## Critical Rules
+- ✅ Always check CSV headers first
+- ✅ Use CSV values directly when available
+- ✅ Only map missing columns
+- ✅ Never recompute values that exist in CSV
+- ✅ Document mapping logic with comments
+- ✅ Test with actual CSV files to verify column availability
