@@ -569,12 +569,13 @@ export function Dashboard({
                         </span>
                       </div>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant="default"
+                        size="default"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedCustomer(customer.id);
                         }}
+                        className="font-semibold"
                       >
                         View Files
                       </Button>
@@ -583,25 +584,12 @@ export function Dashboard({
                     {/* Accordion Content */}
                     {expandedCustomers.has(customer.id) && (
                       <div className="px-4 pb-4 border-t bg-muted/20">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-3">
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{customer.games.length}</div>
-                            <div className="text-sm text-muted-foreground">Games</div>
+                        <div className="pt-3">
+                          <div className="text-sm text-muted-foreground">
+                            Click "View Files" to see detailed file information for this customer.
                           </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{customer.totalInstalls.toLocaleString()}</div>
-                            <div className="text-sm text-muted-foreground">Total Installs</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{(customer.avgRoasD7 * 100).toFixed(1)}%</div>
-                            <div className="text-sm text-muted-foreground">Avg ROAS D7</div>
-                    </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{(customer.avgRoasD30 * 100).toFixed(1)}%</div>
-                            <div className="text-sm text-muted-foreground">Avg ROAS D30</div>
-                    </div>
-                    </div>
-                    </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -762,12 +750,13 @@ export function Dashboard({
                         </span>
                       </div>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant="default"
+                        size="default"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedManager(manager.id);
                         }}
+                        className="font-semibold"
                       >
                         View Files
                       </Button>
@@ -776,25 +765,12 @@ export function Dashboard({
                     {/* Accordion Content */}
                     {expandedManagers.has(manager.id) && (
                       <div className="px-4 pb-4 border-t bg-muted/20">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-3">
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{manager.customers.length}</div>
-                            <div className="text-sm text-muted-foreground">Customers</div>
+                        <div className="pt-3">
+                          <div className="text-sm text-muted-foreground">
+                            Click "View Files" to see detailed file information for this account manager.
                           </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{manager.totalInstalls.toLocaleString()}</div>
-                            <div className="text-sm text-muted-foreground">Total Installs</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{(manager.avgRoasD7 * 100).toFixed(1)}%</div>
-                            <div className="text-sm text-muted-foreground">Avg ROAS D7</div>
-                    </div>
-                          <div className="text-center">
-                            <div className="text-lg font-bold">{(manager.avgRoasD30 * 100).toFixed(1)}%</div>
-                            <div className="text-sm text-muted-foreground">Avg ROAS D30</div>
-                    </div>
-                    </div>
-                    </div>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
