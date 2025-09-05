@@ -2,113 +2,94 @@
 description: Deployment and testing patterns for production verification
 ---
 
-# Deployment and Testing Patterns
+# Deployment Testing Patterns
 
-## Deployment Workflow
-Follow this systematic approach when deploying changes to production.
+## Railway Deployment Workflow
+1. **Code changes** → Git commit and push
+2. **Railway auto-deploy** → Triggers on git push
+3. **Database setup** → Ensure PostgreSQL database exists
+4. **Environment variables** → Verify `DATABASE_URL` is set
+5. **Migration execution** → Run Prisma migrations
+6. **Service restart** → Restart backend if needed
 
-### Step 1: Local Development
+## Testing Strategy
+### Small File Testing First
 ```bash
-# Make changes locally
-# Test with npm run dev
-# Verify functionality works as expected
+# Create minimal test CSV
+echo "gönderamkapp,campaign_network,adgroup_network,day,installs,ecpi,cost,all_revenue,roas_d0,roas_d1,roas_d2,roas_d3,roas_d4,roas_d5,roas_d6,roas_d7,roas_d14,roas_d21,roas_d30,roas_d45
+Bus Frenzy,AppSa_BusFrenzy_iOS_US_CPE,SFT_MTkwMzZ8,2025-07-01,171,0.58,99.18,0,0,0,0,0,0,0,0,0,0,0,0,0" > test_small.csv
+
+# Test with small file
+curl -X POST "https://backend-production-80f6.up.railway.app/files/test-small/ingest" \
+  -H "Content-Type: text/csv" \
+  --data-binary @test_small.csv
 ```
 
-### Step 2: Build and Deploy
+### Production Testing
 ```bash
-# Build frontend
-npm run build
-
-# Deploy to Netlify
-netlify deploy --prod --dir=dist
-
-# Commit and push changes
-git add .
-git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Description of changes"
-git push origin main
+# Test with real CSV (after small file succeeds)
+curl -X POST "https://backend-production-80f6.up.railway.app/files/test-real-csv/ingest" \
+  -H "Content-Type: text/csv" \
+  --data-binary @2025-9-5_10_50_adjust_report_export.csv
 ```
-
-### Step 3: Production Testing
-Use browser automation to test deployed features systematically.
-
-## Production Testing with Playwright
-```typescript
-// Navigate to production site
-await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/');
-
-// Test core functionality
-await page.click('text=Dashboard');
-await page.waitForSelector('[data-testid="total-installs"]');
-
-// Verify install count
-const installCount = await page.textContent('[data-testid="total-installs"]');
-console.log('Production install count:', installCount);
-
-// Test page refresh persistence
-await page.keyboard.press('F5');
-await page.waitForSelector('[data-testid="total-installs"]');
-const refreshedCount = await page.textContent('[data-testid="total-installs"]');
-console.log('After refresh:', refreshedCount);
-
-// Verify counts match
-assert(installCount === refreshedCount, 'Install count should persist after refresh');
-```
-
-## Critical Testing Scenarios
-
-### Scenario 1: Data Persistence
-**Test**: Load data → Refresh page → Verify counts match
-**Expected**: Install counts remain consistent
-**Failure**: Data loss indicates localStorage or backend issues
-
-### Scenario 2: Ad Network Decoding
-**Test**: Check publisher names in tables
-**Expected**: Codes like "SFT_34631_5406" decoded to "Fluent"
-**Failure**: Raw codes visible indicates decoding issues
-
-### Scenario 3: CSV Header Handling
-**Test**: Upload CSV with corrupted headers
-**Expected**: Data parses correctly despite header issues
-**Failure**: Parsing errors or missing data
-
-### Scenario 4: File Upload Flow
-**Test**: Upload → Navigate to Dashboard → Verify data
-**Expected**: Smooth transition with correct data display
-**Failure**: Navigation or data loading issues
-
-## Production URLs
-- **Frontend**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
-- **Backend**: https://backend-production-80f6.up.railway.app/
-- **GitHub**: https://github.com/BeratGocer/appsamurai-dashboard
-
-## Testing Checklist
-- ✅ **Initial Load**: Verify data loads correctly
-- ✅ **Page Refresh**: Test F5 persistence
-- ✅ **Ad Network Decoding**: Check publisher names
-- ✅ **Install Counts**: Verify totals match CSV
-- ✅ **Navigation**: Test all tab transitions
-- ✅ **File Upload**: Test new file uploads
-- ✅ **Error Handling**: Test with invalid data
 
 ## Common Deployment Issues
+### 502 Bad Gateway
+- **Cause**: `DATABASE_URL` missing or backend not running
+- **Solution**: Check Railway environment variables, restart service
 
-### Issue: Changes not visible in production
-**Cause**: Build not deployed or cached
-**Solution**: 
+### DB Insert Error
+- **Cause**: Database tables don't exist (migrations not run)
+- **Solution**: Run Prisma migrations, restart backend
+
+### Timeout Errors
+- **Cause**: Large CSV files (5000+ rows) exceed Railway timeout
+- **Solution**: Test with smaller files first, optimize parsing
+
+## Railway CLI Commands
 ```bash
-npm run build
-netlify deploy --prod --dir=dist
+# Login and link project
+railway login
+railway link
+
+# Add PostgreSQL database
+railway add --database postgres
+
+# Check environment variables
+railway variables
+
+# Force deployment
+railway up --detach
+
+# View logs
+railway logs --deployment
 ```
 
-### Issue: Z-index or CSS problems
-**Cause**: Tailwind classes not compiled or conflicts
-**Solution**: Check build output and verify CSS compilation
+## Verification Steps
+1. **Backend health**: `curl -I "https://backend-production-80f6.up.railway.app/"`
+2. **Small file test**: Upload 5-row CSV
+3. **Database verification**: Check inserted row count
+4. **Large file test**: Upload full CSV (only after small file succeeds)
+5. **Data integrity**: Verify install counts match CSV totals
 
-### Issue: Backend API errors
-**Cause**: Server not updated or environment issues
-**Solution**: Check Railway deployment logs
+## Error Response Patterns
+```json
+// Success
+{"inserted":4,"skipped":0,"appended":false}
 
-## File Locations
-- Frontend Build: `dist/` directory
-- Deployment Config: [netlify.toml](mdc:netlify.toml)
-- Package Config: [package.json](mdc:package.json)
+// Partial success
+{"inserted":2,"skipped":2,"reason":"Invalid date at line 3","appended":false}
+
+// Database error
+{"inserted":0,"skipped":4,"reason":"DB insert error","appended":false}
+
+// Row count mismatch
+{"error":"csv_parse_error","message":"Expected 100 rows but parsed 95 rows. 5 rows skipped."}
+```
+
+## Best Practices
+- Always test with small files before large uploads
+- Monitor Railway logs for deployment issues
+- Verify environment variables are set correctly
+- Use Railway CLI for debugging and force deployments
+- Implement comprehensive error logging and validation

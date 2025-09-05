@@ -1,0 +1,92 @@
+---
+description: CSV parsing debugging patterns and error handling
+---
+
+# CSV Parsing Debugging Patterns
+
+## Critical Issues Identified
+- **21-column rows**: Some CSV rows have commas within quoted fields causing incorrect parsing
+- **Header row parsing**: Loop must start from `li = 1` to skip header row
+- **Date parsing errors**: Invalid date format causes entire row to be skipped
+
+## Debugging Implementation
+```typescript
+// Track column count distribution
+let columnCountStats = new Map<number, number>()
+
+for (let li = 1; li < lines.length; li++) { // Start from 1 to skip header
+  const row = lines[li]
+  if (!row.trim()) continue
+  const v = parseCsvLine(row)
+  
+  // Track column count distribution
+  const colCount = v.length
+  columnCountStats.set(colCount, (columnCountStats.get(colCount) || 0) + 1)
+  
+  // Log first data row for debugging
+  if (li === 1) {
+    req.log.info({
+      fileId: id,
+      lineIndex: li+1,
+      parsedColumns: v,
+      iDay,
+      dayStr,
+      columnCount: v.length
+    }, 'First data row parsing');
+  }
+}
+
+// Log column statistics
+req.log.info({
+  fileId: id,
+  inputRowCount,
+  parsedRowCount,
+  skipped,
+  columnCountStats: Object.fromEntries(columnCountStats)
+}, 'Processing CSV ingest');
+```
+
+## Error Handling Patterns
+```typescript
+// Detailed error logging for database inserts
+try {
+  await prisma.campaignRow.create({ data: r })
+  inserted++
+} catch (insertError) {
+  skipped++
+  if (!firstError) firstError = `DB insert error: ${insertError.message}`
+  req.log.warn({ insertError, row: r }, 'Failed to insert individual row');
+}
+```
+
+## Row Count Validation
+```typescript
+// Validate row count integrity
+if (inputRowCount !== parsedRowCount) {
+  req.log.error({
+    fileId: id,
+    inputRowCount,
+    parsedRowCount,
+    skipped,
+    reason: firstError
+  }, 'CSV ingest failed: row count mismatch');
+  
+  return reply.code(400).send({
+    error: 'csv_parse_error',
+    message: `Expected ${inputRowCount} rows but parsed ${parsedRowCount} rows. ${skipped} rows skipped.`,
+    details: { inputRowCount, parsedRowCount, skipped, reason: firstError }
+  });
+}
+```
+
+## Common CSV Issues
+1. **Quoted fields with commas**: `"SFT_34631_5406,undefined"` causes 21 columns instead of 20
+2. **Header typos**: `gönderamkapp` instead of `gönderapp`
+3. **Empty rows**: Must be skipped with `if (!row.trim()) continue`
+4. **Date format**: Must be valid ISO date format for `new Date()`
+
+## Testing Strategy
+- Always test with small CSV files first (5-10 rows)
+- Check column count distribution in logs
+- Verify first data row parsing details
+- Monitor database insert success rates

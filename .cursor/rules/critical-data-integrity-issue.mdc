@@ -1,83 +1,75 @@
 ---
 description: Critical data integrity issue - install count data loss persists despite multiple fixes
-alwaysApply: false
 ---
 
 # Critical Data Integrity Issue
 
-## Issue Status: CRITICAL - UNRESOLVED ❌
+## Problem Summary
+**70,010 installs from CSV → 45,716 installs in database**
+**24,294 installs lost (35% data loss)**
 
-### Problem Summary
-- **CSV Source**: 70,010 total installs (verified)
-- **Frontend Display**: Shows 70K initially, drops to 45K after refresh
-- **Impact**: Critical data integrity issue affecting business metrics
-- **Status**: Multiple attempted fixes have failed
+## Root Cause Identified
+- **12 rows with 21 columns** instead of expected 20 columns
+- **Commas within quoted fields**: `"SFT_34631_5406,undefined"`
+- **Entire rows skipped** during CSV parsing
+- **24,300 installs lost** from these 12 problematic rows
 
-## Failed Fix Attempts
-1. ❌ Frontend/Backend ad network mapping synchronization
-2. ❌ localStorage dependency removal
-3. ❌ Refresh button implementation
-4. ❌ Backend logging improvements
-5. ❌ KPI calculation hidden tables bypass
-6. ❌ DynamicKPISection unfiltered data usage
-
-## Current System State
-- **Frontend**: Deployed to Netlify (https://ubiquitous-sherbet-b4f6bf.netlify.app)
-- **Backend**: Running on Railway (https://backend-production-80f6.up.railway.app)
-- **Database**: PostgreSQL on Railway
-- **Data Source**: [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv)
+## Current Status
+- ✅ **502 Bad Gateway**: Fixed (DATABASE_URL added)
+- ✅ **Header parsing**: Fixed (start loop from li=1)
+- ✅ **Column mapping**: Fixed (gönderapp priority)
+- ❌ **Database migration**: Still failing (tables don't exist)
+- ❌ **21-column rows**: Still not being parsed correctly
 
 ## Immediate Action Required
+1. **Fix database migration**: Ensure Prisma migrations run on Railway
+2. **Fix CSV parser**: Handle quoted fields with commas correctly
+3. **Verify 21-column rows**: Ensure they're inserted into database
+4. **Test with real CSV**: Verify 70,010 installs are preserved
 
-### 1. Backend Data Verification
-```bash
-# Check if backend stores complete data
-curl -s https://backend-production-80f6.up.railway.app/files/{fileId}/groups | jq '.[] | .byDate | map(.installs) | add'
+## Technical Details
+### Problematic Rows Pattern
+```csv
+"Bus Frenzy","AppSa_BusFrenzy_iOS_US_CPE","SFT_34631_5406,undefined","2025-07-01","2025"
+```
+- **Expected**: 20 columns
+- **Actual**: 21 columns (comma splits quoted field)
+- **Result**: Row skipped entirely
+
+### Database Schema
+```prisma
+model CampaignRow {
+  id              BigInt  @id @default(autoincrement())
+  fileId          String
+  app             String
+  campaignNetwork String
+  adgroupNetwork  String
+  day             DateTime
+  installs        Int
+  // ... other fields
+}
 ```
 
-### 2. Frontend Data Flow Analysis
-- Add comprehensive logging to trace data from backend to display
-- Verify data aggregation in `getGameCountryPublisherGroups`
-- Check KPI calculation logic in `calculateKPIValue`
+## Debugging Commands
+```bash
+# Check 21-column rows in CSV
+awk -F',' 'NF==21' 2025-9-5_10_50_adjust_report_export.csv | wc -l
 
-### 3. Database Integrity Check
-- Verify all CSV rows are stored in database
-- Check for data type conversion issues
-- Ensure no data is lost during ingest process
+# Test small file first
+curl -X POST "https://backend-production-80f6.up.railway.app/files/test-small/ingest" \
+  -H "Content-Type: text/csv" --data-binary @test_small.csv
 
-## Root Cause Hypotheses
-1. **Backend Data Loss**: Incomplete data storage during CSV ingest
-2. **Frontend Aggregation Bug**: Data lost during grouping/aggregation
-3. **Filtering Logic Error**: Date/game filters excluding data
-4. **Data Type Issues**: Install values converted incorrectly
-5. **Database Query Problems**: Backend queries not returning complete data
+# Test real CSV (only after small file succeeds)
+curl -X POST "https://backend-production-80f6.up.railway.app/files/test-real/ingest" \
+  -H "Content-Type: text/csv" --data-binary @2025-9-5_10_50_adjust_report_export.csv
+```
 
-## Critical Files Requiring Investigation
-- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Data processing pipeline
-- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Data loading logic
-- [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts) - KPI calculation
-- [server/src/index.ts](mdc:server/src/index.ts) - Backend data processing
-- [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv) - Source data
+## Success Criteria
+- [ ] Small CSV (5 rows) inserts successfully
+- [ ] Database migration runs without errors
+- [ ] 21-column rows are parsed and inserted
+- [ ] Total installs match CSV: 70,010
+- [ ] No rows skipped due to parsing errors
 
-## Debugging Strategy
-1. **Start with Source**: Verify CSV contains 70,010 installs
-2. **Check Backend**: Ensure backend stores complete data
-3. **Trace Frontend**: Follow data from backend to display
-4. **Identify Bottleneck**: Find where data is lost
-5. **Implement Fix**: Address root cause
-6. **Verify Solution**: Test with multiple scenarios
-
-## Business Impact
-- **Data Accuracy**: Critical metrics showing incorrect values
-- **User Trust**: Dashboard reliability compromised
-- **Decision Making**: Business decisions based on incorrect data
-- **System Reliability**: Core functionality not working as expected
-
-## Next Steps
-1. **Immediate**: Add comprehensive logging to identify data loss point
-2. **Short-term**: Implement systematic debugging approach
-3. **Long-term**: Establish data integrity monitoring
-4. **Prevention**: Add automated tests for data accuracy
-
-## Status: URGENT - REQUIRES IMMEDIATE ATTENTION
-This is a critical data integrity issue that affects the core functionality of the dashboard. Multiple fix attempts have failed, indicating a deeper systemic issue that requires systematic investigation and resolution.
+## Priority: CRITICAL
+This data loss affects business metrics and must be resolved immediately.

@@ -1,0 +1,65 @@
+---
+description: Data integrity debugging patterns for install count and ad network decoding issues
+---
+
+# Data Integrity Debugging Patterns
+
+## Critical Data Loss Issue
+**Problem**: 70,010 installs from CSV → 45,716 installs in database (24,294 installs lost)
+
+## Root Cause Analysis
+1. **21-column rows**: 12 rows with commas in quoted `adgroup_network` fields
+2. **Row skipping**: These rows are entirely skipped during CSV parsing
+3. **Data loss**: 24,300 installs lost from these 12 problematic rows
+
+## Debugging Checklist
+1. **Initial upload**: Verify if data comes from raw CSV or API
+2. **Query parameters**: Check frontend refresh call parameters vs backend defaults
+3. **Row count comparison**: CSV rows vs DB rows
+4. **Prisma filters**: Check for relation filters (some/every/none)
+5. **Aggregation**: Verify distinct/groupBy column usage
+6. **Data types**: Check install/revenue/cost DB types vs frontend parsing
+7. **Pagination**: Check for limit/take/cursor usage
+8. **Timezone**: Verify UTC boundary date handling
+9. **Soft deletes**: Check for status filters in refresh
+10. **Unique constraints**: Verify if duplicate processing skips rows
+
+## Backend Ingest Audit
+```typescript
+// Track detailed ingest statistics
+let skipped = 0
+let firstError: string | null = null
+let columnCountStats = new Map<number, number>()
+
+// Log processing results
+req.log.info({
+  fileId: id,
+  inputRowCount,
+  parsedRowCount,
+  skipped,
+  totalInstalls,
+  skippedRows: inputRowCount - parsedRowCount,
+  columnCountStats: Object.fromEntries(columnCountStats)
+}, 'Processing CSV ingest');
+```
+
+## Data Validation Patterns
+- **Row count integrity**: `inputRowCount === parsedRowCount`
+- **Column count distribution**: Track min/max/mean column counts
+- **Install parsing**: Count unparseable or empty install columns
+- **Error logging**: Log raw text and error reason for skipped rows
+
+## Common Data Loss Scenarios
+1. **CSV parsing errors**: Malformed rows skipped entirely
+2. **Database constraints**: Unique key violations
+3. **Type conversion errors**: Invalid data types
+4. **Date parsing failures**: Invalid date formats
+5. **Column mapping errors**: Wrong column indices
+
+## Prevention Strategies
+- Implement comprehensive error logging
+- Add row count validation with strict error handling
+- Track column count distribution
+- Log first data row parsing details
+- Validate database insert success rates
+- Test with various CSV formats and edge cases
