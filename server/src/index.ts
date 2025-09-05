@@ -453,11 +453,12 @@ app.get('/debug/schema', async (req: FastifyRequest, reply: FastifyReply) => {
       hasTestRow: !!testRow,
       columns: testRow ? Object.keys(testRow) : []
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string }
     reply.send({ 
       success: false, 
-      error: error.message,
-      code: error.code 
+      error: err.message,
+      code: err.code 
     })
   }
 })
