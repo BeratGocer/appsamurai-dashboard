@@ -482,10 +482,20 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
       }
       try {
         const dayStr = v[iDay]
+        if (li === 1) { // Log first data row for debugging
+          req.log.info({ 
+            fileId: id, 
+            lineIndex: li+1, 
+            parsedColumns: v, 
+            iDay, 
+            dayStr,
+            columnCount: v.length 
+          }, 'First data row parsing');
+        }
         const d = new Date(dayStr || '')
         if (!dayStr || Number.isNaN(d.getTime())) {
           skipped++
-          if (!firstError) firstError = `Invalid date at line ${li+1}`
+          if (!firstError) firstError = `Invalid date at line ${li+1}: "${dayStr}" (iDay=${iDay})`
           continue
         }
         const installsNum = Number(v[iInst] || 0)
