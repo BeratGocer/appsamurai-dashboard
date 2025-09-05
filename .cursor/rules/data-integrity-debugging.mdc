@@ -1,65 +1,115 @@
 ---
 description: Data integrity debugging patterns for install count and ad network decoding issues
+globs: src/utils/csvParser.ts,src/utils/kpiUtils.ts,src/components/Dashboard.tsx
 ---
 
 # Data Integrity Debugging Patterns
 
-## Critical Data Loss Issue
-**Problem**: 70,010 installs from CSV → 45,716 installs in database (24,294 installs lost)
+## Core Principle
+When CSV data shows different totals than system calculations, systematically debug the data flow to identify where data loss occurs.
 
-## Root Cause Analysis
-1. **21-column rows**: 12 rows with commas in quoted `adgroup_network` fields
-2. **Row skipping**: These rows are entirely skipped during CSV parsing
-3. **Data loss**: 24,300 installs lost from these 12 problematic rows
+## Common Data Integrity Issues
 
-## Debugging Checklist
-1. **Initial upload**: Verify if data comes from raw CSV or API
-2. **Query parameters**: Check frontend refresh call parameters vs backend defaults
-3. **Row count comparison**: CSV rows vs DB rows
-4. **Prisma filters**: Check for relation filters (some/every/none)
-5. **Aggregation**: Verify distinct/groupBy column usage
-6. **Data types**: Check install/revenue/cost DB types vs frontend parsing
-7. **Pagination**: Check for limit/take/cursor usage
-8. **Timezone**: Verify UTC boundary date handling
-9. **Soft deletes**: Check for status filters in refresh
-10. **Unique constraints**: Verify if duplicate processing skips rows
+### 1. Install Count Discrepancies
+**Symptoms**: CSV shows 70K installs, system shows 45K
+**Root Causes**:
+- Hidden tables filtering incorrectly applied
+- Selected game filtering causing data loss
+- Date range filtering excluding valid data
+- CSV parsing errors or data duplication
 
-## Backend Ingest Audit
-```typescript
-// Track detailed ingest statistics
-let skipped = 0
-let firstError: string | null = null
-let columnCountStats = new Map<number, number>()
+### 2. Ad Network Decoding Issues
+**Symptoms**: Campaign networks not decoded properly, showing as "Unknown"
+**Root Causes**:
+- Missing ad network mappings
+- Incorrect parsing logic for new formats
+- Case sensitivity issues in mappings
 
-// Log processing results
-req.log.info({
-  fileId: id,
-  inputRowCount,
-  parsedRowCount,
-  skipped,
-  totalInstalls,
-  skippedRows: inputRowCount - parsedRowCount,
-  columnCountStats: Object.fromEntries(columnCountStats)
-}, 'Processing CSV ingest');
+## Debugging Methodology
+
+### Step 1: Verify CSV Data
+```bash
+# Count total installs in CSV
+awk -F',' 'NR>1 {sum+=$5} END {print "Total installs:", sum}' file.csv
+
+# Check for data duplication
+awk -F',' 'NR>1 {key=$1","$2","$3","$4; count[key]++; sum[key]+=$5} END {for(k in count) if(count[k]>1) print k, "appears", count[k], "times"}' file.csv
 ```
 
-## Data Validation Patterns
-- **Row count integrity**: `inputRowCount === parsedRowCount`
-- **Column count distribution**: Track min/max/mean column counts
-- **Install parsing**: Count unparseable or empty install columns
-- **Error logging**: Log raw text and error reason for skipped rows
+### Step 2: Check System Calculations
+```typescript
+// Debug KPI calculations
+console.log('Raw data length:', data.length);
+console.log('Game groups length:', gameGroups.length);
+console.log('Hidden tables:', Array.from(hiddenTables));
+console.log('Selected game:', selectedGame);
+```
 
-## Common Data Loss Scenarios
-1. **CSV parsing errors**: Malformed rows skipped entirely
-2. **Database constraints**: Unique key violations
-3. **Type conversion errors**: Invalid data types
-4. **Date parsing failures**: Invalid date formats
-5. **Column mapping errors**: Wrong column indices
+### Step 3: Verify Filtering Logic
+```typescript
+// Test filtering step by step
+const afterGameFilter = data.filter(row => row.app === selectedGame);
+const afterHiddenFilter = afterGameFilter.filter(row => {
+  const tableId = `${row.game}-${row.country}-${row.platform}-${row.publisher}`;
+  return !hiddenTables.has(tableId);
+});
+console.log('After game filter:', afterGameFilter.length);
+console.log('After hidden filter:', afterHiddenFilter.length);
+```
 
-## Prevention Strategies
-- Implement comprehensive error logging
-- Add row count validation with strict error handling
-- Track column count distribution
-- Log first data row parsing details
-- Validate database insert success rates
-- Test with various CSV formats and edge cases
+## Data Flow Validation
+
+### CSV → Parsed Data
+- Verify all rows parsed correctly
+- Check for parsing errors in console
+- Validate column mappings
+
+### Parsed Data → Game Groups
+- Ensure all data included in groups
+- Check group creation logic
+- Verify daily data aggregation
+
+### Game Groups → KPI Calculations
+- Validate filtering logic
+- Check for data loss in filtering
+- Verify calculation methods
+
+## Common Fixes
+
+### Fix 1: Correct Filtering Order
+```typescript
+// ✅ CORRECT: Filter gameGroups first, then apply hiddenTables
+if (hiddenTables && gameGroups) {
+  gameGroups.forEach(group => {
+    if (selectedGame && group.game !== selectedGame) return;
+    if (!hiddenTables.has(tableId)) {
+      visibleData.push(...group.dailyData);
+    }
+  });
+}
+```
+
+### Fix 2: Handle Data Type Differences
+```typescript
+// ✅ CORRECT: Handle different data structures
+if ('app' in row) {
+  // Raw CampaignData
+  return row.app === selectedGame;
+} else {
+  // dailyData from gameGroups (no app field)
+  return true; // Already filtered at group level
+}
+```
+
+## Testing Checklist
+- [ ] CSV total matches expected value
+- [ ] System total matches CSV total
+- [ ] Hidden tables filtering works correctly
+- [ ] Selected game filtering works correctly
+- [ ] Combined filtering produces expected results
+- [ ] No data loss in calculation pipeline
+
+## File References
+- CSV parsing: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- KPI calculations: [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts)
+- Dashboard integration: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)

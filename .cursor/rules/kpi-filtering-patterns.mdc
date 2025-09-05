@@ -1,0 +1,70 @@
+---
+description: KPI calculation filtering patterns for selectedGame and hiddenTables
+globs: src/utils/kpiUtils.ts,src/components/DynamicKPISection.tsx,src/components/Dashboard.tsx
+---
+
+# KPI Filtering Patterns
+
+## Core Issue
+KPI calculations must properly handle filtering by both `selectedGame` and `hiddenTables` parameters without causing data loss or incorrect zero values.
+
+## Data Structure Understanding
+- **Raw Data**: `CampaignData[]` with `app` field for game filtering
+- **Game Groups**: `GameCountryPublisherGroup[]` with `dailyData` that lacks `app` field
+- **Critical**: `dailyData` from `gameGroups` does NOT have `app` field, only the parent `group.game`
+
+## Correct Filtering Logic
+```typescript
+if (hiddenTables && hiddenTables.size > 0 && gameGroups) {
+  const visibleData: CampaignData[] = [];
+  
+  gameGroups.forEach(group => {
+    // ✅ CORRECT: Filter by game at group level, not dailyData level
+    if (selectedGame && group.game !== selectedGame) {
+      return;
+    }
+    
+    const tableId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
+    if (!hiddenTables.has(tableId)) {
+      visibleData.push(...group.dailyData);
+    }
+  });
+  
+  filteredData = visibleData;
+} else if (selectedGame) {
+  // ✅ CORRECT: Only filter raw data by app field when no gameGroups
+  filteredData = filteredData.filter(row => row.app === selectedGame);
+}
+```
+
+## Common Mistakes to Avoid
+❌ **WRONG**: `row.app === selectedGame` on `dailyData` (dailyData has no app field)
+❌ **WRONG**: Filtering order: selectedGame first, then hiddenTables
+❌ **WRONG**: Using `any[]` type for gameGroups parameter
+
+## Correct Implementation Pattern
+1. **Check for gameGroups first** - if present, use group-level filtering
+2. **Filter by selectedGame at group level** - `group.game !== selectedGame`
+3. **Then filter by hiddenTables** - `!hiddenTables.has(tableId)`
+4. **Fallback to raw data filtering** - only when no gameGroups
+
+## Type Safety Requirements
+```typescript
+// ✅ CORRECT: Proper typing
+gameGroups?: GameCountryPublisherGroup[]
+
+// ❌ WRONG: Loose typing
+gameGroups?: any[]
+```
+
+## Testing Scenarios
+- ✅ Selected game with hidden tables should show correct KPI values
+- ✅ Hidden tables without selected game should work
+- ✅ Selected game without hidden tables should work
+- ❌ Selected game with hidden tables should NOT show zero values
+
+## File References
+- Main KPI logic: [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts)
+- KPI component: [src/components/DynamicKPISection.tsx](mdc:src/components/DynamicKPISection.tsx)
+- Dashboard integration: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+- Type definitions: [src/types/index.ts](mdc:src/types/index.ts)
