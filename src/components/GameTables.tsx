@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Settings, Edit3 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, EyeOff, Settings, Edit3, RefreshCw } from 'lucide-react';
 import type { GameCountryPublisherGroup } from '@/types'
 import type { ConditionalFormattingRule } from './SettingsPanel'
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -29,6 +29,8 @@ interface GameTablesProps {
   onToggleKpiEdit?: () => void;
   // Available columns for dynamic sorting
   availableColumns?: string[];
+  // Refresh functionality
+  onRefreshData?: () => void;
 }
 
 type SortCriteria = 'volume' | 'roas_d0' | 'roas_d1' | 'roas_d2' | 'roas_d3' | 'roas_d4' | 'roas_d5' | 'roas_d6' | 'roas_d7' | 'roas_d14' | 'roas_d21' | 'roas_d30' | 'roas_d45' | 'roas_d60' | 'cost' | 'revenue' | 'alphabetical';
@@ -375,6 +377,7 @@ export function GameTables({
   kpiEditMode = false,
   onToggleKpiEdit,
   availableColumns: _availableColumns = [],
+  onRefreshData,
 }: GameTablesProps) {
   // DnD Sensors for React 19 compatibility
   // const sensors = useSensors(
@@ -834,6 +837,16 @@ export function GameTables({
             
             {/* Settings and Edit KPI Cards buttons */}
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRefreshData}
+                className="flex items-center gap-2"
+                title="Verileri yenile"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Yenile
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

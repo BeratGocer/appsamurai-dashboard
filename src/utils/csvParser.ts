@@ -772,10 +772,42 @@ export function decodeAdNetwork(encryptedCode: string): string {
   if (encryptedCode === 'unknown') return 'Test';
   if (encryptedCode === 'test') return 'Test';
   
-  // Ad network mapping from Adnetworks.csv
+  // Ad network mapping from Adnetworks.csv - synchronized with backend
   const adNetworkMap: Record<string, string> = {
+    // Base64 decoded mappings
+    'VGVzdA==': 'Test',
+    'QWQgaXQgdXA=': 'Ad it Up', 
+    'Q29wcGVy': 'Copper',
+    'RHluYXRh': 'Dynata',
+    'SXJvblNvdXJjZQ==': 'IronSource',
+    'VW5pdHk=': 'Unity',
+    'QWRNb2I=': 'AdMob',
+    'RmFjZWJvb2s=': 'Facebook',
+    'QXBwTG92aW4=': 'AppLovin',
+    'UHJpbWU=': 'Prime',
+    'Rmx1ZW50': 'Fluent',
+    'S2xpbms=': 'Klink',
+    'VU5L': 'TNK',
+    'RW5lYmE=': 'Eneba',
+    'UGxheXdlbGw=': 'Playwell',
+    'QXBwc1ByaXpl': 'AppsPrize',
+    'QXlldCBTdHVkaW9z': 'Ayet Studios',
+    'RW1iZXJGdW5k': 'EmberFund',
+    'TG9vdGFibHk=': 'Lootably',
+    'UmVQb2NrZXQ=': 'RePocket',
+    'QWQgZm9yIFVz': 'Ad for Us',
+    'QnV6enZpbA==': 'Buzzvil',
+    'VGFwQ2hhbXBz': 'TapChamps',
+    'T2ZmZXJUb3Jv': 'OfferToro',
+    'QVRM': 'ATM',
+    'UG9pa2V5': 'Poikey',
+    'UmV3YXJkeQ==': 'Rewardy',
+    'SG9waSBTMlM=': 'Hopi S2S',
+    'TW9kZSBFYXJuIEFwcA==': 'Mode Earn App',
+    
+    // Direct codes (case insensitive)
     'SCR': 'Copper',
-    'ScR': 'Copper',
+    'ScR': 'Copper', 
     'ScR_': 'Copper',
     'SPE': 'Prime',
     'SPE_': 'Prime',

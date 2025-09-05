@@ -509,6 +509,10 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
       return reply.code(400).send({ error: 'No valid rows' })
     }
 
+    // Log total installs for debugging
+    const totalInstalls = rows.reduce((sum, row) => sum + row.installs, 0);
+    req.log.info({ fileId: id, totalRows: rows.length, totalInstalls, skipped }, 'Processing CSV ingest');
+
     if (!append || append === '0' || append === 'false') {
       await prisma.campaignRow.deleteMany({ where: { fileId: id } })
     }
@@ -519,16 +523,18 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
         const slice = rows.slice(i, i + batchSize)
         await prisma.campaignRow.createMany({ data: slice })
       }
-    } catch {
+    } catch (error) {
+      req.log.error({ error, fileId: id }, 'Batch insert failed, falling back to individual inserts');
       // Fallback: insert one-by-one to skip problematic row(s)
       let inserted = 0
       for (const r of rows) {
         try {
           await prisma.campaignRow.create({ data: r })
           inserted++
-        } catch {
+        } catch (insertError) {
           skipped++
           if (!firstError) firstError = 'DB insert error'
+          req.log.warn({ insertError, row: r }, 'Failed to insert individual row');
         }
       }
       return reply.send({ inserted, skipped, reason: firstError ?? undefined, appended: !!append && append !== '0' && append !== 'false' })
