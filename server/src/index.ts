@@ -326,9 +326,19 @@ function normalizePublisherPrefix(adg: string): string {
     return decodedAdNetwork;
   }
   
-  // Handle prefix patterns for raw codes
+  // Handle prefix patterns for raw codes - but check if the prefix itself can be decoded
   const m = adg.match(/^([A-Za-z]{3})_/)
-  return m ? `${m[1]}_` : decodedAdNetwork
+  if (m) {
+    const prefix = m[1];
+    const decodedPrefix = decodeAdNetwork(prefix);
+    // If the prefix itself decodes to a known ad network, return the decoded name
+    if (decodedAdNetworks.includes(decodedPrefix)) {
+      return decodedPrefix;
+    }
+    return `${prefix}_`;
+  }
+  
+  return decodedAdNetwork;
 }
 
 app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams, Querystring: IngestQuery }>, reply: FastifyReply) => {

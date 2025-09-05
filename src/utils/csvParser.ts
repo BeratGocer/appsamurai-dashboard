@@ -949,10 +949,16 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
       return publisherRaw;
     }
     
-    // Handle prefix patterns for raw codes
+    // Handle prefix patterns for raw codes - but check if the prefix itself can be decoded
     const match = publisherRaw.match(/^([A-Za-z]{3})_/);
     if (match) {
-      return `${match[1]}_`;
+      const prefix = match[1];
+      const decodedPrefix = decodeAdNetwork(prefix);
+      // If the prefix itself decodes to a known ad network, return the decoded name
+      if (decodedAdNetworks.includes(decodedPrefix)) {
+        return decodedPrefix;
+      }
+      return `${prefix}_`;
     }
     
     return publisherRaw;
