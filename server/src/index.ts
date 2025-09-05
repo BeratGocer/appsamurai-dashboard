@@ -420,7 +420,7 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     })
     
     // Get column indices dynamically
-    const iApp = columnMap.get('gönderapp') ?? columnMap.get('gönder app') ?? 0
+    const iApp = columnMap.get('gönderapp') ?? columnMap.get('gönderamkapp') ?? columnMap.get('gönder app') ?? 0
     const iCN = columnMap.get('campaign_network') ?? 1
     const iAN = columnMap.get('adgroup_network') ?? 2
     const iDay = columnMap.get('day') ?? 3
