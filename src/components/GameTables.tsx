@@ -444,7 +444,7 @@ export function GameTables({
     }
     
     return groupEntries;
-  }, [groups, groupOrder]);
+  }, [groups]);
 
   // Initialize group order when groups change
   React.useEffect(() => {
