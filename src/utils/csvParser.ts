@@ -44,10 +44,13 @@ export function parseCSV(csvContent: string): CampaignData[] {
     
     if (isAzulaFormat) {
       // Parse Azula ROAS format: campaign_network,adgroup_network,day,installs,adjust_cost,all_revenue,roas,roas_d0,roas_d1,roas_d2,roas_d3,roas_d4,roas_d5,roas_d6,roas_d7
+      const rawCampaignNetwork = values[0] || '';
+      const rawAdgroupNetwork = values[1] || '';
+      
       return {
         app: 'Azula', // Default app name for Azula format
-        campaign_network: values[0] || '',
-        adgroup_network: values[1] || '',
+        campaign_network: decodeAdNetwork(rawCampaignNetwork),
+        adgroup_network: decodeAdNetwork(rawAdgroupNetwork),
         day: values[2] || '',
         installs: parseInt(values[3]) || 0,
         adjust_cost: parseFloat(values[4]) || 0,
@@ -74,10 +77,13 @@ export function parseCSV(csvContent: string): CampaignData[] {
       };
     } else if (isBusFrenzyFormat) {
       // Parse BusFrenzy format: app,campaign_network,adgroup_network,day,installs,ecpi,cost,all_revenue,roas_d0,roas_d1,roas_d2,roas_d3,roas_d4,roas_d5,roas_d6,roas_d7,roas_d14,roas_d21,roas_d30,roas_d45
+      const rawCampaignNetwork = values[1] || '';
+      const rawAdgroupNetwork = values[2] || '';
+      
       return {
         app: values[0] || '',
-        campaign_network: values[1] || '',
-        adgroup_network: values[2] || '',
+        campaign_network: decodeAdNetwork(rawCampaignNetwork),
+        adgroup_network: decodeAdNetwork(rawAdgroupNetwork),
         day: values[3] || '',
         installs: parseInt(values[4]) || 0,
         ecpi: parseFloat(values[5]) || 0,
@@ -104,10 +110,13 @@ export function parseCSV(csvContent: string): CampaignData[] {
       };
     } else if (isDetailedFormat) {
       // Parse detailed format with all fields
+      const rawCampaignNetwork = values[1] || '';
+      const rawAdgroupNetwork = values[2] || '';
+      
       return {
         app: values[0] || '',
-        campaign_network: values[1] || '',
-        adgroup_network: values[2] || '',
+        campaign_network: decodeAdNetwork(rawCampaignNetwork),
+        adgroup_network: decodeAdNetwork(rawAdgroupNetwork),
         day: values[3] || '',
         installs: parseInt(values[4]) || 0,
         // Financial metrics
@@ -201,10 +210,13 @@ export function parseCSV(csvContent: string): CampaignData[] {
       const retentionD21Index = getColumnIndex('retention_rate_d21');
       const retentionD30Index = getColumnIndex('retention_rate_d30');
       
+      const rawCampaignNetwork = campaignNetworkIndex >= 0 ? values[campaignNetworkIndex] || '' : '';
+      const rawAdgroupNetwork = adgroupNetworkIndex >= 0 ? values[adgroupNetworkIndex] || '' : '';
+      
       return {
         app: appIndex >= 0 ? values[appIndex] || '' : '',
-        campaign_network: campaignNetworkIndex >= 0 ? values[campaignNetworkIndex] || '' : '',
-        adgroup_network: adgroupNetworkIndex >= 0 ? values[adgroupNetworkIndex] || '' : '',
+        campaign_network: decodeAdNetwork(rawCampaignNetwork),
+        adgroup_network: decodeAdNetwork(rawAdgroupNetwork),
         day: dayIndex >= 0 ? values[dayIndex] || '' : '',
         installs: installsIndex >= 0 ? parseInt(values[installsIndex]) || 0 : 0,
         roas: roasIndex >= 0 ? parseFloat(values[roasIndex]) || 0 : 0,
@@ -749,6 +761,71 @@ export function extractPlatform(app: string, campaignNetwork: string = ''): stri
   return 'Unknown';
 }
 
+// Decode ad network codes using the latest Adnetworks.csv mapping
+export function decodeAdNetwork(encryptedCode: string): string {
+  if (!encryptedCode || encryptedCode.toLowerCase() === 'unknown') return 'Unknown';
+  
+  // Handle special cases first
+  if (encryptedCode === 'unknown') return 'Test';
+  if (encryptedCode === 'test') return 'Test';
+  
+  // Ad network mapping from Adnetworks.csv
+  const adNetworkMap: Record<string, string> = {
+    'SCR': 'Copper',
+    'SPE': 'Prime', 
+    'SFT': 'Fluent',
+    'SDA': 'Dynata',
+    'SAP': 'Ad it Up',
+    'SKK': 'Klink',
+    'STK': 'TNK',
+    'SEA': 'Eneba',
+    'TEST': 'Test',
+    'SPL': 'Playwell',
+    'SAN': 'AppsPrize',
+    'PTSDK_ADVN': 'AppsPrize',
+    'LV9': 'Ad it Up',
+    'WU': 'Prime',
+    'MT': 'Fluent',
+    'ZU': 'Eneba',
+    'OT': 'Copper',
+    'e3': 'Test',
+    'UF': 'Ayet Studios',
+    'ZG': 'EmberFund',
+    'Ql': 'Ad it Up',
+    'Y2': 'Lootably',
+    'Zn': 'RePocket',
+    'Z0': 'Ad for Us',
+    'OX': 'Buzzvil',
+    'U0': 'TapChamps',
+    'Mz': 'OfferToro',
+    'dW': 'ATM',
+    'Mm': 'Poikey',
+    'Mj': 'Dynata',
+    'ND': 'AppsPrize',
+    'N3': 'AppsPrize',
+    'MX': 'Dynata',
+    'Mn': 'Dynata',
+    'b3': 'Rewardy',
+    'OD': 'AppsPrize',
+    'NE': 'TNK',
+    'Nz': 'AppsPrize',
+    'Nm': 'Hopi S2S',
+    'NJ': 'AppsPrize',
+    'NT': 'AppsPrize',
+    'NH': 'Mode Earn App'
+  };
+  
+  // Extract prefix and match
+  for (const [prefix, realName] of Object.entries(adNetworkMap)) {
+    if (encryptedCode.startsWith(prefix)) {
+      return realName;
+    }
+  }
+  
+  // Return original if no match found
+  return encryptedCode;
+}
+
 // Decode publisher codes from adgroup_network (C column) - keep unrecognized codes as-is
 export function decodePublisherCode(adgroupNetwork: string): string {
   if (!adgroupNetwork || adgroupNetwork.toLowerCase() === 'unknown') return 'Unknown';
@@ -864,10 +941,20 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
   
   const normalizePublisher = (publisherRaw: string): string => {
     if (!publisherRaw) return 'Unknown';
+    
+    // Handle decoded ad network names - return them as-is
+    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App'];
+    
+    if (decodedAdNetworks.includes(publisherRaw)) {
+      return publisherRaw;
+    }
+    
+    // Handle prefix patterns for raw codes
     const match = publisherRaw.match(/^([A-Za-z]{3})_/);
     if (match) {
       return `${match[1]}_`;
     }
+    
     return publisherRaw;
   };
 
@@ -881,9 +968,9 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
     const platform = parsed.platform !== 'Unknown' ? parsed.platform : extractPlatform(row.app, row.campaign_network);
     const country = parsed.country !== 'Unknown' ? parsed.country : extractCountryFromCampaign(row.campaign_network);
     
-    // Publisher must come directly from adgroup_network (raw, no decoding),
-    // then normalized by known prefixes (e.g., SFT_, SDA_) to combine tables
-    const publisher = normalizePublisher(row.adgroup_network || 'Unknown');
+    // Publisher comes from decoded adgroup_network, then normalized by known prefixes (e.g., SFT_, SDA_) to combine tables
+    const decodedAdgroupNetwork = decodeAdNetwork(row.adgroup_network || 'Unknown');
+    const publisher = normalizePublisher(decodedAdgroupNetwork);
     
     const key = `${game}-${country}-${platform}-${publisher}`;
     

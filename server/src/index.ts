@@ -250,10 +250,85 @@ function parseCampaignNetworkBasic(cn: string) {
   return result
 }
 
+// Ad network decoding function using the latest mapping
+function decodeAdNetwork(adNetworkCode: string): string {
+  if (!adNetworkCode || adNetworkCode.toLowerCase() === 'unknown') return 'Unknown';
+  
+  const code = adNetworkCode.toUpperCase();
+  
+  // Ad network mappings from Adnetworks.csv
+  const adNetworkMappings: Record<string, string> = {
+    // Base64 decoded mappings
+    'VGVzdA==': 'Test',
+    'QWQgaXQgdXA=': 'Ad it Up', 
+    'Q29wcGVy': 'Copper',
+    'RHluYXRh': 'Dynata',
+    'SXJvblNvdXJjZQ==': 'IronSource',
+    'VW5pdHk=': 'Unity',
+    'QWRNb2I=': 'AdMob',
+    'RmFjZWJvb2s=': 'Facebook',
+    'QXBwTG92aW4=': 'AppLovin',
+    'UHJpbWU=': 'Prime',
+    'Rmx1ZW50': 'Fluent',
+    'S2xpbms=': 'Klink',
+    'VU5L': 'TNK',
+    'RW5lYmE=': 'Eneba',
+    'UGxheXdlbGw=': 'Playwell',
+    'QXBwc1ByaXpl': 'AppsPrize',
+    'QXlldCBTdHVkaW9z': 'Ayet Studios',
+    'RW1iZXJGdW5k': 'EmberFund',
+    'TG9vdGFibHk=': 'Lootably',
+    'UmVQb2NrZXQ=': 'RePocket',
+    'QWQgZm9yIFVz': 'Ad for Us',
+    'QnV6enZpbA==': 'Buzzvil',
+    'VGFwQ2hhbXBz': 'TapChamps',
+    'T2ZmZXJUb3Jv': 'OfferToro',
+    'QVRM': 'ATM',
+    'UG9pa2V5': 'Poikey',
+    'UmV3YXJkeQ==': 'Rewardy',
+    'SG9waSBTMlM=': 'Hopi S2S',
+    'TW9kZSBFYXJuIEFwcA==': 'Mode Earn App',
+    
+    // Direct codes
+    'TEST': 'Test',
+    'UNKNOWN': 'Unknown'
+  };
+
+  // Check direct mappings first
+  if (adNetworkMappings[code] || adNetworkMappings[adNetworkCode]) {
+    return adNetworkMappings[code] || adNetworkMappings[adNetworkCode];
+  }
+
+  // Try Base64 decoding
+  try {
+    const decoded = Buffer.from(code, 'base64').toString('utf-8');
+    if (decoded && decoded !== code && decoded.length > 0) {
+      return decoded;
+    }
+  } catch {
+    // Base64 decoding failed, continue with other methods
+  }
+
+  // Return original if no mapping found
+  return adNetworkCode;
+}
+
 function normalizePublisherPrefix(adg: string): string {
   if (!adg) return 'Unknown'
+  
+  // First decode the ad network
+  const decodedAdNetwork = decodeAdNetwork(adg);
+  
+  // Handle decoded ad network names - return them as-is
+  const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App'];
+  
+  if (decodedAdNetworks.includes(decodedAdNetwork)) {
+    return decodedAdNetwork;
+  }
+  
+  // Handle prefix patterns for raw codes
   const m = adg.match(/^([A-Za-z]{3})_/)
-  return m ? `${m[1]}_` : adg
+  return m ? `${m[1]}_` : decodedAdNetwork
 }
 
 app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams, Querystring: IngestQuery }>, reply: FastifyReply) => {
@@ -377,8 +452,8 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
         rows.push({
           fileId: id,
           app: v[iApp] || '',
-          campaignNetwork: v[iCN] || '',
-          adgroupNetwork: v[iAN] || '',
+          campaignNetwork: decodeAdNetwork(v[iCN] || ''),
+          adgroupNetwork: decodeAdNetwork(v[iAN] || ''),
           day: d,
           installs: installsNum,
           ecpi: iEcpi >= 0 ? toNumericStringOrNull(v[iEcpi]) : null,
