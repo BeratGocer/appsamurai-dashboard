@@ -801,9 +801,18 @@ export function extractPlatform(app: string, campaignNetwork: string = ''): stri
 export function decodeAdNetwork(encryptedCode: string): string {
   if (!encryptedCode || encryptedCode.toLowerCase() === 'unknown') return 'Unknown';
   
+  // Clean up the input - remove ,undefined and other artifacts
+  let cleanCode = encryptedCode.trim();
+  if (cleanCode.includes(',undefined')) {
+    cleanCode = cleanCode.split(',undefined')[0];
+  }
+  if (cleanCode.includes(',')) {
+    cleanCode = cleanCode.split(',')[0];
+  }
+  
   // Handle special cases first
-  if (encryptedCode === 'unknown') return 'Test';
-  if (encryptedCode === 'test') return 'Test';
+  if (cleanCode === 'unknown') return 'Test';
+  if (cleanCode === 'test') return 'Test';
   
   // Ad network mapping from Adnetworks.csv
   const adNetworkMap: Record<string, string> = {
@@ -848,6 +857,8 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'SFT_': 'Fluent',
     'SFT_MTkwMzZ8': 'Fluent',
     'SFT_MTkxNDF8': 'Fluent',
+    'SFT_34631_5406': 'Fluent',
+    'SFT_45209_5406': 'Fluent',
     'SDA': 'Dynata',
     'SDA_': 'Dynata',
     'SAP': 'Ad it Up',
@@ -892,15 +903,20 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'NH': 'Mode Earn App'
   };
   
+  // Special case: SFT_ prefix should always map to Fluent
+  if (cleanCode.startsWith('SFT_')) {
+    return 'Fluent';
+  }
+  
   // Extract prefix and match
   for (const [prefix, realName] of Object.entries(adNetworkMap)) {
-    if (encryptedCode.startsWith(prefix)) {
+    if (cleanCode.startsWith(prefix)) {
       return realName;
     }
   }
   
   // Return original if no match found
-  return encryptedCode;
+  return cleanCode;
 }
 
 // Decode publisher codes from adgroup_network (C column) - keep unrecognized codes as-is
@@ -933,7 +949,11 @@ export function decodePublisherCode(adgroupNetwork: string): string {
     
     // Direct codes
     'TEST': 'Test',
-    'UNKNOWN': 'Unknown'
+    'UNKNOWN': 'Unknown',
+    
+    // Specific SFT codes that appear in the data
+    'SFT_34631_5406': 'Fluent',
+    'SFT_45209_5406': 'Fluent'
   };
 
   // Check direct mappings first
@@ -941,6 +961,11 @@ export function decodePublisherCode(adgroupNetwork: string): string {
     return knownMappings[code] || knownMappings[adgroupNetwork];
   }
 
+  // Special case: SFT_ prefix should always map to Fluent
+  if (cleanCode.startsWith('SFT_')) {
+    return 'Fluent';
+  }
+  
   // Handle prefix formats like SFT_, SPE_, SAP_, LV9U_
   if (cleanCode.includes('_')) {
     const parts = cleanCode.split('_');
