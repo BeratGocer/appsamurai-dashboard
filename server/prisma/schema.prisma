@@ -51,14 +51,14 @@ model CampaignRow {
   id              BigInt  @id @default(autoincrement())
   file            File    @relation(fields: [fileId], references: [id])
   fileId          String
-  app             String
-  campaignNetwork String
-  adgroupNetwork  String
+  gönder_app      String  @map("app")
+  campaign_network String
+  adgroup_network String
   day             DateTime
   installs        Int
   ecpi            Decimal? @db.Decimal(20,10)
-  adjustCost      Decimal? @db.Decimal(20,10)
-  adRevenue       Decimal? @db.Decimal(20,10)
+  cost            Decimal? @db.Decimal(20,10)
+  all_revenue     Decimal? @db.Decimal(20,10)
   roas_d0         Decimal? @db.Decimal(20,10)
   roas_d1         Decimal? @db.Decimal(20,10)
   roas_d2         Decimal? @db.Decimal(20,10)

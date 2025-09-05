@@ -52,14 +52,14 @@ interface IngestQuery { append?: string }
 
 interface CampaignRowInput {
   fileId: string
-  app: string
-  campaignNetwork: string
-  adgroupNetwork: string
+  gönder_app: string
+  campaign_network: string
+  adgroup_network: string
   day: Date
   installs: number
   ecpi: number | string | null
-  adjustCost: number | string | null
-  adRevenue: number | string | null
+  cost: number | string | null
+  all_revenue: number | string | null
   roas_d0: number | string | null
   roas_d1: number | string | null
   roas_d2: number | string | null
@@ -89,8 +89,8 @@ interface AggregatedDate {
   roas_d21: number
   roas_d30: number
   roas_d45: number
-  adjustCost: number
-  adRevenue: number
+  cost: number
+  all_revenue: number
   ecpi?: number | null
 }
 
@@ -316,14 +316,14 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     }
     const headers = parseCsvLine(headerLine).map((h: string) => h.trim())
     const idx = (name: string) => headers.indexOf(name)
-    const iApp = idx('app')
+    const iApp = idx('gönder app')
     const iCN = idx('campaign_network')
     const iAN = idx('adgroup_network')
     const iDay = idx('day')
     const iInst = idx('installs')
     const iEcpi = idx('ecpi')
-    const iCost = idx('adjust_cost') >= 0 ? idx('adjust_cost') : idx('cost')
-    const iRev = idx('ad_revenue') >= 0 ? idx('ad_revenue') : idx('all_revenue')
+    const iCost = idx('cost')
+    const iRev = idx('all_revenue')
     const iD0 = idx('roas_d0')
     const iD1 = idx('roas_d1')
     const iD2 = idx('roas_d2')
@@ -378,14 +378,14 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
         }
         rows.push({
           fileId: id,
-          app: v[iApp] || '',
-          campaignNetwork: v[iCN] || '',
-          adgroupNetwork: v[iAN] || '',
+          gönder_app: v[iApp] || '',
+          campaign_network: v[iCN] || '',
+          adgroup_network: v[iAN] || '',
           day: d,
           installs: installsNum,
           ecpi: iEcpi >= 0 ? toNumericStringOrNull(v[iEcpi]) : null,
-          adjustCost: iCost >= 0 ? toNumericStringOrNull(v[iCost]) : null,
-          adRevenue: iRev >= 0 ? toNumericStringOrNull(v[iRev]) : null,
+          cost: iCost >= 0 ? toNumericStringOrNull(v[iCost]) : null,
+          all_revenue: iRev >= 0 ? toNumericStringOrNull(v[iRev]) : null,
           roas_d0: iD0 >= 0 ? toNumericStringOrNull(v[iD0]) : null,
           roas_d1: iD1 >= 0 ? toNumericStringOrNull(v[iD1]) : null,
           roas_d2: iD2 >= 0 ? toNumericStringOrNull(v[iD2]) : null,
@@ -452,9 +452,9 @@ app.get('/files/:id/groups', async (req: FastifyRequest<{ Params: { id: string }
   type Key = string
   const map = new Map<Key, GroupAgg>()
   for (const r of rows) {
-    const { platform, country } = parseCampaignNetworkBasic(r.campaignNetwork)
-    const game = r.app.replace(/ Android$/, '').replace(/ iOS$/, '').trim()
-    const publisher = normalizePublisherPrefix(r.adgroupNetwork)
+    const { platform, country } = parseCampaignNetworkBasic((r as unknown as CampaignRowInput).campaign_network)
+    const game = (r as unknown as CampaignRowInput).gönder_app.replace(/ Android$/, '').replace(/ iOS$/, '').trim()
+    const publisher = normalizePublisherPrefix((r as unknown as CampaignRowInput).adgroup_network)
     const key = `${game}|${country}|${platform}|${publisher}`
     if (!map.has(key)) map.set(key, { game, country, platform, publisher, byDate: new Map<string, AggregatedDate>() })
     const g = map.get(key)!
@@ -463,7 +463,7 @@ app.get('/files/:id/groups', async (req: FastifyRequest<{ Params: { id: string }
       date, installs: 0, 
       roas_d0: 0, roas_d1: 0, roas_d2: 0, roas_d3: 0, roas_d4: 0, roas_d5: 0, roas_d6: 0, roas_d7: 0, 
       roas_d14: 0, roas_d21: 0, roas_d30: 0, roas_d45: 0, 
-      adjustCost: 0, adRevenue: 0 
+      cost: 0, all_revenue: 0 
     })
     const d = g.byDate.get(date)!
     const prevInst = d.installs
@@ -483,9 +483,9 @@ app.get('/files/:id/groups', async (req: FastifyRequest<{ Params: { id: string }
     d.roas_d30 = wavg(Number(d.roas_d30||0), Number(r.roas_d30||0))
     d.roas_d45 = wavg(Number(d.roas_d45||0), Number(r.roas_d45||0))
     d.installs = total
-    d.adjustCost += Number(r.adjustCost||0)
-    d.adRevenue += Number(r.adRevenue||0)
-    d.ecpi = d.installs > 0 ? d.adjustCost / d.installs : null
+    d.cost += Number((r as unknown as CampaignRowInput).cost||0)
+    d.all_revenue += Number((r as unknown as CampaignRowInput).all_revenue||0)
+    d.ecpi = d.installs > 0 ? d.cost / d.installs : null
   }
   const groups = Array.from(map.values()).map((g: GroupAgg) => ({
     game: g.game,

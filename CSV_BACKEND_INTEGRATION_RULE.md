@@ -4,7 +4,7 @@
 CSV dosyalarında 20 sütun var ama backend'de sadece bazıları işleniyor. Kullanıcı ayarlardan sütun eklediğinde veri gelmiyor.
 
 ## CSV Columns (20 total)
-1. `gönder app`
+1. `app`
 2. `campaign_network`
 3. `adgroup_network`
 4. `day`
