@@ -107,7 +107,7 @@ export function parseCSV(csvContent: string): CampaignData[] {
         roas_d45: 0,
         ecpi: 0,
         cohort_ad_revenue: 0,
-        gross_profit: parseFloat(values[5]) || 0, // Use all_revenue as gross_profit approximation
+        gross_profit: 0, // Set default, will be filled if column exists
         roas_subscription: 0,
         subscrevnt_revenue: 0,
       };
@@ -138,9 +138,9 @@ export function parseCSV(csvContent: string): CampaignData[] {
         roas_d30: parseFloat(values[18]) || 0,
         roas_d45: parseFloat(values[19]) || 0,
         // Set default values for missing fields
-        roas: parseFloat(values[15]) || 0, // Use roas_d7 as roas
+        roas: 0, // Set default, will be filled if column exists
         cohort_ad_revenue: 0,
-        gross_profit: parseFloat(values[7]) || 0, // Use all_revenue as gross_profit approximation
+        gross_profit: 0, // Set default, will be filled if column exists
         roas_subscription: 0,
         subscrevnt_revenue: 0,
       };
