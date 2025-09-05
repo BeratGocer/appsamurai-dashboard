@@ -1,0 +1,96 @@
+---
+alwaysApply: true
+description: Dashboard settings panel integration and conditional rendering patterns
+---
+
+# Dashboard Settings Integration
+
+## Settings Panel Conditional Rendering
+The SettingsPanel component must be properly integrated with tab navigation:
+
+```typescript
+// Dashboard.tsx - Settings Panel Integration
+{currentTab === 'overview' && (
+  <SettingsPanel
+    isOpen={showSettings}
+    onClose={() => setShowSettings(false)}
+    currentTab={currentTab}
+    // ... other props
+  />
+)}
+```
+
+## Tab State Management
+Critical tab states for proper settings visibility:
+
+```typescript
+const [currentTab, setCurrentTab] = useState<'files' | 'customers' | 'managers' | 'dashboard' | 'overview'>('files')
+
+// Settings button only visible on 'overview' tab
+{currentTab === 'overview' && (
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => setShowSettings(true)}
+    className="flex items-center gap-2"
+  >
+    <Settings className="w-4 h-4" />
+    Ayarlar
+  </Button>
+)}
+```
+
+## Settings Panel Props
+Required props for SettingsPanel component:
+
+```typescript
+interface SettingsPanelProps {
+  isOpen: boolean
+  onClose: () => void
+  currentTab: string
+  // Additional props for settings functionality
+}
+```
+
+## Common Issues and Solutions
+
+### Issue: "Ayarlar butonu çalışmıyor"
+**Root Cause**: SettingsPanel only renders when `currentTab === 'overview'`
+**Solution**: Ensure user navigates to Dashboard tab first
+
+### Issue: "Ayarlara tıkladığımda site boş dönüyor"
+**Root Cause**: SettingsPanel not rendering due to tab condition
+**Solution**: Verify tab state and conditional rendering logic
+
+### Issue: Settings button not visible
+**Root Cause**: Default tab is 'files', not 'overview'
+**Solution**: User must click "Dashboard" tab to see settings
+
+## Navigation Flow
+Proper user flow for accessing settings:
+
+1. **Upload Page** → User uploads CSV files
+2. **Dashboard Tab** → User clicks "Dashboard" in navigation
+3. **Overview Sub-tab** → Settings button becomes visible
+4. **Settings Panel** → User can access settings
+
+## Layout Integration
+Settings panel positioning and z-index:
+
+```typescript
+// Settings panel should have proper z-index
+<div className="fixed inset-0 z-40 bg-black/50" onClick={onClose}>
+  <div className="fixed right-0 top-0 h-full w-80 bg-card border-l shadow-xl">
+    {/* Settings content */}
+  </div>
+</div>
+```
+
+## Critical Rules
+- ✅ SettingsPanel only renders on 'overview' tab
+- ✅ Settings button only visible on 'overview' tab
+- ✅ Default tab is 'files' - user must navigate to 'dashboard'
+- ✅ Use proper z-index for settings panel (z-40)
+- ✅ Handle tab state changes correctly
+- ✅ Test settings access flow from all entry points
+- ✅ Ensure settings panel closes properly

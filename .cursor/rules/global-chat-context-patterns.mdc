@@ -1,0 +1,72 @@
+---
+alwaysApply: true
+description: Global chat context patterns and state management for AppSamurai Dashboard
+---
+
+# Global Chat Context Patterns
+
+## Architecture Overview
+The chat system uses React Context API for global state management across all pages:
+
+- **Context Provider**: [src/contexts/ChatContext.tsx](mdc:src/contexts/ChatContext.tsx)
+- **Global Component**: [src/components/GlobalChatAssistant.tsx](mdc:src/components/GlobalChatAssistant.tsx)
+- **App Integration**: [src/App.tsx](mdc:src/App.tsx) - wraps entire app with ChatProvider
+
+## Context State Management
+```typescript
+interface ChatContextType {
+  isOpen: boolean
+  setIsOpen: (open: boolean) => void
+  isMinimized: boolean
+  setIsMinimized: (minimized: boolean) => void
+  messages: ChatMessage[]
+  setMessages: (messages: ChatMessage[]) => void
+  addMessage: (message: ChatMessage) => void
+  input: string
+  setInput: (input: string) => void
+  loading: boolean
+  setLoading: (loading: boolean) => void
+  // Navigation functions
+  onNavigateToOverview?: () => void
+  onSelectGame?: (game: string) => void
+  onFocusPublisher?: (publisher: string) => void
+  getTodayContext?: () => any
+  setNavigationFunctions: (functions: NavigationFunctions) => void
+}
+```
+
+## Global Chat States
+1. **Closed State**: Chat button visible at bottom-right
+2. **Minimized State**: Small floating panel with input
+3. **Full State**: Takes entire right side of dashboard (w-80 md:w-96)
+
+## Navigation Integration
+Components register navigation functions with the chat context:
+
+```typescript
+const { setNavigationFunctions } = useChat()
+
+useEffect(() => {
+  setNavigationFunctions({
+    onNavigateToOverview: () => setCurrentTab('overview'),
+    onSelectGame: (game) => setSelectedGame(game),
+    onFocusPublisher: (publisher) => setFocusPublisher(publisher),
+    getTodayContext: () => generateContextData()
+  })
+}, [])
+```
+
+## Critical Implementation Rules
+- ✅ Always wrap App with ChatProvider for global access
+- ✅ Use z-50 for chat panel to ensure it's above other elements
+- ✅ Add relative z-10 to minimize button for clickability
+- ✅ Only navigate to overview when intent.game is present
+- ✅ Handle Turkish intent parsing for game/publisher extraction
+- ✅ Provide context data for AI responses
+- ✅ Use conditional rendering based on isOpen and isMinimized states
+
+## Layout Considerations
+- Chat panel reserves space: `w-80 md:w-96` on dashboard
+- Use `fixed top-0 right-0 h-full` for full panel
+- Use `fixed bottom-4 right-4` for minimized panel
+- Ensure proper z-index layering for clickable elements

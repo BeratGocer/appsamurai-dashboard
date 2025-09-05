@@ -1,0 +1,76 @@
+---
+alwaysApply: true
+description: Deployment troubleshooting and live testing patterns
+---
+
+# Deployment Troubleshooting
+
+## Deployment Architecture
+- **Frontend**: Netlify at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
+- **Backend**: Railway at `https://backend-production-80f6.up.railway.app/`
+- **GitHub**: `https://github.com/BeratGocer/appsamurai-dashboard`
+
+## Deployment Workflow
+1. **Code Changes** → Git commit and push
+2. **Frontend Build** → `npm run build` (creates dist/)
+3. **Netlify Deploy** → `netlify deploy --prod --dir=dist`
+4. **Live Testing** → Browser automation with Playwright
+
+## Common Deployment Issues
+
+### Issue: "Frontend değişiminin hemen gelmesi gerekmiyor mu"
+**Root Cause**: Changes pushed to Git but not deployed to Netlify
+**Solution**: Run `netlify deploy --prod --dir=dist` after Git push
+
+### Issue: "Web sitesinde hala chat kutusunun küçültme tuşunu göremiyorum"
+**Root Cause**: Z-index or CSS issues in production
+**Solution**: 
+- Verify z-index values (z-50 for panel, z-10 for button)
+- Check Tailwind classes are compiled correctly
+- Test with browser automation
+
+### Issue: "Ayarlara tıkladığımda site boş dönüyor"
+**Root Cause**: SettingsPanel conditional rendering logic
+**Solution**: Ensure SettingsPanel renders on 'overview' tab
+
+## Live Testing with Playwright
+Use browser automation to test deployed features:
+
+```typescript
+// Navigate to production site
+await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/')
+
+// Test chat functionality
+await page.click('[title="Yardımcı"]')
+await page.fill('input[placeholder="Mesaj yazın..."]', 'test message')
+await page.click('button[title="Gönder"]')
+
+// Test settings access
+await page.click('text=Dashboard')
+await page.click('text=Ayarlar')
+```
+
+## Build Process Verification
+Ensure build process includes all changes:
+
+```bash
+# Clean build
+rm -rf dist/
+npm run build
+
+# Verify dist/ contains latest changes
+ls -la dist/assets/
+
+# Deploy to production
+netlify deploy --prod --dir=dist
+```
+
+## Critical Rules
+- ✅ Always push to Git before deploying
+- ✅ Run `npm run build` before Netlify deploy
+- ✅ Test with Playwright after deployment
+- ✅ Verify z-index values in production
+- ✅ Check conditional rendering logic
+- ✅ Monitor Netlify build logs for errors
+- ✅ Test all user flows on live site
+- ✅ Use browser dev tools to debug CSS issues

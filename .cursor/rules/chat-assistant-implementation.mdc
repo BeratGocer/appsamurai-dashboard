@@ -1,7 +1,8 @@
 # Chat Assistant Implementation
 
 ## Frontend Components
-- **Chat Component**: [src/components/ChatAssistant.tsx](mdc:src/components/ChatAssistant.tsx)
+- **Global Chat Component**: [src/components/GlobalChatAssistant.tsx](mdc:src/components/GlobalChatAssistant.tsx)
+- **Chat Context**: [src/contexts/ChatContext.tsx](mdc:src/contexts/ChatContext.tsx) - global state management
 - **API Integration**: [src/utils/api.ts](mdc:src/utils/api.ts) - chat endpoint calls
 
 ## Backend Implementation
@@ -10,10 +11,13 @@
 - **Error Handling**: Graceful fallbacks for API failures
 
 ## Key Features
-1. **Turkish Language Support**: System prompt in Turkish
-2. **Context Awareness**: Receives dashboard data context
-3. **Real-time Responses**: Async chat interface
-4. **Error Handling**: Shows "Üzgünüm, şu an cevap oluşturulamadı" on failures
+1. **Global Access**: Available on all pages via React Context
+2. **Minimization Support**: Can be minimized to small floating form
+3. **Turkish Language Support**: System prompt in Turkish
+4. **Context Awareness**: Receives dashboard data context
+5. **Real-time Responses**: Async chat interface
+6. **Error Handling**: Shows "Üzgünüm, şu an cevap oluşturulamadı" on failures
+7. **Intent-Based Navigation**: Only navigates when specific game/publisher intents detected
 
 ## Environment Variables
 - `OPENAI_API_KEY`: Required for chat functionality

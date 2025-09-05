@@ -1,0 +1,90 @@
+---
+alwaysApply: true
+description: Chat UI responsiveness and z-index management patterns
+---
+
+# Chat UI Responsiveness Patterns
+
+## Z-Index Management
+Critical z-index values for proper layering:
+
+```typescript
+// Chat toggle button - highest priority
+className="fixed bottom-4 right-4 z-50"
+
+// Full chat panel - above all content
+className="fixed top-0 right-0 h-full w-80 md:w-96 bg-card border-l shadow-xl z-50"
+
+// Minimize button - above panel content
+className="text-sm opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted relative z-10"
+```
+
+## Responsive Design Patterns
+- **Mobile**: `w-80` (320px) for chat panel
+- **Desktop**: `md:w-96` (384px) for chat panel
+- **Layout**: Dashboard content uses `flex-1` to accommodate chat space
+
+## State-Based Rendering
+Three distinct UI states with proper conditional rendering:
+
+```typescript
+{/* Chat Toggle Button */}
+{!isOpen && (
+  <button className="fixed bottom-4 right-4 z-50...">
+    <MessageSquare className="w-5 h-5" />
+  </button>
+)}
+
+{/* Minimized Panel */}
+{isOpen && isMinimized && (
+  <div className="fixed bottom-4 right-4 z-50...">
+    {/* Small floating panel */}
+  </div>
+)}
+
+{/* Full Panel */}
+{isOpen && !isMinimized && (
+  <div className="fixed top-0 right-0 h-full w-80 md:w-96...">
+    {/* Full-width panel */}
+  </div>
+)}
+```
+
+## Clickability Issues Prevention
+Common issues and solutions:
+
+1. **Minimize Button Not Clickable**:
+   - Add `relative z-10` to button
+   - Ensure parent panel has `z-50`
+   - Check for overlapping elements
+
+2. **Chat Button Hidden**:
+   - Verify `!isOpen` condition
+   - Ensure proper z-index hierarchy
+   - Check for CSS conflicts
+
+3. **Panel Overlap Issues**:
+   - Use consistent z-index values
+   - Test on different screen sizes
+   - Verify Tailwind classes are applied
+
+## Layout Integration
+Dashboard layout adjustments for chat:
+
+```typescript
+// Dashboard main content
+<div className="flex flex-1">
+  <div className="flex-1">
+    {/* Main dashboard content */}
+  </div>
+  {/* Space reserved for chat: w-80 md:w-96 */}
+</div>
+```
+
+## Critical Rules
+- ✅ Always use z-50 for chat panels
+- ✅ Add relative z-10 to interactive buttons
+- ✅ Test minimize/maximize functionality
+- ✅ Ensure responsive breakpoints work
+- ✅ Verify clickability on all screen sizes
+- ✅ Use conditional rendering for state management

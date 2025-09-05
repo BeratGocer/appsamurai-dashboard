@@ -20,12 +20,14 @@ app.post('/chat', async (req: FastifyRequest<{ Body: ChatBody }>, reply: Fastify
 ```
 
 ## Frontend Chat Component
-The chat UI is implemented in [src/components/ChatAssistant.tsx](mdc:src/components/ChatAssistant.tsx) with:
-- Floating bottom-right widget
+The chat UI is implemented in [src/components/GlobalChatAssistant.tsx](mdc:src/components/GlobalChatAssistant.tsx) with:
+- Global access via React Context
+- Three states: closed, minimized, full
 - Intent parsing for Turkish queries
-- Navigation to Overview tab
+- Conditional navigation (only on game/publisher intents)
 - Game/publisher filtering
 - Context generation for daily summaries
+- Minimization support with z-index management
 
 ## API Configuration
 The API base URL is configured in [src/utils/api.ts](mdc:src/utils/api.ts):
@@ -40,6 +42,10 @@ const API_BASE = 'https://backend-production-80f6.up.railway.app'
 - ✅ Test chat endpoint with `curl` before deployment
 - ✅ Handle `llm_failed` errors gracefully in frontend
 - ✅ Parse Turkish intents for game/publisher filtering
+- ✅ Use React Context for global chat state management
+- ✅ Implement proper z-index layering (z-50 for panels, z-10 for buttons)
+- ✅ Only navigate on specific intents, not every message
+- ✅ Support minimization with proper state management
 
 ## Deployment Checklist
 1. Update API key in Railway dashboard

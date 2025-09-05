@@ -1,0 +1,98 @@
+---
+alwaysApply: true
+description: Chat navigation logic and intent-based routing patterns
+---
+
+# Chat Navigation Logic
+
+## Intent-Based Navigation
+Chat system only navigates when specific intents are detected:
+
+```typescript
+const parseIntent = (text: string) => {
+  const lower = text.toLowerCase()
+  // Extract game names from Turkish queries
+  const gameMatch = lower.match(/([a-z0-9\s]+) bugün|([a-z0-9\s]+) dünkü|([a-z0-9\s]+) performans/i)
+  const extracted = gameMatch?.[1]?.trim() || gameMatch?.[2]?.trim() || gameMatch?.[3]?.trim() || ''
+  const cleanedGame = extracted ? extracted.replace(/bugün|dünkü|performans|nasıl|gösterdi/g, '').trim() : ''
+  
+  // Extract publisher tokens (SFT_, SDA_, TBSDK, etc.)
+  const publisherMatch = text.match(/([A-Z]{3}_|TBSDK|SFT_|SDA_)/)
+  return { game: cleanedGame || undefined, publisher: publisherMatch?.[1] }
+}
+```
+
+## Conditional Navigation Logic
+Navigation only occurs when specific conditions are met:
+
+```typescript
+const handleSend = async () => {
+  // ... message handling ...
+  
+  const intent = parseIntent(userText)
+  
+  // ONLY navigate to overview if user asks for specific game data
+  if (intent.game) {
+    onNavigateToOverview?.()
+    onSelectGame?.(intent.game.replace(/\s+/g, ' ').trim())
+  }
+  
+  if (intent.publisher) {
+    onFocusPublisher?.(intent.publisher)
+  }
+  
+  // ... API call ...
+}
+```
+
+## Navigation Triggers
+The system navigates only for these specific cases:
+
+1. **Game Performance Queries**:
+   - "Crayzlabs bugün nasıl performans gösterdi?"
+   - "ColorJelly dünkü performans"
+   - Triggers: `onNavigateToOverview()` + `onSelectGame(game)`
+
+2. **Publisher Focus Queries**:
+   - "SFT_ tablolarını göster"
+   - "TBSDK performansı"
+   - Triggers: `onFocusPublisher(publisher)`
+
+3. **General Queries**:
+   - "Merhaba", "Nasılsın?", "Yardım"
+   - **NO NAVIGATION** - stays on current page
+
+## Context Data Generation
+Navigation functions provide context for AI responses:
+
+```typescript
+getTodayContext={() => {
+  const dates = gameGroups.flatMap(g => g.dailyData.map(d => d.date))
+  if (dates.length === 0) return null
+  const latest = [...dates].sort().at(-1) as string
+  const rows = gameGroups.map(g => {
+    const d = g.dailyData.find(x => x.date === latest)
+    return d ? {
+      game: g.game,
+      country: g.country,
+      platform: g.platform,
+      publisher: g.publisher,
+      date: d.date,
+      installs: d.installs,
+      roas_d0: d.roas_d7, // Using D7 as D0 placeholder
+      roas_d7: d.roas_d7,
+      roas_d30: d.roas_d30,
+    } : null
+  }).filter(Boolean)
+  return { date: latest, rows }
+}}
+```
+
+## Critical Rules
+- ✅ NEVER navigate on every message - only on specific intents
+- ✅ Parse Turkish game names correctly
+- ✅ Handle publisher prefixes (SFT_, SDA_, etc.)
+- ✅ Provide context data for AI responses
+- ✅ Clean game names (remove Turkish query words)
+- ✅ Use optional chaining for navigation functions
+- ✅ Test navigation logic with various Turkish queries
