@@ -31,7 +31,7 @@ interface GameTablesProps {
   availableColumns?: string[];
 }
 
-type SortCriteria = 'volume' | 'roas_d0' | 'roas_d7' | 'roas_d14' | 'roas_d21' | 'roas_d30' | 'roas_d45' | 'roas_d60' | 'cost' | 'revenue' | 'alphabetical';
+type SortCriteria = 'volume' | 'roas_d0' | 'roas_d1' | 'roas_d2' | 'roas_d3' | 'roas_d4' | 'roas_d5' | 'roas_d6' | 'roas_d7' | 'roas_d14' | 'roas_d21' | 'roas_d30' | 'roas_d45' | 'roas_d60' | 'cost' | 'revenue' | 'alphabetical';
 
 interface SortableTableItemProps {
   group: GameCountryPublisherGroup;
@@ -534,6 +534,12 @@ export function GameTables({
       case 'volume':
         return calculateGroupVolume(group);
       case 'roas_d0':
+      case 'roas_d1':
+      case 'roas_d2':
+      case 'roas_d3':
+      case 'roas_d4':
+      case 'roas_d5':
+      case 'roas_d6':
       case 'roas_d7':
       case 'roas_d14':
       case 'roas_d21':
@@ -556,6 +562,12 @@ export function GameTables({
       case 'volume':
         return calculateAppCountryPlatformVolume(groups);
       case 'roas_d0':
+      case 'roas_d1':
+      case 'roas_d2':
+      case 'roas_d3':
+      case 'roas_d4':
+      case 'roas_d5':
+      case 'roas_d6':
       case 'roas_d7':
       case 'roas_d14':
       case 'roas_d21':

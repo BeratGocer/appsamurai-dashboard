@@ -905,15 +905,35 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
         date: row.day,
         installs: row.installs,
         roas_d0: row.roas_d0 || 0,
+        roas_d1: row.roas_d1 || 0,
+        roas_d2: row.roas_d2 || 0,
+        roas_d3: row.roas_d3 || 0,
+        roas_d4: row.roas_d4 || 0,
+        roas_d5: row.roas_d5 || 0,
+        roas_d6: row.roas_d6 || 0,
         roas_d7: row.roas_d7 || 0,
+        roas_d14: row.roas_d14 || 0,
+        roas_d21: row.roas_d21 || 0,
         roas_d30: row.roas_d30 || 0,
+        roas_d45: row.roas_d45 || 0,
+        roas_d60: row.roas_d60 || 0,
         cost: row.cost || 0,
         revenue: row.all_revenue || 0,
         // Optional fields preserved for downstream formatting
         ...(row.ecpi !== undefined ? { ecpi: row.ecpi } : {}),
         ...(row.adjust_cost !== undefined ? { adjust_cost: row.adjust_cost } : {}),
         ...(row.ad_revenue !== undefined ? { ad_revenue: row.ad_revenue } : {}),
+        ...(row.retention_rate_d1 !== undefined ? { retention_rate_d1: row.retention_rate_d1 } : {}),
+        ...(row.retention_rate_d2 !== undefined ? { retention_rate_d2: row.retention_rate_d2 } : {}),
+        ...(row.retention_rate_d3 !== undefined ? { retention_rate_d3: row.retention_rate_d3 } : {}),
+        ...(row.retention_rate_d4 !== undefined ? { retention_rate_d4: row.retention_rate_d4 } : {}),
+        ...(row.retention_rate_d5 !== undefined ? { retention_rate_d5: row.retention_rate_d5 } : {}),
+        ...(row.retention_rate_d6 !== undefined ? { retention_rate_d6: row.retention_rate_d6 } : {}),
         ...(row.retention_rate_d7 !== undefined ? { retention_rate_d7: row.retention_rate_d7 } : {}),
+        ...(row.retention_rate_d12 !== undefined ? { retention_rate_d12: row.retention_rate_d12 } : {}),
+        ...(row.retention_rate_d14 !== undefined ? { retention_rate_d14: row.retention_rate_d14 } : {}),
+        ...(row.retention_rate_d21 !== undefined ? { retention_rate_d21: row.retention_rate_d21 } : {}),
+        ...(row.retention_rate_d30 !== undefined ? { retention_rate_d30: row.retention_rate_d30 } : {}),
       } as any);
     } else {
       const current = group.dailyData[existingIndex] as any;
@@ -931,18 +951,58 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
         return totalInstalls > 0 ? ((a * prevInstalls) + (b * newInstalls)) / totalInstalls : 0;
       };
 
-      // ROAS fields
+      // ROAS fields - all available ROAS columns
       current.roas_d0 = wavg(current.roas_d0 || 0, row.roas_d0 || 0);
+      current.roas_d1 = wavg(current.roas_d1 || 0, row.roas_d1 || 0);
+      current.roas_d2 = wavg(current.roas_d2 || 0, row.roas_d2 || 0);
+      current.roas_d3 = wavg(current.roas_d3 || 0, row.roas_d3 || 0);
+      current.roas_d4 = wavg(current.roas_d4 || 0, row.roas_d4 || 0);
+      current.roas_d5 = wavg(current.roas_d5 || 0, row.roas_d5 || 0);
+      current.roas_d6 = wavg(current.roas_d6 || 0, row.roas_d6 || 0);
       current.roas_d7 = wavg(current.roas_d7 || 0, row.roas_d7 || 0);
+      current.roas_d14 = wavg(current.roas_d14 || 0, row.roas_d14 || 0);
+      current.roas_d21 = wavg(current.roas_d21 || 0, row.roas_d21 || 0);
       current.roas_d30 = wavg(current.roas_d30 || 0, row.roas_d30 || 0);
+      current.roas_d45 = wavg(current.roas_d45 || 0, row.roas_d45 || 0);
+      current.roas_d60 = wavg(current.roas_d60 || 0, row.roas_d60 || 0);
       
       // Sum cost and revenue
       current.cost = (current.cost || 0) + (row.cost || 0);
       current.revenue = (current.revenue || 0) + (row.all_revenue || 0);
 
-      // Retention rates (if present)
+      // Retention rates (if present) - all available retention columns
+      if (current.retention_rate_d1 !== undefined || row.retention_rate_d1 !== undefined) {
+        current.retention_rate_d1 = wavg(current.retention_rate_d1 || 0, row.retention_rate_d1 || 0);
+      }
+      if (current.retention_rate_d2 !== undefined || row.retention_rate_d2 !== undefined) {
+        current.retention_rate_d2 = wavg(current.retention_rate_d2 || 0, row.retention_rate_d2 || 0);
+      }
+      if (current.retention_rate_d3 !== undefined || row.retention_rate_d3 !== undefined) {
+        current.retention_rate_d3 = wavg(current.retention_rate_d3 || 0, row.retention_rate_d3 || 0);
+      }
+      if (current.retention_rate_d4 !== undefined || row.retention_rate_d4 !== undefined) {
+        current.retention_rate_d4 = wavg(current.retention_rate_d4 || 0, row.retention_rate_d4 || 0);
+      }
+      if (current.retention_rate_d5 !== undefined || row.retention_rate_d5 !== undefined) {
+        current.retention_rate_d5 = wavg(current.retention_rate_d5 || 0, row.retention_rate_d5 || 0);
+      }
+      if (current.retention_rate_d6 !== undefined || row.retention_rate_d6 !== undefined) {
+        current.retention_rate_d6 = wavg(current.retention_rate_d6 || 0, row.retention_rate_d6 || 0);
+      }
       if (current.retention_rate_d7 !== undefined || row.retention_rate_d7 !== undefined) {
         current.retention_rate_d7 = wavg(current.retention_rate_d7 || 0, row.retention_rate_d7 || 0);
+      }
+      if (current.retention_rate_d12 !== undefined || row.retention_rate_d12 !== undefined) {
+        current.retention_rate_d12 = wavg(current.retention_rate_d12 || 0, row.retention_rate_d12 || 0);
+      }
+      if (current.retention_rate_d14 !== undefined || row.retention_rate_d14 !== undefined) {
+        current.retention_rate_d14 = wavg(current.retention_rate_d14 || 0, row.retention_rate_d14 || 0);
+      }
+      if (current.retention_rate_d21 !== undefined || row.retention_rate_d21 !== undefined) {
+        current.retention_rate_d21 = wavg(current.retention_rate_d21 || 0, row.retention_rate_d21 || 0);
+      }
+      if (current.retention_rate_d30 !== undefined || row.retention_rate_d30 !== undefined) {
+        current.retention_rate_d30 = wavg(current.retention_rate_d30 || 0, row.retention_rate_d30 || 0);
       }
 
       // Sum cost/revenue if present
@@ -1109,26 +1169,34 @@ export function synchronizeGroupDates(groups: GameCountryPublisherGroup[], start
           date,
           installs: 0,
           roas_d0: 0,
-          roas_d7: 0,
-          roas_d30: 0,
-          cost: 0,
-          revenue: 0,
           roas_d1: 0,
           roas_d2: 0,
           roas_d3: 0,
           roas_d4: 0,
           roas_d5: 0,
           roas_d6: 0,
+          roas_d7: 0,
           roas_d14: 0,
           roas_d21: 0,
+          roas_d30: 0,
           roas_d45: 0,
+          roas_d60: 0,
+          cost: 0,
+          revenue: 0,
           ecpi: 0,
           adjust_cost: 0,
           ad_revenue: 0,
           gross_profit: 0,
           retention_rate_d1: 0,
+          retention_rate_d2: 0,
+          retention_rate_d3: 0,
+          retention_rate_d4: 0,
+          retention_rate_d5: 0,
+          retention_rate_d6: 0,
           retention_rate_d7: 0,
+          retention_rate_d12: 0,
           retention_rate_d14: 0,
+          retention_rate_d21: 0,
           retention_rate_d30: 0,
         } as any;
       }
