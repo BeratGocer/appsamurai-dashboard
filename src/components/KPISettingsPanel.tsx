@@ -145,6 +145,7 @@ export function KPISettingsPanel({
                 {isOpen ? 'Hide' : 'Show'}
               </Button>
             </div>
+          </div>
         </CardHeader>
 
         {isOpen && (
