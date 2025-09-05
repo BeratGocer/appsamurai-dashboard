@@ -1,0 +1,43 @@
+---
+description: CSV data validation and logical consistency checking patterns
+---
+
+# CSV Data Validation Patterns
+
+## Critical Data Logic Validation
+When analyzing CSV data, **ALWAYS** check for logical consistency:
+
+### ROAS Timeline Logic
+- **D3 ROAS**: Requires 3 days after install date
+- **D7 ROAS**: Requires 7 days after install date  
+- **D30 ROAS**: Requires 30 days after install date
+
+### Example Validation
+If current date is **September 5, 2025**:
+- **August 29**: D3 ✅ (3 days passed), D7 ✅ (7 days passed)
+- **August 30**: D3 ✅ (3 days passed), D7 ❌ (only 6 days passed)
+- **September 1**: D3 ✅ (3 days passed), D7 ❌ (only 4 days passed)
+- **September 2**: D3 ✅ (3 days passed), D7 ❌ (only 3 days passed)
+
+### Data Consistency Checks
+1. **Verify timeline logic** before assuming data errors
+2. **Check if 0.00% values are logical** (not yet measured vs missing data)
+3. **Validate KPI calculations** against individual row data
+4. **Confirm date ranges** match expected measurement periods
+
+## Common Data Issues
+- **All D3/D7 values 0.00%**: Likely missing data or parsing error
+- **KPI doesn't match table data**: May be weighted average vs single day
+- **Inconsistent ROAS values**: Check if measurement periods are correct
+
+## Validation Questions to Ask
+1. "What is the current date for this data?"
+2. "How many days have passed since each install date?"
+3. "Are the 0.00% values logical given the timeline?"
+4. "Does the KPI calculation method match the table data?"
+
+## Error Prevention
+- **Always validate data logic** before assuming technical issues
+- **Consider temporal relationships** in campaign data
+- **Verify measurement periods** align with ROAS definitions
+- **Check for data completeness** vs logical impossibility

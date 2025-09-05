@@ -1,0 +1,42 @@
+---
+description: Dynamic CSV column testing and file replacement patterns
+---
+
+# Dynamic CSV Column Testing Patterns
+
+## Critical Testing Rule
+When testing dynamic CSV column functionality (D3, D4, D5, D6, etc.), **ALWAYS** instruct the user to:
+
+1. **Delete the existing CSV file** from the dashboard
+2. **Re-upload the same CSV file** fresh
+3. **Never rely on existing uploaded files** for dynamic column testing
+
+## Why This Is Necessary
+- Backend uses **dynamic column parsing** based on CSV headers
+- Existing uploaded files may have been processed with **old hardcoded column indices**
+- **File replacement** ensures backend processes the CSV with **current dynamic parsing logic**
+- Old data in database may not include newly added ROAS columns (D3, D4, D5, D6, etc.)
+
+## Testing Workflow
+```bash
+# 1. User adds D4 ROAS column in settings
+# 2. User uploads CSV file
+# 3. D4 ROAS shows 0.00% (WRONG - old data)
+# 4. SOLUTION: Delete file and re-upload
+# 5. D4 ROAS shows real data (CORRECT - new data)
+```
+
+## Backend Dynamic Parsing
+The backend now uses **CSV header-based column mapping**:
+- Reads first row to map column names to indices
+- Supports any ROAS column (D0, D1, D2, D3, D4, D5, D6, D7, D14, D21, D30, D45)
+- Automatically handles missing columns as null values
+
+## User Instructions Template
+When user reports dynamic column issues:
+> "Please delete the existing CSV file from the dashboard and re-upload it. The backend now uses dynamic column parsing, but existing files may have been processed with the old system. Re-uploading ensures the new dynamic parsing logic processes your data correctly."
+
+## File Replacement vs Append
+- **Replace**: Deletes old data, processes CSV with current parsing logic ✅
+- **Append**: Adds to existing data, may use old parsing logic ❌
+- **Always recommend Replace** for dynamic column testing
