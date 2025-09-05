@@ -296,10 +296,11 @@ export function Dashboard({
       onSelectGame: (game) => setSelectedGame(game),
       onFocusPublisher: (publisher) => setFocusPublisher(publisher),
       getTodayContext: () => {
-        const dates = gameGroups.flatMap(g => g.dailyData.map(d => d.date))
+        // Use rawGameGroups directly to avoid dependency loop
+        const dates = rawGameGroups.flatMap(g => g.dailyData.map(d => d.date))
         if (dates.length === 0) return null
         const latest = [...dates].sort().at(-1) as string
-        const rows = gameGroups.map(g => {
+        const rows = rawGameGroups.map(g => {
           const d = g.dailyData.find(x => x.date === latest)
           return d ? {
             game: g.game,
@@ -316,7 +317,7 @@ export function Dashboard({
         return { date: latest, rows }
       }
     })
-  }, [setNavigationFunctions, gameGroups]);
+  }, [setNavigationFunctions, rawGameGroups]);
 
   // Show upload screen if requested
   if (showUpload) {
