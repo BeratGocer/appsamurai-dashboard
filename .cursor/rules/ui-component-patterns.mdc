@@ -1,46 +1,39 @@
 # UI Component Patterns
 
 ## Component Library
-- **shadcn/ui**: Primary component library
-- **Tailwind CSS**: Styling framework
-- **Lucide React**: Icon library
+- **Base Components**: [src/components/ui/](mdc:src/components/ui/) - shadcn/ui components
+- **Custom Components**: [src/components/](mdc:src/components/) - dashboard-specific components
 
 ## Key Components
-- **Dashboard**: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Main dashboard view
-- **FileUpload**: [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx) - File upload interface
-- **Navbar**: [src/components/Navbar.tsx](mdc:src/components/Navbar.tsx) - Navigation bar
-- **DynamicKPISection**: [src/components/DynamicKPISection.tsx](mdc:src/components/DynamicKPISection.tsx) - KPI cards
-- **GameTables**: [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Game-specific tables
+1. **Dashboard**: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Main dashboard view
+2. **Navbar**: [src/components/Navbar.tsx](mdc:src/components/Navbar.tsx) - Navigation and theme toggle
+3. **FileManager**: [src/components/FileManager.tsx](mdc:src/components/FileManager.tsx) - File upload and management
+4. **ChatAssistant**: [src/components/ChatAssistant.tsx](mdc:src/components/ChatAssistant.tsx) - AI chat interface
+5. **KPISettingsPanel**: [src/components/KPISettingsPanel.tsx](mdc:src/components/KPISettingsPanel.tsx) - KPI configuration
 
-## Layout Patterns
-1. **Accordion Layout**: Use expandable sections instead of grid cards
-2. **Responsive Design**: Mobile-first approach with Tailwind breakpoints
-3. **Dark/Light Theme**: Implemented via [ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
-4. **Turkish Localization**: All UI text in Turkish
+## Design Patterns
+1. **Accordion Layouts**: Expandable rows instead of cards
+2. **Turkish Language**: All UI text in Turkish
+3. **Dark/Light Theme**: ThemeContext integration
+4. **Responsive Design**: Mobile-friendly layouts
+5. **Loading States**: Skeleton loaders and spinners
 
-## Styling Guidelines
-- Use Tailwind utility classes
-- Follow shadcn/ui component patterns
-- Maintain consistent spacing and typography
-- Use semantic color names (e.g., `text-primary`, `bg-secondary`)
-- Implement hover states and transitions
+## Styling Standards
+- **CSS Framework**: Tailwind CSS
+- **Component Library**: shadcn/ui
+- **Theme**: Custom dark/light theme
+- **Typography**: Turkish font support
+- **Colors**: Consistent color palette
 
-## Component Structure
-```typescript
-// Example component structure
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+## Layout Structure
+- Navigation bar with tabs
+- Main content area with metrics
+- Accordion-style data tables
+- Floating chat assistant
+- Settings panels
 
-export function MyComponent() {
-  return (
-    <Card className="p-4">
-      <h3 className="text-lg font-semibold">Title</h3>
-      <Button variant="default">Action</Button>
-    </Card>
-  )
-}
-```
-description:
-globs:
-alwaysApply: true
----
+## Accessibility
+- ARIA labels for screen readers
+- Keyboard navigation support
+- High contrast mode support
+- Focus management

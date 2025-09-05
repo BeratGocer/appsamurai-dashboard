@@ -16,6 +16,7 @@ This is a React + TypeScript + Vite dashboard application for analyzing mobile a
 3. **Data Visualization**: KPI cards, metrics, filtered views
 4. **Accordion Layouts**: Row-by-row expandable listings instead of grid cards
 5. **Search & Filtering**: Applied to campaign data across all views
+6. **Chat Assistant**: OpenAI-powered chat for data analysis
 
 ## Data Flow
 CSV Files → [csvParser.ts](mdc:src/utils/csvParser.ts) → State Management → Dashboard Views
@@ -25,3 +26,9 @@ CSV Files → [csvParser.ts](mdc:src/utils/csvParser.ts) → State Management �
 - Tailwind CSS for styling
 - Turkish language UI labels
 - Dark/Light theme support via [ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
+
+## Backend Integration
+- **API Base**: [src/utils/api.ts](mdc:src/utils/api.ts)
+- **Chat Endpoint**: `/chat` for OpenAI integration
+- **File Management**: `/files` endpoints for CSV processing
+- **Deployment**: Netlify (frontend) + Railway (backend)

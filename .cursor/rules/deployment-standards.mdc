@@ -1,0 +1,65 @@
+# Deployment Standards
+
+## Environment Architecture
+- **Frontend**: Netlify (automatic from GitHub)
+- **Backend**: Railway (manual deployment)
+- **Database**: Railway PostgreSQL
+- **API Keys**: Railway environment variables
+
+## Git Workflow
+- ✅ Auto-commit and push on file changes
+- ✅ Never commit `.env` files (ignored by `.gitignore`)
+- ✅ Use descriptive commit messages with timestamps
+- ✅ Push to `origin main` branch
+
+## Railway Deployment
+```bash
+# Link to project
+railway link
+
+# Set environment variables
+railway variables --set "OPENAI_API_KEY=your-key-here"
+
+# Deploy backend
+railway up
+
+# Check status
+railway status
+
+# View logs
+railway logs
+```
+
+## Netlify Deployment
+- Automatic deployment from GitHub main branch
+- Build command: `npm run build`
+- Output directory: `dist/`
+- Environment: Production
+
+## Environment Variables
+### Railway (Backend)
+- `OPENAI_API_KEY`: OpenAI API key for chat functionality
+- `DATABASE_URL`: PostgreSQL connection string
+- `RAILWAY_ENVIRONMENT`: production
+
+### Local Development
+- `server/.env`: Local API key (never committed)
+- `PORT`: Backend port (default: 8787)
+
+## Critical Rules
+- ❌ NEVER change API_BASE to localhost in production
+- ❌ NEVER commit API keys or secrets
+- ✅ Always test backend endpoints before deployment
+- ✅ Use Railway CLI for environment management
+- ✅ Deploy backend after code changes
+- ✅ Verify frontend builds successfully
+
+## Troubleshooting
+- `llm_failed`: Check OpenAI API key in Railway
+- `404 /chat`: Backend not deployed or endpoint missing
+- Build errors: Check TypeScript compilation
+- Deployment failures: Check Railway logs
+description:
+globs:
+alwaysApply: true
+---

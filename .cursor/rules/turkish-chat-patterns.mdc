@@ -1,0 +1,75 @@
+# Turkish Chat Intent Patterns
+
+## Intent Parsing
+The chat system parses Turkish queries to extract game names and publishers:
+
+```typescript
+const parseIntent = (text: string) => {
+  const lower = text.toLowerCase()
+  // Extract game names from Turkish queries
+  const gameMatch = lower.match(/([a-z0-9\s]+) bugün|([a-z0-9\s]+) dünkü|([a-z0-9\s]+) performans/i)
+  const extracted = gameMatch?.[1]?.trim() || gameMatch?.[2]?.trim() || gameMatch?.[3]?.trim() || ''
+  const cleanedGame = extracted ? extracted.replace(/bugün|dünkü|performans|nasıl|gösterdi/g, '').trim() : ''
+  
+  // Extract publisher tokens (SFT_, SDA_, TBSDK, etc.)
+  const publisherMatch = text.match(/([A-Z]{3}_|TBSDK|SFT_|SDA_)/)
+  return { game: cleanedGame || undefined, publisher: publisherMatch?.[1] }
+}
+```
+
+## Common Query Patterns
+- **Game Performance**: "Crayzlabs bugün nasıl performans gösterdi?"
+- **Publisher Focus**: "SFT_ tablolarını göster"
+- **Daily Summary**: "Bugünkü özeti ver"
+- **Specific Date**: "Dünkü performans nasıldı?"
+
+## Navigation Actions
+Based on parsed intent, the system performs:
+1. **Navigate to Overview**: `setCurrentTab('overview')`
+2. **Select Game**: `setSelectedGame(game)`
+3. **Focus Publisher**: `setFocusPublisher(publisher)`
+4. **Generate Context**: Daily data for AI summary
+
+## Context Generation
+The system provides context to OpenAI for better responses:
+
+```typescript
+getTodayContext={() => {
+  const dates = gameGroups.flatMap(g => g.dailyData.map(d => d.date))
+  if (dates.length === 0) return null
+  const latest = [...dates].sort().at(-1) as string
+  const rows = gameGroups.map(g => {
+    const d = g.dailyData.find(x => x.date === latest)
+    return d ? {
+      game: g.game,
+      country: g.country,
+      platform: g.platform,
+      publisher: g.publisher,
+      date: d.date,
+      installs: d.installs,
+      roas_d0: d.roas_d7, // Using D7 as D0 placeholder
+      roas_d7: d.roas_d7,
+      roas_d30: d.roas_d30,
+    } : null
+  }).filter(Boolean)
+  return { date: latest, rows }
+}}
+```
+
+## UI Integration
+- **Chat Widget**: Floating bottom-right component
+- **Publisher Focus**: Scrolls to matching tables
+- **Game Filtering**: Shows only selected game data
+- **Error Handling**: Graceful fallback for failed responses
+
+## Critical Rules
+- ✅ Parse Turkish game names correctly
+- ✅ Handle publisher prefixes (SFT_, SDA_, etc.)
+- ✅ Provide context for AI responses
+- ✅ Navigate UI based on intent
+- ✅ Handle missing data gracefully
+- ✅ Use Turkish error messages
+description:
+globs:
+alwaysApply: true
+---

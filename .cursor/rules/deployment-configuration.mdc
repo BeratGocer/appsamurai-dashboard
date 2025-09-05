@@ -1,0 +1,48 @@
+# Deployment Configuration
+
+## Frontend Deployment (Netlify)
+- **Build Command**: `npm run build`
+- **Publish Directory**: `dist`
+- **Configuration**: [netlify.toml](mdc:netlify.toml)
+- **URL**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+
+## Backend Deployment (Railway)
+- **Configuration**: [railway.json](mdc:railway.json)
+- **Dockerfile**: [server/Dockerfile](mdc:server/Dockerfile)
+- **Entry Point**: [server/src/index.ts](mdc:server/src/index.ts)
+- **Database**: PostgreSQL with Prisma ORM
+
+## Environment Variables
+### Frontend (.env)
+- `VITE_API_BASE_URL`: Backend API URL
+- `VITE_APP_NAME`: Application name
+
+### Backend (Railway)
+- `OPENAI_API_KEY`: OpenAI API key for chat functionality
+- `DATABASE_URL`: PostgreSQL connection string
+- `PORT`: Server port (default: 8080)
+
+## Build Process
+1. **Frontend**: Vite build with TypeScript
+2. **Backend**: Prisma generate + TypeScript compile
+3. **Database**: Prisma migrations
+
+## API Endpoints
+- `GET /health`: Health check
+- `POST /chat`: OpenAI chat integration
+- `GET /files`: List uploaded files
+- `POST /files/init`: Initialize file upload
+- `GET /files/:id/settings`: Get file settings
+
+## Database Schema
+- **Schema**: [server/prisma/schema.prisma](mdc:server/prisma/schema.prisma)
+- **Migrations**: [server/prisma/migrations/](mdc:server/prisma/migrations/)
+
+## Monitoring
+- Railway logs for backend
+- Netlify analytics for frontend
+- Error tracking via console logs
+description:
+globs:
+alwaysApply: true
+---

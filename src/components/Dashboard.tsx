@@ -15,7 +15,7 @@ import type { CampaignData, UploadedFile } from '@/types'
 import { GameTables } from './GameTables'
 import SettingsPanel, { type SettingsData } from './SettingsPanel'
 
-import ChatAssistant from './ChatAssistant'
+import { useChat } from '@/contexts/ChatContext'
 
 
 interface DashboardProps {
@@ -39,6 +39,7 @@ export function Dashboard({
   onExportFiles,
   onImportFiles
 }: DashboardProps) {
+  const { setNavigationFunctions } = useChat()
   const [data, setData] = useState<CampaignData[]>([]);
   const [showUpload, setShowUpload] = useState(false);
   const [currentTab, setCurrentTab] = useState('files');
@@ -254,6 +255,35 @@ export function Dashboard({
     }
   }, [uploadedFiles, activeFileId]);
 
+  // Set navigation functions for chat
+  useEffect(() => {
+    setNavigationFunctions({
+      onNavigateToOverview: () => setCurrentTab('overview'),
+      onSelectGame: (game) => setSelectedGame(game),
+      onFocusPublisher: (publisher) => setFocusPublisher(publisher),
+      getTodayContext: () => {
+        const dates = gameGroups.flatMap(g => g.dailyData.map(d => d.date))
+        if (dates.length === 0) return null
+        const latest = [...dates].sort().at(-1) as string
+        const rows = gameGroups.map(g => {
+          const d = g.dailyData.find(x => x.date === latest)
+          return d ? {
+            game: g.game,
+            country: g.country,
+            platform: g.platform,
+            publisher: g.publisher,
+            date: d.date,
+            installs: d.installs,
+            roas_d0: d.roas_d7, // Using D7 as D0 placeholder
+            roas_d7: d.roas_d7,
+            roas_d30: d.roas_d30,
+          } : null
+        }).filter(Boolean)
+        return { date: latest, rows }
+      }
+    })
+  }, [setNavigationFunctions, gameGroups]);
+
   // Show upload screen if requested
   if (showUpload) {
     return (
@@ -298,7 +328,9 @@ export function Dashboard({
         onTabChange={setCurrentTab}
       />
       
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="flex">
+        {/* Main Content Area */}
+        <div className="flex-1 container mx-auto p-6 space-y-6">
 
       {/* Settings Panel - Only show in overview tab */}
       {currentTab === 'overview' && (
@@ -438,32 +470,6 @@ export function Dashboard({
             focusPublisher={focusPublisher}
           />
 
-          {/* Floating Chat Assistant */}
-          <ChatAssistant
-            onNavigateToOverview={() => setCurrentTab('overview')}
-            onSelectGame={(game) => setSelectedGame(game)}
-            onFocusPublisher={(publisher) => setFocusPublisher(publisher)}
-            getTodayContext={() => {
-              const dates = gameGroups.flatMap(g => g.dailyData.map(d => d.date))
-              if (dates.length === 0) return null
-              const latest = [...dates].sort().at(-1) as string
-              const rows = gameGroups.map(g => {
-                const d = g.dailyData.find(x => x.date === latest)
-                return d ? {
-                  game: g.game,
-                  country: g.country,
-                  platform: g.platform,
-                  publisher: g.publisher,
-                  date: d.date,
-                  installs: d.installs,
-                  roas_d0: d.roas_d7, // Using D7 as D0 placeholder
-                  roas_d7: d.roas_d7,
-                  roas_d30: d.roas_d30,
-                } : null
-              }).filter(Boolean)
-              return { date: latest, rows }
-            }}
-          />
         </div>
       )}
 
@@ -883,6 +889,12 @@ export function Dashboard({
 
 
 
+        </div>
+        
+        {/* Chat Area - Right Side */}
+        <div className="w-80 md:w-96 border-l bg-card/50">
+          {/* This space is reserved for the global chat assistant */}
+        </div>
       </div>
     </div>
   )

@@ -1,47 +1,72 @@
 # Error Handling Patterns
 
-## Common Upload Errors
+## Backend Error Responses
+The chat endpoint returns specific error codes:
 
-### 413 Payload Too Large
-- **Cause**: File size exceeds server body limit
-- **Solution**: Implement chunked upload in [FileUpload.tsx](mdc:src/components/FileUpload.tsx)
-- **Backend Fix**: Increase `bodyLimit` in [server/src/index.ts](mdc:server/src/index.ts)
+```typescript
+// Missing API key
+if (!apiKey) {
+  return reply.code(500).send({ error: 'missing_api_key' })
+}
 
-### 500 Internal Server Error
-- **Cause**: CSV parsing failures or database errors
-- **Solution**: Robust parsing with error handling
-- **Debug**: Check server logs for specific error details
+// Invalid message
+if (!message || typeof message !== 'string') {
+  return reply.code(400).send({ error: 'invalid_message' })
+}
 
-### "ingest failed" Error
-- **Common Causes**:
-  - Malformed CSV data
-  - Missing required headers
-  - Invalid numeric values
-  - Database constraint violations
-- **Solution**: Implement data sanitization and validation
+// OpenAI API failure
+if (!res.ok) {
+  return reply.code(502).send({ error: 'llm_failed' })
+}
 
-## File Management Issues
+// General chat failure
+catch (err) {
+  reply.code(500).send({ error: 'chat_failed' })
+}
+```
 
-### Deleted Files Reappearing
-- **Cause**: Frontend state not synced with backend
-- **Solution**: Proper state management in [App.tsx](mdc:src/App.tsx)
-- **Pattern**: Always call backend API for file operations
+## Frontend Error Handling
+The ChatAssistant component handles errors gracefully:
 
-### Empty Files After Upload
-- **Cause**: CSV parsing failed silently
-- **Solution**: Validate data before database insert
-- **Debug**: Check server logs for parsing errors
+```typescript
+try {
+  const reply = await apiChat(userText, context)
+  setHistory(h => [...h, { role: 'assistant', text: reply }])
+} catch (e) {
+  setHistory(h => [...h, { 
+    role: 'assistant', 
+    text: 'Üzgünüm, şu an cevap oluşturulamadı.' 
+  }])
+} finally {
+  setLoading(false)
+}
+```
 
-## Debugging Steps
-1. **Check Server Logs**: Look for specific error messages
-2. **Validate CSV Format**: Ensure proper headers and data structure
-3. **Test with Small File**: Verify upload process works
-4. **Check Database**: Verify data was inserted correctly
-5. **Frontend Console**: Look for JavaScript errors
+## Common Error Scenarios
+1. **`missing_api_key`**: Railway environment variable not set
+2. **`invalid_message`**: Empty or malformed chat message
+3. **`llm_failed`**: OpenAI API connection or rate limit issue
+4. **`chat_failed`**: General backend error
+5. **Network errors**: Frontend can't reach backend
 
-## Best Practices
-- Always log errors with context
-- Provide user-friendly error messages
-- Implement graceful degradation
-- Validate data at multiple levels
-- Use TypeScript for type safety
+## Troubleshooting Steps
+1. **Check Railway variables**: `railway variables`
+2. **Test backend endpoint**: `curl -X POST https://backend-production-80f6.up.railway.app/chat`
+3. **View Railway logs**: `railway logs`
+4. **Verify API key**: Check OpenAI dashboard
+5. **Check network**: Ensure Railway service is running
+
+## User Experience
+- ✅ Show loading state during API calls
+- ✅ Display user-friendly Turkish error messages
+- ✅ Maintain chat history even on errors
+- ✅ Allow retry without losing context
+- ✅ Graceful fallback for missing data
+
+## Critical Rules
+- ❌ Never expose API keys in error messages
+- ❌ Never crash the UI on chat errors
+- ✅ Always provide user-friendly error messages
+- ✅ Log errors for debugging
+- ✅ Handle network timeouts gracefully
+- ✅ Retry failed requests when appropriate

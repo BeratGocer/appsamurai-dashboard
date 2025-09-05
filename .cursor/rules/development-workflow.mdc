@@ -1,55 +1,54 @@
 
 # Development Workflow
 
-## Project Structure
-- **Frontend**: React + TypeScript + Vite in root directory
-- **Backend**: Fastify + Prisma in `server/` directory
-- **Database**: PostgreSQL with Prisma migrations
+## Project Setup
+1. **Clone Repository**: Main dashboard project
+2. **Install Dependencies**: `npm install` (frontend) + `cd server && npm install` (backend)
+3. **Environment Setup**: Configure `.env` files for both frontend and backend
+4. **Database Setup**: Run Prisma migrations
 
-## Development Setup
-```bash
-# Install dependencies
-pnpm install
-cd server && pnpm install
+## Development Commands
+### Frontend
+- `npm run dev`: Start development server
+- `npm run build`: Build for production
+- `npm run preview`: Preview production build
 
-# Start development servers
-pnpm dev          # Frontend (Vite)
-cd server && pnpm dev  # Backend (Fastify)
-```
+### Backend
+- `npm run dev`: Start development server
+- `npm run build`: Build TypeScript
+- `railway up`: Deploy to Railway
 
-## Key Commands
-- **Build**: `pnpm build` - Build frontend for production
-- **Dev**: `pnpm dev` - Start development server
-- **Backend**: `cd server && pnpm dev` - Start backend server
-- **Database**: `cd server && pnpm prisma migrate dev` - Run migrations
+## Code Organization
+- **Frontend**: React components in `src/components/`
+- **Backend**: Fastify server in `server/src/`
+- **Types**: Shared types in `src/types/`
+- **Utils**: Utility functions in `src/utils/`
 
-## Deployment
-- **Frontend**: Deployed to Netlify at `https://ubiquitous-sherbet-b4f6bf.netlify.app`
-- **Backend**: Deployed to Railway/Cloudflare
-- **Database**: PostgreSQL hosted on Railway
+## Git Workflow
+- **Auto-commit**: Changes are automatically committed and pushed
+- **Branch Strategy**: Main branch for production
+- **Commit Messages**: Auto-generated with timestamps
 
-## File Upload Testing
-1. **Test File**: Use `2025-9-4_9_57_adjust_report_export.csv`
-2. **Customer**: "test müşteri" or "CrayzLabs"
-3. **Manager**: "test Account Manager" or "Eylül"
-4. **Expected**: Successful upload without "ingest failed" error
+## Testing Strategy
+- **Frontend**: Manual testing via browser
+- **Backend**: API endpoint testing
+- **Chat Integration**: OpenAI API testing
+- **Data Processing**: CSV parsing validation
 
-## Debugging Process
-1. **Check Backend Logs**: Look for specific error messages
-2. **Test API Endpoints**: Use curl or Postman
-3. **Validate CSV Format**: Check headers and data structure
-4. **Check Database**: Verify data insertion
-5. **Frontend Console**: Look for JavaScript errors
+## Debugging
+- **Frontend**: Browser dev tools + console logs
+- **Backend**: Railway logs + console output
+- **API**: Network tab for request/response inspection
+- **Database**: Prisma Studio for data inspection
 
-## Common Issues
-- **413 Error**: Increase `bodyLimit` in backend
-- **500 Error**: Check CSV parsing and database constraints
-- **File Reappearing**: Ensure proper state management
-- **Empty Files**: Validate CSV data before processing
+## Performance Considerations
+- **Lazy Loading**: Components loaded on demand
+- **Data Pagination**: Large datasets handled efficiently
+- **Caching**: API responses cached where appropriate
+- **Optimization**: Bundle size optimization
 
-## Best Practices
-- Always test with real CSV files
-- Check server logs for errors
-- Validate data at multiple levels
-- Use TypeScript for type safety
-- Implement proper error handling
+## Security Practices
+- **API Keys**: Stored in environment variables
+- **CORS**: Configured for production domains
+- **Input Validation**: CSV data validation
+- **Error Handling**: Graceful error responses

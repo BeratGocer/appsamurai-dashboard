@@ -1,0 +1,42 @@
+# Chat Assistant Implementation
+
+## Frontend Components
+- **Chat Component**: [src/components/ChatAssistant.tsx](mdc:src/components/ChatAssistant.tsx)
+- **API Integration**: [src/utils/api.ts](mdc:src/utils/api.ts) - chat endpoint calls
+
+## Backend Implementation
+- **Chat Endpoint**: [server/src/index.ts](mdc:server/src/index.ts) - `/chat` route
+- **OpenAI Integration**: Uses `gpt-4o-mini` model with Turkish system prompt
+- **Error Handling**: Graceful fallbacks for API failures
+
+## Key Features
+1. **Turkish Language Support**: System prompt in Turkish
+2. **Context Awareness**: Receives dashboard data context
+3. **Real-time Responses**: Async chat interface
+4. **Error Handling**: Shows "Üzgünüm, şu an cevap oluşturulamadı" on failures
+
+## Environment Variables
+- `OPENAI_API_KEY`: Required for chat functionality
+- Railway deployment configuration needed
+
+## Usage Pattern
+```typescript
+// Frontend chat call
+const response = await fetch('/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ message, context })
+});
+```
+
+## System Prompt
+Chat assistant is configured to:
+- Provide short, clear Turkish responses
+- Analyze campaign performance data
+- Use percentage formatting for ROAS values
+- Format numbers in Turkish style
+- Focus on requested publisher information
+description:
+globs:
+alwaysApply: true
+---

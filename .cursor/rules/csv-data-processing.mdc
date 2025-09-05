@@ -1,0 +1,42 @@
+# CSV Data Processing
+
+## Core Parser
+- **Main Parser**: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- **Data Types**: [src/types/index.ts](mdc:src/types/index.ts)
+
+## Data Structure
+Campaign data includes:
+- Game names (e.g., "Bus Frenzy", "Venomidle Survive")
+- Countries (Australia, Canada, UK, US)
+- Platforms (iOS, Android)
+- Publishers (encoded identifiers)
+- Performance metrics (ROAS D0, D7, D30)
+- Install counts and costs
+
+## Parsing Patterns
+1. **Flexible Format Support**: Handles multiple CSV structures
+2. **Publisher Decoding**: Maps encoded publisher IDs
+3. **Platform Mapping**: iOS/Android standardization
+4. **Country Normalization**: Standard country codes
+5. **Metric Calculation**: ROAS and performance calculations
+
+## Data Flow
+1. CSV Upload → File Processing
+2. Parser Analysis → Data Structure Creation
+3. State Management → Dashboard Display
+4. Filtering & Grouping → User Views
+
+## Key Functions
+- `parseCSV()`: Main parsing function
+- `groupByGameCountryPlatform()`: Data organization
+- `calculateMetrics()`: Performance calculations
+- `formatPublisher()`: Publisher name formatting
+
+## Error Handling
+- Graceful fallbacks for malformed data
+- Default values for missing metrics
+- Validation for required fields
+description:
+globs:
+alwaysApply: true
+---

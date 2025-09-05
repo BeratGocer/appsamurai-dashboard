@@ -94,8 +94,13 @@ interface ChatBody {
 app.post('/chat', async (req: FastifyRequest<{ Body: ChatBody }>, reply: FastifyReply) => {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
+    req.log.error('OPENAI_API_KEY environment variable is missing')
     return reply.code(500).send({ error: 'missing_api_key' })
   }
+  
+  // Log API key prefix for debugging (don't log full key)
+  req.log.info({ apiKeyPrefix: apiKey.substring(0, 7) }, 'API key found')
+  
   const { message, context } = req.body || { message: '' }
   if (!message || typeof message !== 'string') {
     return reply.code(400).send({ error: 'invalid_message' })
@@ -104,32 +109,48 @@ app.post('/chat', async (req: FastifyRequest<{ Body: ChatBody }>, reply: Fastify
   const systemPrompt = `Sen AppSamurai Dashboard icin yardimci bir assistantsin. Kisa ve net Turkce cevap ver. Kullanici mobil reklam kampanyalari performansini sorar. Verilen baglam (context) JSON icindeki metrikleri kullanarak gunluk ozet olustur. Yuzdeleri % formatinda, sayilari Turkce formatla. Gerektiginde sadece istenen yayinci/publisher hakkinda bilgi ver.`
 
   try {
+    const requestBody = {
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        context ? { role: 'user', content: `Baglam: ${JSON.stringify(context)}` } : undefined,
+        { role: 'user', content: message }
+      ].filter(Boolean)
+    }
+    
+    req.log.info({ requestBody }, 'Sending request to OpenAI')
+    
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          context ? { role: 'user', content: `Baglam: ${JSON.stringify(context)}` } : undefined,
-          { role: 'user', content: message }
-        ].filter(Boolean)
-      })
+      body: JSON.stringify(requestBody)
     })
+    
+    req.log.info({ status: res.status, statusText: res.statusText }, 'OpenAI response received')
+    
     if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      req.log.error({ text }, 'openai error')
-      return reply.code(502).send({ error: 'llm_failed' })
+      const errorText = await res.text().catch(() => 'Failed to read error response')
+      req.log.error({ 
+        status: res.status, 
+        statusText: res.statusText, 
+        errorText,
+        headers: Object.fromEntries(res.headers.entries())
+      }, 'OpenAI API error')
+      return reply.code(502).send({ error: 'llm_failed', details: errorText })
     }
+    
     const data = await res.json() as any
+    req.log.info({ choices: data?.choices?.length }, 'OpenAI response parsed')
+    
     const content: string = data?.choices?.[0]?.message?.content || 'Bir cevap olusturulamadi.'
     reply.send({ reply: content })
   } catch (err) {
-    req.log.error({ err }, 'chat failed')
-    reply.code(500).send({ error: 'chat_failed' })
+    const error = err as Error
+    req.log.error({ err, message: error.message, stack: error.stack }, 'Chat request failed')
+    reply.code(500).send({ error: 'chat_failed', details: error.message })
   }
 })
 

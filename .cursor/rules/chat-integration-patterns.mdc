@@ -1,0 +1,53 @@
+# Chat Integration Patterns
+
+## Architecture Overview
+- **Frontend**: Netlify deployment at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
+- **Backend**: Railway deployment at `https://backend-production-80f6.up.railway.app/`
+- **API Key**: Stored in Railway environment variables, never in Git
+
+## Backend Chat Endpoint
+The chat functionality is implemented in [server/src/index.ts](mdc:server/src/index.ts):
+
+```typescript
+// Chat endpoint using OpenAI
+app.post('/chat', async (req: FastifyRequest<{ Body: ChatBody }>, reply: FastifyReply) => {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    return reply.code(500).send({ error: 'missing_api_key' })
+  }
+  // ... OpenAI API call implementation
+})
+```
+
+## Frontend Chat Component
+The chat UI is implemented in [src/components/ChatAssistant.tsx](mdc:src/components/ChatAssistant.tsx) with:
+- Floating bottom-right widget
+- Intent parsing for Turkish queries
+- Navigation to Overview tab
+- Game/publisher filtering
+- Context generation for daily summaries
+
+## API Configuration
+The API base URL is configured in [src/utils/api.ts](mdc:src/utils/api.ts):
+```typescript
+const API_BASE = 'https://backend-production-80f6.up.railway.app'
+```
+
+## Critical Rules
+- ✅ NEVER commit API keys to Git (use `.env` files)
+- ✅ Use Railway environment variables for production
+- ✅ Always use Railway URL for production API calls
+- ✅ Test chat endpoint with `curl` before deployment
+- ✅ Handle `llm_failed` errors gracefully in frontend
+- ✅ Parse Turkish intents for game/publisher filtering
+
+## Deployment Checklist
+1. Update API key in Railway dashboard
+2. Deploy backend with `railway up`
+3. Deploy frontend to Netlify (automatic from Git)
+4. Test chat endpoint: `curl -X POST https://backend-production-80f6.up.railway.app/chat`
+5. Verify chat UI in production dashboard
+description:
+globs:
+alwaysApply: true
+---

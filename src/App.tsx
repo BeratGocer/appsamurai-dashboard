@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Dashboard } from './components/Dashboard'
 import { FileUpload } from './components/FileUpload'
 import { ThemeToggle } from './components/ThemeToggle'
+import { ChatProvider } from './contexts/ChatContext'
+import GlobalChatAssistant from './components/GlobalChatAssistant'
 import type { UploadedFile } from './types'
 import { apiGetFiles, apiGetGroups, apiDeleteFile } from './utils/api'
 import type { CampaignData } from './types'
@@ -274,47 +276,53 @@ function App() {
   // Show file upload screen if requested
   if (showUploadPage) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">AppSamurai Dashboard</h1>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setShowUploadPage(false)}>
-              Back to Dashboard
-            </Button>
-            <ThemeToggle />
+      <ChatProvider>
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">AppSamurai Dashboard</h1>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setShowUploadPage(false)}>
+                Back to Dashboard
+              </Button>
+              <ThemeToggle />
+            </div>
           </div>
+          
+          <FileUpload
+            onFileUpload={handleFileUpload}
+            uploadedFiles={uploadedFiles}
+            onFileSelect={handleFileSelect}
+            onFileDelete={handleFileDelete}
+            activeFileId={activeFileId}
+            onFileReplace={handleFileReplace}
+            availableCustomers={Array.from(new Set(uploadedFiles.map(f => f.customerName).filter(Boolean))) as string[]}
+            availableManagers={Array.from(new Set(uploadedFiles.map(f => f.accountManager).filter(Boolean))) as string[]}
+          />
         </div>
-        
-        <FileUpload
-          onFileUpload={handleFileUpload}
-          uploadedFiles={uploadedFiles}
-          onFileSelect={handleFileSelect}
-          onFileDelete={handleFileDelete}
-          activeFileId={activeFileId}
-          onFileReplace={handleFileReplace}
-          availableCustomers={Array.from(new Set(uploadedFiles.map(f => f.customerName).filter(Boolean))) as string[]}
-          availableManagers={Array.from(new Set(uploadedFiles.map(f => f.accountManager).filter(Boolean))) as string[]}
-        />
-      </div>
+        <GlobalChatAssistant />
+      </ChatProvider>
     )
   }
 
   // Show dashboard as default (homepage)
   return (
-    <Dashboard 
-      uploadedFiles={uploadedFiles}
-      activeFileId={activeFileId}
-      onFileUpload={handleFileUpload}
-      onFileSelect={(fileId: string) => {
-        handleFileSelect(fileId);
-        // Auto-navigate to overview tab when file is selected
-        // This will be handled inside Dashboard component
-      }}
-      onFileDelete={handleFileDelete}
-      onShowUpload={handleShowUpload}
-      onExportFiles={handleExportFiles}
-      onImportFiles={handleImportFiles}
-    />
+    <ChatProvider>
+      <Dashboard 
+        uploadedFiles={uploadedFiles}
+        activeFileId={activeFileId}
+        onFileUpload={handleFileUpload}
+        onFileSelect={(fileId: string) => {
+          handleFileSelect(fileId);
+          // Auto-navigate to overview tab when file is selected
+          // This will be handled inside Dashboard component
+        }}
+        onFileDelete={handleFileDelete}
+        onShowUpload={handleShowUpload}
+        onExportFiles={handleExportFiles}
+        onImportFiles={handleImportFiles}
+      />
+      <GlobalChatAssistant />
+    </ChatProvider>
   )
 }
 
