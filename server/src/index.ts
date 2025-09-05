@@ -556,7 +556,9 @@ app.get('/files/:id/groups', async (req: FastifyRequest<{ Params: { id: string }
   for (const r of rows) {
     const { platform, country } = parseCampaignNetworkBasic((r as unknown as CampaignRowInput).campaignNetwork)
     const game = (r as unknown as CampaignRowInput).app.replace(/ Android$/, '').replace(/ iOS$/, '').trim()
-    const publisher = normalizePublisherPrefix((r as unknown as CampaignRowInput).adgroupNetwork)
+    // Apply decoding to stored data as well
+    const decodedAdgroupNetwork = decodeAdNetwork((r as unknown as CampaignRowInput).adgroupNetwork)
+    const publisher = normalizePublisherPrefix(decodedAdgroupNetwork)
     const key = `${game}|${country}|${platform}|${publisher}`
     if (!map.has(key)) map.set(key, { game, country, platform, publisher, byDate: new Map<string, AggregatedDate>() })
     const g = map.get(key)!
