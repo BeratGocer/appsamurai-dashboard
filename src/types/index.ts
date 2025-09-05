@@ -6,6 +6,8 @@ export interface CampaignData {
   installs: number;
   // Financial metrics
   ecpi?: number;
+  cost?: number;
+  all_revenue?: number;
   adjust_cost?: number;
   ad_revenue?: number;
   cohort_ad_revenue?: number;
@@ -198,8 +200,11 @@ export interface GameCountryPublisherGroup {
   dailyData: Array<{
     date: string;
     installs: number;
+    roas_d0: number;
     roas_d7: number;
     roas_d30: number;
+    cost: number;
+    revenue: number;
   }>;
 }
 

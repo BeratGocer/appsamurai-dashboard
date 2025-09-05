@@ -817,8 +817,11 @@ export interface GameCountryPublisherGroup {
   dailyData: Array<{
     date: string;
     installs: number;
+    roas_d0: number;
     roas_d7: number;
     roas_d30: number;
+    cost: number;
+    revenue: number;
   }>;
 }
 
@@ -870,6 +873,8 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
         roas_d0: row.roas_d0 || 0,
         roas_d7: row.roas_d7 || 0,
         roas_d30: row.roas_d30 || 0,
+        cost: row.cost || 0,
+        revenue: row.all_revenue || 0,
         // Optional fields preserved for downstream formatting
         ...(row.ecpi !== undefined ? { ecpi: row.ecpi } : {}),
         ...(row.adjust_cost !== undefined ? { adjust_cost: row.adjust_cost } : {}),
@@ -896,6 +901,10 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
       current.roas_d0 = wavg(current.roas_d0 || 0, row.roas_d0 || 0);
       current.roas_d7 = wavg(current.roas_d7 || 0, row.roas_d7 || 0);
       current.roas_d30 = wavg(current.roas_d30 || 0, row.roas_d30 || 0);
+      
+      // Sum cost and revenue
+      current.cost = (current.cost || 0) + (row.cost || 0);
+      current.revenue = (current.revenue || 0) + (row.all_revenue || 0);
 
       // Retention rates (if present)
       if (current.retention_rate_d7 !== undefined || row.retention_rate_d7 !== undefined) {
@@ -1065,9 +1074,11 @@ export function synchronizeGroupDates(groups: GameCountryPublisherGroup[], start
         return {
           date,
           installs: 0,
+          roas_d0: 0,
           roas_d7: 0,
           roas_d30: 0,
-          roas_d0: 0,
+          cost: 0,
+          revenue: 0,
           roas_d1: 0,
           roas_d2: 0,
           roas_d3: 0,

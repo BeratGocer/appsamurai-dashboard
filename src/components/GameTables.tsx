@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "./ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { ChevronDown, ChevronRight, GripVertical, Eye, EyeOff } from 'lucide-react';
 import type { GameCountryPublisherGroup } from '@/types'
 import type { ConditionalFormattingRule } from './SettingsPanel'
@@ -23,6 +24,8 @@ interface GameTablesProps {
   dateRange?: { startDate: string; endDate: string } | null;
 }
 
+type SortCriteria = 'volume' | 'roas_d0' | 'roas_d7' | 'roas_d30' | 'cost' | 'revenue' | 'alphabetical';
+
 interface SortableTableItemProps {
   group: GameCountryPublisherGroup;
   isExpanded: boolean;
@@ -40,9 +43,11 @@ interface SortableHeaderItemProps {
   campaignCount: number;
   totalVolume: number;
   dateRange?: { startDate: string; endDate: string } | null;
+  sortCriteria: SortCriteria;
+  totalValue: number;
 }
 
-function SortableHeaderItem({ game, country, platform, campaignCount, totalVolume, dateRange }: SortableHeaderItemProps) {
+function SortableHeaderItem({ game, country, platform, campaignCount, totalVolume, dateRange, sortCriteria, totalValue }: SortableHeaderItemProps) {
   const groupKey = `${game}-${country}-${platform}`;
   const {
     attributes,
@@ -80,7 +85,13 @@ function SortableHeaderItem({ game, country, platform, campaignCount, totalVolum
               {campaignCount} farklı adnetwork/publisher
             </p>
             <p className="text-xs font-semibold text-blue-600">
-              {totalVolume.toLocaleString()} install
+              {sortCriteria === 'volume' && `${totalVolume.toLocaleString()} install`}
+              {sortCriteria === 'roas_d0' && `${(totalValue * 100).toFixed(1)}% D0 ROAS`}
+              {sortCriteria === 'roas_d7' && `${(totalValue * 100).toFixed(1)}% D7 ROAS`}
+              {sortCriteria === 'roas_d30' && `${(totalValue * 100).toFixed(1)}% D30 ROAS`}
+              {sortCriteria === 'cost' && `$${totalValue.toLocaleString()} harcama`}
+              {sortCriteria === 'revenue' && `$${totalValue.toLocaleString()} gelir`}
+              {sortCriteria === 'alphabetical' && 'Alfabetik sıralama'}
               {dateRange ? ' (seçili tarih aralığı)' : ' (son 7 gün)'}
             </p>
           </div>
@@ -380,6 +391,12 @@ export function GameTables({
   // State for app-country-platform group order
   const [groupOrder, setGroupOrder] = useState<string[]>([]);
   
+  // State for sorting criteria
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria>('volume');
+  
+  // State for custom sort mode (when user drags & drops)
+  const [isCustomSortMode, setIsCustomSortMode] = useState(false);
+  
   // State for table order
   const [sortedGroups, setSortedGroups] = useState(() => {
     // Smart sorting: group by platform+country, then by publisher
@@ -425,6 +442,104 @@ export function GameTables({
     return groups.reduce((sum, group) => sum + calculateGroupVolume(group), 0);
   };
 
+  // Calculate average ROAS for a group
+  const calculateGroupRoas = (group: GameCountryPublisherGroup, roasType: 'roas_d0' | 'roas_d7' | 'roas_d30'): number => {
+    let relevantData = group.dailyData;
+    
+    if (dateRange && dateRange.startDate && dateRange.endDate) {
+      const startDate = new Date(dateRange.startDate);
+      const endDate = new Date(dateRange.endDate);
+      relevantData = group.dailyData.filter(day => {
+        const dayDate = new Date(day.date);
+        return dayDate >= startDate && dayDate <= endDate;
+      });
+    } else {
+      const sortedData = [...group.dailyData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      relevantData = sortedData.slice(-7);
+    }
+    
+    const validRoas = relevantData.filter(day => day[roasType] > 0);
+    return validRoas.length > 0 ? validRoas.reduce((sum, day) => sum + day[roasType], 0) / validRoas.length : 0;
+  };
+
+  // Calculate total cost for a group
+  const calculateGroupCost = (group: GameCountryPublisherGroup): number => {
+    let relevantData = group.dailyData;
+    
+    if (dateRange && dateRange.startDate && dateRange.endDate) {
+      const startDate = new Date(dateRange.startDate);
+      const endDate = new Date(dateRange.endDate);
+      relevantData = group.dailyData.filter(day => {
+        const dayDate = new Date(day.date);
+        return dayDate >= startDate && dayDate <= endDate;
+      });
+    } else {
+      const sortedData = [...group.dailyData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      relevantData = sortedData.slice(-7);
+    }
+    
+    return relevantData.reduce((sum, day) => sum + (day.cost || 0), 0);
+  };
+
+  // Calculate total revenue for a group
+  const calculateGroupRevenue = (group: GameCountryPublisherGroup): number => {
+    let relevantData = group.dailyData;
+    
+    if (dateRange && dateRange.startDate && dateRange.endDate) {
+      const startDate = new Date(dateRange.startDate);
+      const endDate = new Date(dateRange.endDate);
+      relevantData = group.dailyData.filter(day => {
+        const dayDate = new Date(day.date);
+        return dayDate >= startDate && dayDate <= endDate;
+      });
+    } else {
+      const sortedData = [...group.dailyData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      relevantData = sortedData.slice(-7);
+    }
+    
+    return relevantData.reduce((sum, day) => sum + (day.revenue || 0), 0);
+  };
+
+  // Calculate group value based on sort criteria
+  const calculateGroupValue = (group: GameCountryPublisherGroup, criteria: SortCriteria): number => {
+    switch (criteria) {
+      case 'volume':
+        return calculateGroupVolume(group);
+      case 'roas_d0':
+        return calculateGroupRoas(group, 'roas_d0');
+      case 'roas_d7':
+        return calculateGroupRoas(group, 'roas_d7');
+      case 'roas_d30':
+        return calculateGroupRoas(group, 'roas_d30');
+      case 'cost':
+        return calculateGroupCost(group);
+      case 'revenue':
+        return calculateGroupRevenue(group);
+      default:
+        return 0;
+    }
+  };
+
+  // Calculate app+country+platform group value based on sort criteria
+  const calculateAppCountryPlatformValue = (groups: GameCountryPublisherGroup[], criteria: SortCriteria): number => {
+    switch (criteria) {
+      case 'volume':
+        return calculateAppCountryPlatformVolume(groups);
+      case 'roas_d0':
+        return groups.reduce((sum, group) => sum + calculateGroupRoas(group, 'roas_d0'), 0) / groups.length;
+      case 'roas_d7':
+        return groups.reduce((sum, group) => sum + calculateGroupRoas(group, 'roas_d7'), 0) / groups.length;
+      case 'roas_d30':
+        return groups.reduce((sum, group) => sum + calculateGroupRoas(group, 'roas_d30'), 0) / groups.length;
+      case 'cost':
+        return groups.reduce((sum, group) => sum + calculateGroupCost(group), 0);
+      case 'revenue':
+        return groups.reduce((sum, group) => sum + calculateGroupRevenue(group), 0);
+      default:
+        return 0;
+    }
+  };
+
   // Group tables by APP + COUNTRY + PLATFORM (same app, same country, same platform, different adnetworks)
   const appCountryPlatformGroups = React.useMemo(() => {
     const grouped = new Map<string, GameCountryPublisherGroup[]>();
@@ -438,13 +553,17 @@ export function GameTables({
       grouped.get(key)!.push(group);
     });
     
-    // Sort each group's publishers/adnetworks by volume (highest first)
+    // Sort each group's publishers/adnetworks by selected criteria (highest first)
     // (same app+country+platform, different adnetworks side by side)
     grouped.forEach(groupArray => {
       groupArray.sort((a, b) => {
-        const volumeA = calculateGroupVolume(a);
-        const volumeB = calculateGroupVolume(b);
-        return volumeB - volumeA; // Highest volume first
+        if (sortCriteria === 'alphabetical') {
+          return a.publisher.localeCompare(b.publisher);
+        }
+        
+        const valueA = calculateGroupValue(a, sortCriteria);
+        const valueB = calculateGroupValue(b, sortCriteria);
+        return valueB - valueA; // Highest value first
       });
     });
     
@@ -460,8 +579,8 @@ export function GameTables({
       };
     });
     
-    // Apply custom order if exists (for drag & drop)
-    if (groupOrder.length > 0) {
+    // Apply custom order if exists and custom sort mode is active (for drag & drop)
+    if (groupOrder.length > 0 && isCustomSortMode) {
       const orderMap = new Map(groupOrder.map((key, index) => [key, index]));
       groupEntries.sort((a, b) => {
         const aOrder = orderMap.get(a.groupKey) ?? 999;
@@ -473,17 +592,24 @@ export function GameTables({
         return a.platform.localeCompare(b.platform);
       });
     } else {
-      // Default sort by volume (highest first), then by app -> country -> platform
+      // Sort by selected criteria (highest first), then by app -> country -> platform
       groupEntries.sort((a, b) => {
-        const volumeA = calculateAppCountryPlatformVolume(a.groups);
-        const volumeB = calculateAppCountryPlatformVolume(b.groups);
-        
-        // If volumes are significantly different, sort by volume
-        if (Math.abs(volumeA - volumeB) > 100) {
-          return volumeB - volumeA; // Highest volume first
+        if (sortCriteria === 'alphabetical') {
+          if (a.game !== b.game) return a.game.localeCompare(b.game);
+          if (a.country !== b.country) return a.country.localeCompare(b.country);
+          return a.platform.localeCompare(b.platform);
         }
         
-        // If volumes are similar, fall back to alphabetical
+        const valueA = calculateAppCountryPlatformValue(a.groups, sortCriteria);
+        const valueB = calculateAppCountryPlatformValue(b.groups, sortCriteria);
+        
+        // If values are significantly different, sort by value
+        const threshold = sortCriteria === 'volume' ? 100 : 0.01;
+        if (Math.abs(valueA - valueB) > threshold) {
+          return valueB - valueA; // Highest value first
+        }
+        
+        // If values are similar, fall back to alphabetical
         if (a.game !== b.game) return a.game.localeCompare(b.game);
         if (a.country !== b.country) return a.country.localeCompare(b.country);
         return a.platform.localeCompare(b.platform);
@@ -491,7 +617,7 @@ export function GameTables({
     }
     
     return groupEntries;
-  }, [groups]);
+  }, [groups, sortCriteria, dateRange, isCustomSortMode, groupOrder]);
 
   // Initialize group order when groups change
   React.useEffect(() => {
@@ -511,7 +637,7 @@ export function GameTables({
     });
   }, [appCountryPlatformGroups]);
 
-  // Update sorted groups when groups change - sort by volume
+  // Update sorted groups when groups change - sort by selected criteria
   React.useEffect(() => {
     const sorted = [...groups].sort((a, b) => {
       const aKey = `${a.platform}-${a.country}`;
@@ -521,13 +647,17 @@ export function GameTables({
         return aKey.localeCompare(bKey);
       }
       
-      // Within same platform+country, sort by volume (highest first)
-      const volumeA = calculateGroupVolume(a);
-      const volumeB = calculateGroupVolume(b);
-      return volumeB - volumeA;
+      // Within same platform+country, sort by selected criteria (highest first)
+      if (sortCriteria === 'alphabetical') {
+        return a.publisher.localeCompare(b.publisher);
+      }
+      
+      const valueA = calculateGroupValue(a, sortCriteria);
+      const valueB = calculateGroupValue(b, sortCriteria);
+      return valueB - valueA;
     });
     setSortedGroups(sorted);
-  }, [groups]);
+  }, [groups, sortCriteria, dateRange]);
 
   const toggleTable = (groupId: string) => {
     const newExpanded = new Set(expandedTables);
@@ -573,6 +703,8 @@ export function GameTables({
             console.log('New group order:', newOrder);
             return newOrder;
           });
+          // Activate custom sort mode when user drags & drops
+          setIsCustomSortMode(true);
         }
       } else {
         // Handle table item drag (has 3 dashes: game-country-platform-publisher)
@@ -585,6 +717,8 @@ export function GameTables({
 
         if (oldIndex !== -1 && newIndex !== -1) {
           setSortedGroups((items) => arrayMove(items, oldIndex, newIndex));
+          // Activate custom sort mode when user drags & drops
+          setIsCustomSortMode(true);
         }
       }
     }
@@ -616,6 +750,46 @@ export function GameTables({
             </p>
           </div>
           <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Sıralama:</span>
+              <Select value={isCustomSortMode ? 'custom' : sortCriteria} onValueChange={(value: SortCriteria | 'custom') => {
+                if (value === 'custom') {
+                  // Keep custom sort mode
+                  return;
+                }
+                setSortCriteria(value as SortCriteria);
+                setIsCustomSortMode(false);
+                setGroupOrder([]); // Reset custom order
+              }}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="volume">Hacim (Install)</SelectItem>
+                  <SelectItem value="roas_d0">D0 ROAS</SelectItem>
+                  <SelectItem value="roas_d7">D7 ROAS</SelectItem>
+                  <SelectItem value="roas_d30">D30 ROAS</SelectItem>
+                  <SelectItem value="cost">Harcama</SelectItem>
+                  <SelectItem value="revenue">Gelir</SelectItem>
+                  <SelectItem value="alphabetical">Alfabetik</SelectItem>
+                  {isCustomSortMode && <SelectItem value="custom">Özel Sıralama</SelectItem>}
+                </SelectContent>
+              </Select>
+              {isCustomSortMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsCustomSortMode(false);
+                    setGroupOrder([]);
+                    setSortCriteria('volume');
+                  }}
+                  className="text-xs"
+                >
+                  Sıfırla
+                </Button>
+              )}
+            </div>
             {hiddenCount > 0 && (
               <Button
                 variant="outline"
@@ -667,6 +841,7 @@ export function GameTables({
                   if (visibleGroupTables.length === 0) return null;
 
                   const totalVolume = calculateAppCountryPlatformVolume(visibleGroupTables);
+                  const totalValue = calculateAppCountryPlatformValue(visibleGroupTables, sortCriteria);
                   
                   return (
                     <SortableHeaderItem
@@ -677,6 +852,8 @@ export function GameTables({
                       campaignCount={visibleGroupTables.length}
                       totalVolume={totalVolume}
                       dateRange={dateRange}
+                      sortCriteria={sortCriteria}
+                      totalValue={totalValue}
                     />
                   );
                 })}
