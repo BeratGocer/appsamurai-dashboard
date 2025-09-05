@@ -10,7 +10,6 @@ import { Upload, FileText, X, CheckCircle, AlertCircle, User, Building } from "l
 import { parseCSV } from '@/utils/csvParser'
 import type { UploadedFile } from '@/types'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { apiInitFile, apiIngestCsv, apiDeleteFile } from '@/utils/api'
 
 interface FileUploadProps {
   onFileUpload: (file: UploadedFile) => void;
@@ -60,9 +59,6 @@ export function FileUpload({
       return;
     }
 
-    // Customer name and account manager are now optional
-    // No validation required
-
     setUploading(true);
     setUploadProgress(0);
     setError(null);
@@ -81,60 +77,12 @@ export function FileUpload({
         });
       }, 100);
 
-      // Initialize file on backend
-      const { fileId } = await apiInitFile({
-        name: file.name,
-        size: file.size,
-        customerName: customerName.trim() || undefined,
-        accountManager: accountManager.trim() || undefined
-      });
-
-      // Upload CSV data to backend in chunks to avoid 413
-      const headerEnd = text.indexOf('\n');
-      const header = headerEnd >= 0 ? text.slice(0, headerEnd) : '';
-      const body = headerEnd >= 0 ? text.slice(headerEnd + 1) : text;
-      const chunkSize = 150_000; // Reduced to ~150KB chunks for better reliability
-      let offset = 0;
-      let first = true;
-      let totalChunks = 0;
-      let successfulChunks = 0;
-      
-      while (offset < body.length) {
-        const next = Math.min(offset + chunkSize, body.length);
-        // slice on newline boundary to avoid splitting rows
-        let chunk = body.slice(offset, next);
-        const lastNewline = chunk.lastIndexOf('\n');
-        if (lastNewline !== -1 && next < body.length) {
-          chunk = chunk.slice(0, lastNewline);
-          offset += lastNewline + 1;
-        } else {
-          offset = next;
-        }
-        
-        if (chunk.trim()) { // Only send non-empty chunks
-          const payload = header ? `${header}\n${chunk}` : chunk;
-          try {
-            await apiIngestCsv(fileId, payload, { append: !first });
-            successfulChunks++;
-            totalChunks++;
-          } catch (error) {
-            console.error(`Chunk ${totalChunks + 1} failed:`, error);
-            // Continue with next chunk instead of failing completely
-            totalChunks++;
-          }
-          first = false;
-          // advance progress superficially
-          setUploadProgress(p => Math.min(90, p + (90 / Math.ceil(body.length / chunkSize))));
-        }
-      }
-
-      if (successfulChunks === 0) {
-        throw new Error('No chunks were successfully uploaded');
-      }
-
-      // Client-side CSV parsing for immediate display
+      // Client-side CSV parsing
       const data = parseCSV(text);
       if (data.length === 0) throw new Error('CSV file appears to be empty or invalid');
+
+      // Generate unique file ID
+      const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       const uploadedFile: UploadedFile = {
         id: fileId,
@@ -426,18 +374,7 @@ export function FileUpload({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={async () => {
-                        try {
-                          // Delete from backend
-                          await apiDeleteFile(file.id);
-                          // Delete from frontend
-                          onFileDelete(file.id);
-                        } catch (error) {
-                          console.error('Failed to delete file:', error);
-                          // Still delete from frontend even if backend fails
-                          onFileDelete(file.id);
-                        }
-                      }}
+                      onClick={() => onFileDelete(file.id)}
                     >
                       <X className="h-4 w-4" />
                     </Button>

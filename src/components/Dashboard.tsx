@@ -238,31 +238,19 @@ export function Dashboard({
     setCurrentTab('overview');
   };
 
-  // Refresh data from backend
+  // Refresh data from localStorage
   const handleRefreshData = useCallback(async () => {
     if (!activeFileId) return;
     
     try {
-      // Force reload the file data from backend
-      const response = await fetch(`/api/files/${activeFileId}/groups`);
-      if (response.ok) {
-        const backendData = await response.json();
-        // Convert backend data back to CampaignData format
-        const campaignData = backendData.flatMap((group: any) => 
-          group.byDate.map((dayData: any) => ({
-            app: group.game,
-            campaign_network: `${group.platform}_${group.country}`,
-            adgroup_network: group.publisher,
-            day: dayData.date,
-            installs: dayData.installs,
-            roas_d0: dayData.roas_d0,
-            roas_d7: dayData.roas_d7,
-            roas_d30: dayData.roas_d30,
-            adjust_cost: dayData.adjustCost,
-            ad_revenue: dayData.adRevenue,
-          }))
-        );
-        setData(campaignData);
+      // Reload data from localStorage
+      const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
+      if (savedFiles) {
+        const files = JSON.parse(savedFiles) as UploadedFile[];
+        const activeFile = files.find(f => f.id === activeFileId);
+        if (activeFile) {
+          setData(activeFile.data);
+        }
       }
     } catch (error) {
       console.error('Failed to refresh data:', error);
@@ -277,7 +265,7 @@ export function Dashboard({
     // Update data when active file changes
     const activeFile = uploadedFiles.find(f => f.id === activeFileId);
     if (activeFile) {
-      // Always use backend data to ensure consistency
+      // Use local data
       setData(activeFile.data);
     } else {
       setData([]);

@@ -1,5 +1,4 @@
 import { MessageSquare, Send, X, Minimize2, Maximize2 } from 'lucide-react'
-import { apiChat } from '@/utils/api'
 import { useChat } from '@/contexts/ChatContext'
 
 export default function GlobalChatAssistant() {
@@ -45,8 +44,8 @@ export default function GlobalChatAssistant() {
     if (intent.publisher) onFocusPublisher?.(intent.publisher)
 
     try {
-      const context = getTodayContext?.() || null
-      const reply = await apiChat(userText, context)
+      // Simple local response for frontend-only mode
+      const reply = `Merhaba! "${userText}" mesajınızı aldım. Şu anda frontend-only modda çalışıyoruz.`
       addMessage({ role: 'assistant', text: reply })
     } catch (e) {
       addMessage({ role: 'assistant', text: 'Üzgünüm, şu an cevap oluşturulamadı.' })

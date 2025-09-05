@@ -772,7 +772,7 @@ export function decodeAdNetwork(encryptedCode: string): string {
   if (encryptedCode === 'unknown') return 'Test';
   if (encryptedCode === 'test') return 'Test';
   
-  // Ad network mapping from Adnetworks.csv - synchronized with backend
+  // Ad network mapping from Adnetworks.csv
   const adNetworkMap: Record<string, string> = {
     // Base64 decoded mappings
     'VGVzdA==': 'Test',
