@@ -436,6 +436,24 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
 })
 
 // Grouped data with weighted averages by installs and publisher prefix
+app.get('/debug/schema', async (req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    // Test if new columns exist
+    const testRow = await prisma.campaignRow.findFirst()
+    reply.send({ 
+      success: true, 
+      hasTestRow: !!testRow,
+      columns: testRow ? Object.keys(testRow) : []
+    })
+  } catch (error: any) {
+    reply.send({ 
+      success: false, 
+      error: error.message,
+      code: error.code 
+    })
+  }
+})
+
 app.get('/files/:id/groups', async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   const { id } = req.params
   const rows = await prisma.campaignRow.findMany({ where: { fileId: id } })
