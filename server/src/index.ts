@@ -456,11 +456,22 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     }
     let skipped = 0
     let firstError: string | null = null
+    let columnCountStats = new Map<number, number>()
+    
     for (let li = 0; li < lines.length; li++) {
       const row = lines[li]
       if (!row.trim()) continue
       const v = parseCsvLine(row)
-      if (v.length < 5) continue
+      
+      // Track column count distribution
+      const colCount = v.length
+      columnCountStats.set(colCount, (columnCountStats.get(colCount) || 0) + 1)
+      
+      if (v.length < 5) {
+        skipped++
+        if (!firstError) firstError = `Insufficient columns at line ${li+1}: expected >=5, got ${v.length}`
+        continue
+      }
       try {
         const dayStr = v[iDay]
         const d = new Date(dayStr || '')
@@ -511,7 +522,35 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
 
     // Log total installs for debugging
     const totalInstalls = rows.reduce((sum, row) => sum + row.installs, 0);
-    req.log.info({ fileId: id, totalRows: rows.length, totalInstalls, skipped }, 'Processing CSV ingest');
+    const inputRowCount = lines.length - 1; // Subtract header
+    const parsedRowCount = rows.length;
+    
+    req.log.info({ 
+      fileId: id, 
+      inputRowCount, 
+      parsedRowCount, 
+      skipped, 
+      totalInstalls,
+      skippedRows: inputRowCount - parsedRowCount,
+      columnCountStats: Object.fromEntries(columnCountStats)
+    }, 'Processing CSV ingest');
+    
+    // Validate row count integrity
+    if (inputRowCount !== parsedRowCount) {
+      req.log.error({ 
+        fileId: id, 
+        inputRowCount, 
+        parsedRowCount, 
+        skipped,
+        reason: firstError 
+      }, 'CSV ingest failed: row count mismatch');
+      activeIngests.delete(id);
+      return reply.code(400).send({ 
+        error: 'csv_parse_error', 
+        message: `Expected ${inputRowCount} rows but parsed ${parsedRowCount} rows. ${skipped} rows skipped.`,
+        details: { inputRowCount, parsedRowCount, skipped, reason: firstError }
+      });
+    }
 
     if (!append || append === '0' || append === 'false') {
       await prisma.campaignRow.deleteMany({ where: { fileId: id } })
