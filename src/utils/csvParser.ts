@@ -1,5 +1,38 @@
 import type { CampaignData, AppSummary, ChartData, FinancialMetrics, RetentionMetrics, GameCompletionMetrics, Customer, AccountManager } from '../types';
 
+// Helper function to parse CSV line with proper quoted field handling
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Escaped quote
+        current += '"';
+        i++; // Skip next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Field separator
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  // Add the last field
+  result.push(current.trim());
+  
+  return result;
+}
+
 export function parseCSV(csvContent: string): CampaignData[] {
   const lines = csvContent.trim().split('\n');
   
@@ -16,7 +49,7 @@ export function parseCSV(csvContent: string): CampaignData[] {
     lines[0] = firstLine;
   }
   
-  const headers = firstLine.split(',').map(h => h.trim());
+  const headers = parseCSVLine(firstLine);
   
   // Check format type based on headers
   const isDetailedFormat = headers.includes('ecpi') && headers.includes('adjust_cost');
@@ -43,7 +76,7 @@ export function parseCSV(csvContent: string): CampaignData[] {
   };
 
   return lines.slice(1).map(line => {
-    const values = line.split(',');
+    const values = parseCSVLine(line);
     
     if (isAzulaFormat) {
       // Parse Azula ROAS format: campaign_network,adgroup_network,day,installs,adjust_cost,all_revenue,roas,roas_d0,roas_d1,roas_d2,roas_d3,roas_d4,roas_d5,roas_d6,roas_d7
@@ -874,7 +907,16 @@ export function decodeAdNetwork(encryptedCode: string): string {
 export function decodePublisherCode(adgroupNetwork: string): string {
   if (!adgroupNetwork || adgroupNetwork.toLowerCase() === 'unknown') return 'Unknown';
   
-  const code = adgroupNetwork.toUpperCase();
+  // Clean up the input - remove ,undefined and other artifacts
+  let cleanCode = adgroupNetwork.trim();
+  if (cleanCode.includes(',undefined')) {
+    cleanCode = cleanCode.split(',undefined')[0];
+  }
+  if (cleanCode.includes(',')) {
+    cleanCode = cleanCode.split(',')[0];
+  }
+  
+  const code = cleanCode.toUpperCase();
   
   // Known publisher mappings - only decode what we're sure about
   const knownMappings: Record<string, string> = {
@@ -900,15 +942,19 @@ export function decodePublisherCode(adgroupNetwork: string): string {
   }
 
   // Handle prefix formats like SFT_, SPE_, SAP_, LV9U_
-  if (adgroupNetwork.includes('_')) {
-    const parts = adgroupNetwork.split('_');
+  if (cleanCode.includes('_')) {
+    const parts = cleanCode.split('_');
     const prefix = parts[0];
     
-    // Known prefix mappings - only map what we're confident about
+    // Known prefix mappings - map to actual decoded names from Adnetworks.csv
     const knownPrefixes: Record<string, string> = {
-      'SFT': 'SFT Network',
-      'SPE': 'SPE Network',
-      'SAP': 'SAP Network'
+      'SFT': 'Fluent',  // SFT maps to Fluent according to Adnetworks.csv
+      'SPE': 'Prime',   // SPE maps to Prime according to Adnetworks.csv
+      'SAP': 'Ad it Up', // SAP maps to Ad it Up according to Adnetworks.csv
+      'SDA': 'Dynata',  // SDA maps to Dynata according to Adnetworks.csv
+      'SKK': 'Klink',   // SKK maps to Klink according to Adnetworks.csv
+      'STK': 'TNK',     // STK maps to TNK according to Adnetworks.csv
+      'SEA': 'Eneba'    // SEA maps to Eneba according to Adnetworks.csv
     };
     
     if (knownPrefixes[prefix]) {
@@ -929,7 +975,7 @@ export function decodePublisherCode(adgroupNetwork: string): string {
   }
   
   // IMPORTANT: Keep unrecognized codes as-is (this is what user wants)
-  return adgroupNetwork;
+  return cleanCode;
 }
 
 // Extract country from campaign network and format it nicely
