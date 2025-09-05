@@ -22,14 +22,6 @@ export function DynamicKPISection({
   onEditModeToggle 
 }: DynamicKPISectionProps) {
   const [kpiConfigs, setKpiConfigs] = useState<KPICardConfig[]>([]);
-  const [showKPISettings, setShowKPISettings] = useState(false);
-
-  // Show KPI settings when edit mode is activated
-  useEffect(() => {
-    if (isEditMode) {
-      setShowKPISettings(true);
-    }
-  }, [isEditMode]);
 
   // Get available columns from data
   const availableColumns = useMemo(() => {
@@ -68,7 +60,7 @@ export function DynamicKPISection({
   // Handle KPI card edit
   const handleEditKPI = (_configId: string) => {
     // If in edit mode, clicking on a card should open settings focused on that card
-    setShowKPISettings(true);
+    // Settings are now always visible when in edit mode
   };
 
   if (!activeFileId || data.length === 0) {
@@ -81,14 +73,14 @@ export function DynamicKPISection({
 
   return (
     <div className="space-y-6">
-      {/* KPI Settings Panel */}
-      <KPISettingsPanel
-        configs={kpiConfigs}
-        availableColumns={availableColumns}
-        onConfigsChange={handleConfigsChange}
-        isOpen={showKPISettings || isEditMode}
-        onToggle={() => setShowKPISettings(!showKPISettings)}
-      />
+      {/* KPI Settings Panel - Only show when in edit mode */}
+      {isEditMode && (
+        <KPISettingsPanel
+          configs={kpiConfigs}
+          availableColumns={availableColumns}
+          onConfigsChange={handleConfigsChange}
+        />
+      )}
 
       {/* KPI Cards Grid */}
       {visibleKPIConfigs.length > 0 && (
@@ -119,7 +111,7 @@ export function DynamicKPISection({
               Add KPI cards to display your campaign metrics
             </p>
             <button
-              onClick={() => setShowKPISettings(true)}
+              onClick={() => onEditModeToggle?.()}
               className="text-primary hover:underline text-sm font-medium"
             >
               Configure KPI Cards
