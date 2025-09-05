@@ -1,0 +1,90 @@
+---
+description: React error #185 infinite loop fix patterns for Dashboard and GameTables components
+---
+
+# React Error #185 Infinite Loop Fix
+
+## Problem Description
+React error #185 "Maximum update depth exceeded" occurs when components call setState inside useEffect with unstable dependencies, causing infinite re-render loops.
+
+## Root Causes Identified
+1. **Unstable data processing**: `filteredData` and `rawGameGroups` recalculated on every render
+2. **Circular dependencies**: `gameGroups` depends on `rawGameGroups`, `useEffect` depends on `gameGroups`
+3. **Missing memoization**: Expensive computations not wrapped in `useMemo`
+
+## Solution Patterns
+
+### 1. Memoize Data Processing
+```typescript
+// Dashboard.tsx - Memoize filtered data
+const filteredData = React.useMemo(() => {
+  return data.filter((row) => {
+    // filtering logic
+  });
+}, [data, settings.dateRange.startDate, settings.dateRange.endDate, selectedGame]);
+
+// Memoize grouped data
+const rawGameGroups = React.useMemo(() => {
+  return getGameCountryPublisherGroups(filteredData);
+}, [filteredData]);
+```
+
+### 2. Break Circular Dependencies
+```typescript
+// Use stable dependencies in useEffect
+useEffect(() => {
+  setNavigationFunctions({
+    // Use rawGameGroups instead of gameGroups to avoid circular dependency
+    getTodayContext: () => {
+      const dates = rawGameGroups.flatMap(g => g.dailyData.map(d => d.date))
+      // ... rest of logic
+    }
+  })
+}, [setNavigationFunctions, rawGameGroups]); // rawGameGroups is stable
+```
+
+### 3. GameTables Circular Dependency Fix
+```typescript
+// GameTables.tsx - Remove groupOrder from appCountryPlatformGroups dependencies
+const appCountryPlatformGroups = React.useMemo(() => {
+  // ... grouping logic
+  return groupEntries;
+}, [groups]); // Remove groupOrder from dependencies
+
+// Use functional state update to break circular dependency
+React.useEffect(() => {
+  setGroupOrder(prevOrder => {
+    const currentKeys = new Set(appCountryPlatformGroups.map(g => g.groupKey));
+    const existingOrder = prevOrder.filter(key => currentKeys.has(key));
+    const newKeys = appCountryPlatformGroups
+      .map(g => g.groupKey)
+      .filter(key => !prevOrder.includes(key));
+    
+    if (newKeys.length > 0 || existingOrder.length !== prevOrder.length) {
+      return [...existingOrder, ...newKeys];
+    }
+    return prevOrder;
+  });
+}, [appCountryPlatformGroups]);
+```
+
+## Critical Rules
+- ✅ Always memoize expensive data processing with `useMemo`
+- ✅ Use stable dependencies in `useEffect` dependency arrays
+- ✅ Break circular dependencies by using functional state updates
+- ✅ Avoid using computed values that depend on state in `useEffect` dependencies
+- ✅ Test with CSV data loaded to ensure no infinite loops
+- ✅ Monitor console for "Maximum update depth exceeded" errors
+
+## Files Modified
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Added memoization for filteredData and rawGameGroups
+- [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Fixed circular dependency in groupOrder logic
+- [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx) - Simplified to minimal implementation
+
+## Testing Checklist
+1. Upload CSV file
+2. Navigate to Dashboard tab
+3. Click "Ayarlar" button
+4. Verify no console errors
+5. Test settings panel functionality
+6. Verify no infinite re-renders

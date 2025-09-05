@@ -1,102 +1,98 @@
 ---
-description: React error #185 infinite loop fix for SettingsPanel component
+description: React error #185 infinite loop fix for SettingsPanel component - RESOLVED
 globs: src/components/SettingsPanel.tsx,src/components/Dashboard.tsx
 ---
 
-# React Error #185 - SettingsPanel Infinite Loop Fix
+# React Error #185 - SettingsPanel Infinite Loop Fix ✅ RESOLVED
 
 ## Problem Description
-React error #185 occurs when clicking the "Ayarlar" (Settings) button in the Dashboard. This error indicates an infinite loop caused by continuous `setState` calls that exceed React's maximum update depth.
+React error #185 occurred when clicking the "Ayarlar" (Settings) button in the Dashboard. This error indicated an infinite loop caused by continuous `setState` calls that exceeded React's maximum update depth.
 
-## Root Cause Analysis
-The infinite loop is caused by:
+## Root Cause Analysis ✅ FIXED
+The infinite loop was caused by:
 
-1. **Object Reference Issues**: `safeSettings` object is recreated on every render
-2. **State Update Chain**: `onSettingsChange` calls create new object references
-3. **Component Re-render Cycle**: Dashboard re-renders → SettingsPanel re-renders → infinite loop
+1. **Unstable Data Processing**: `filteredData` and `rawGameGroups` recalculated on every render
+2. **Circular Dependencies**: `gameGroups` depends on `rawGameGroups`, `useEffect` depends on `gameGroups`
+3. **Missing Memoization**: Expensive computations not wrapped in `useMemo`
 
-## Current Implementation Issues
+## Solution Implemented ✅
 
-### SettingsPanel.tsx Problems:
-- `safeSettings` object created without `useMemo` (lines 101-108)
-- `setDatePreset` function uses `settings` instead of `safeSettings` (line 163-169)
-- Multiple `onSettingsChange` calls that trigger re-renders
-
-### Dashboard.tsx Problems:
-- Complex conditional rendering logic for SettingsPanel (line 336)
-- Settings state management causing cascading updates
-
-## Required Fixes
-
-### 1. Fix SettingsPanel.tsx
+### 1. Dashboard.tsx - Memoized Data Processing
 ```typescript
-// Add useMemo import
-import React, { useState, useMemo } from 'react';
-
-// Fix safeSettings with proper memoization
-const safeSettings = useMemo(() => ({
-  dateRange: {
-    startDate: settings.dateRange?.startDate || '',
-    endDate: settings.dateRange?.endDate || '',
-  },
-  conditionalRules: settings.conditionalRules || [],
-  visibleColumns: settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7'],
-}), [settings.dateRange?.startDate, settings.dateRange?.endDate, settings.conditionalRules, settings.visibleColumns]);
-
-// Fix setDatePreset function
-const setDatePreset = (preset: string) => {
-  // ... date calculation logic ...
-  
-  onSettingsChange({
-    ...safeSettings, // Use safeSettings, not settings
-    dateRange: {
-      startDate,
-      endDate,
-    },
+// Memoize filtered data to prevent recalculation
+const filteredData = React.useMemo(() => {
+  return data.filter((row) => {
+    // filtering logic
   });
-};
+}, [data, settings.dateRange.startDate, settings.dateRange.endDate, selectedGame]);
+
+// Memoize grouped data
+const rawGameGroups = React.useMemo(() => {
+  return getGameCountryPublisherGroups(filteredData);
+}, [filteredData]);
+
+// Use stable dependencies in useEffect
+useEffect(() => {
+  setNavigationFunctions({
+    getTodayContext: () => {
+      // Use rawGameGroups directly to avoid dependency loop
+      const dates = rawGameGroups.flatMap(g => g.dailyData.map(d => d.date))
+      // ... rest of logic
+    }
+  })
+}, [setNavigationFunctions, rawGameGroups]);
 ```
 
-### 2. Fix Dashboard.tsx
+### 2. GameTables.tsx - Fixed Circular Dependency
 ```typescript
-// Simplify conditional rendering
-{currentTab === 'overview' && (
-  <SettingsPanel
-    settings={settings}
-    onSettingsChange={handleSettingsChange}
-    isOpen={showSettings}
-    onToggle={() => setShowSettings(!showSettings)}
-    // ... other props
-  />
-)}
+// Remove groupOrder from appCountryPlatformGroups dependencies
+const appCountryPlatformGroups = React.useMemo(() => {
+  // ... grouping logic
+  return groupEntries;
+}, [groups]); // groupOrder removed from dependencies
+
+// Use functional state update to break circular dependency
+React.useEffect(() => {
+  setGroupOrder(prevOrder => {
+    const currentKeys = new Set(appCountryPlatformGroups.map(g => g.groupKey));
+    const existingOrder = prevOrder.filter(key => currentKeys.has(key));
+    const newKeys = appCountryPlatformGroups
+      .map(g => g.groupKey)
+      .filter(key => !prevOrder.includes(key));
+    
+    if (newKeys.length > 0 || existingOrder.length !== prevOrder.length) {
+      return [...existingOrder, ...newKeys];
+    }
+    return prevOrder;
+  });
+}, [appCountryPlatformGroups]);
 ```
 
-### 3. Additional Optimizations
-- Use `useCallback` for event handlers
-- Implement proper dependency arrays for `useMemo` and `useCallback`
-- Consider using `useRef` for stable references
+### 3. SettingsPanel.tsx - Simplified Implementation
+- Removed all `useCallback`, `useEffect`, and `useMemo` hooks
+- Uses direct `useState` for local state
+- Relies on props and callbacks directly
 
-## Testing Steps
-1. Navigate to Dashboard tab
-2. Click "Ayarlar" button
-3. Verify SettingsPanel opens without React error #185
-4. Test all SettingsPanel functionality (date presets, conditional rules, column visibility)
-5. Check browser console for any remaining errors
+## Testing Results ✅
+1. ✅ Navigate to Dashboard tab - Works
+2. ✅ Click "Ayarlar" button - Opens without errors
+3. ✅ SettingsPanel functionality - All features working
+4. ✅ No console errors - Clean console
+5. ✅ No infinite re-renders - Stable performance
 
-## Files to Modify
-- [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx)
-- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+## Files Modified ✅
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Added memoization for filteredData and rawGameGroups
+- [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Fixed circular dependency in groupOrder logic
+- [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx) - Simplified to minimal implementation
 
-## Error Pattern
-```
-Error: Minified React error #185; visit https://react.dev/errors/185 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
-    at go (index-BPX3Okr0.js:48:21307)
-    at Yc (index-BPX3Okr0.js:48:20832)
-    at ls (index-BPX3Okr0.js:48:44886)
-    at Yh (index-BPX3Okr0.js:48:44514)
-    at Fg (index-BPX3Okr0.js:49:34767)
-```
-
-## Deployment URL
+## Deployment Status ✅
 - Production: https://ubiquitous-sherbet-b4f6bf.netlify.app/
-- Current Status: SettingsPanel causes page crash with React error #185
+- Status: ✅ RESOLVED - SettingsPanel works perfectly without React error #185
+- Last Deploy: 2025-09-05_11:55:22
+
+## Key Lessons Learned
+- Always memoize expensive data processing with `useMemo`
+- Use stable dependencies in `useEffect` dependency arrays
+- Break circular dependencies by using functional state updates
+- Avoid using computed values that depend on state in `useEffect` dependencies
+- Test with real data (CSV files) to ensure no infinite loops
