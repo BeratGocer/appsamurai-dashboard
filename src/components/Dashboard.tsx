@@ -73,32 +73,7 @@ export function Dashboard({
   const [focusPublisher, setFocusPublisher] = useState<string | null>(null);
 
 
-  // Load settings for current file
-  const loadFileSettings = useCallback((fileId: string | null) => {
-    const settingsKey = fileId ? `dashboard-settings-${fileId}` : 'dashboard-settings-default';
-    const saved = localStorage.getItem(settingsKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Ensure all required fields exist
-        return {
-          dateRange: parsed.dateRange || { startDate: '', endDate: '' },
-          conditionalRules: parsed.conditionalRules || [],
-          visibleColumns: parsed.visibleColumns || ['installs', 'roas_d0', 'roas_d7'],
-        };
-      } catch {
-        // If parsing fails, return default
-      }
-    }
-    return {
-      dateRange: {
-        startDate: '',
-        endDate: '',
-      },
-      conditionalRules: [],
-      visibleColumns: ['installs', 'roas_d0', 'roas_d7'],
-    };
-  }, []);
+  // Load settings for current file - REMOVED (moved inline to useEffect)
 
   // Save settings to localStorage for current file
   const handleSettingsChange = useCallback((newSettings: SettingsData) => {
@@ -147,11 +122,8 @@ export function Dashboard({
     setShowSettings(prev => !prev);
   }, []);
 
-  // Load settings when activeFileId changes
-  useEffect(() => {
-    const loadedSettings = loadFileSettings(activeFileId);
-    setSettings(loadedSettings);
-  }, [activeFileId, loadFileSettings]);
+  // Load settings when activeFileId changes - REMOVED DUPLICATE
+  // Settings loading is handled in the main useEffect below
 
 
 
@@ -274,8 +246,30 @@ export function Dashboard({
       setData([]);
     }
     
-    // Load settings for the new active file
-    const fileSettings = loadFileSettings(activeFileId);
+    // Load settings for the new active file - inline function to avoid dependency issues
+    const loadFileSettingsInline = (fileId: string | null) => {
+      const settingsKey = fileId ? `dashboard-settings-${fileId}` : 'dashboard-settings-default';
+      const saved = localStorage.getItem(settingsKey);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return {
+            dateRange: parsed.dateRange || { startDate: '', endDate: '' },
+            conditionalRules: parsed.conditionalRules || [],
+            visibleColumns: parsed.visibleColumns || ['installs', 'roas_d0', 'roas_d7'],
+          };
+        } catch {
+          // If parsing fails, return default
+        }
+      }
+      return {
+        dateRange: { startDate: '', endDate: '' },
+        conditionalRules: [],
+        visibleColumns: ['installs', 'roas_d0', 'roas_d7'],
+      };
+    };
+    
+    const fileSettings = loadFileSettingsInline(activeFileId);
     setSettings(fileSettings);
 
     // Load hidden tables for current file
@@ -293,7 +287,7 @@ export function Dashboard({
     } else {
       setHiddenTables(new Set());
     }
-  }, [uploadedFiles, activeFileId, loadFileSettings]);
+  }, [uploadedFiles, activeFileId]);
 
   // Set navigation functions for chat
   useEffect(() => {
