@@ -328,7 +328,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Settings className="h-4 w-4" />
-            Ayarlar
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onToggle}>
             <X className="h-4 w-4" />
