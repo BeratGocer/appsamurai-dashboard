@@ -3,8 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
-// import { Settings, Edit3 } from 'lucide-react'; // Hidden but functionality preserved
+import { ChevronDown, ChevronRight, Eye, EyeOff, Settings, Edit3 } from 'lucide-react';
 import type { GameCountryPublisherGroup } from '@/types'
 import type { ConditionalFormattingRule } from './SettingsPanel'
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -23,11 +22,11 @@ interface GameTablesProps {
   visibleColumns?: string[];
   focusPublisher?: string | null;
   dateRange?: { startDate: string; endDate: string } | null;
-  // New props for settings and KPI functionality - Hidden but functionality preserved
-  // showSettings?: boolean;
-  // onToggleSettings?: () => void;
-  // kpiEditMode?: boolean;
-  // onToggleKpiEdit?: () => void;
+  // New props for settings and KPI functionality
+  showSettings?: boolean;
+  onToggleSettings?: () => void;
+  kpiEditMode?: boolean;
+  onToggleKpiEdit?: () => void;
   // Available columns for dynamic sorting
   availableColumns?: string[];
 }
@@ -371,10 +370,10 @@ export function GameTables({
   visibleColumns = ['installs', 'roas_d0', 'roas_d7'],
   focusPublisher = null,
   dateRange = null,
-  // showSettings: _showSettings = false, // Hidden but functionality preserved
-  // onToggleSettings, // Hidden but functionality preserved
-  // kpiEditMode = false, // Hidden but functionality preserved
-  // onToggleKpiEdit, // Hidden but functionality preserved
+  showSettings: _showSettings = false,
+  onToggleSettings,
+  kpiEditMode = false,
+  onToggleKpiEdit,
   availableColumns: _availableColumns = [],
 }: GameTablesProps) {
   // DnD Sensors for React 19 compatibility
@@ -821,8 +820,7 @@ export function GameTables({
               )}
             </div>
             
-            {/* Settings and Edit KPI Cards buttons - HIDDEN BUT FUNCTIONALITY PRESERVED */}
-            {/* 
+            {/* Settings and Edit KPI Cards buttons */}
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -843,7 +841,6 @@ export function GameTables({
                 {kpiEditMode ? 'Exit Edit Mode' : 'Edit KPI Cards'}
               </Button>
             </div>
-            */}
             {hiddenCount > 0 && (
               <Button
                 variant="outline"

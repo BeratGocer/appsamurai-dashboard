@@ -487,10 +487,10 @@ export function Dashboard({
             visibleColumns={settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']}
             focusPublisher={focusPublisher}
             dateRange={settings.dateRange.startDate && settings.dateRange.endDate ? settings.dateRange : null}
-            // showSettings={showSettings} // Hidden but functionality preserved
-            // onToggleSettings={handleSettingsToggle} // Hidden but functionality preserved
-            // kpiEditMode={kpiEditMode} // Hidden but functionality preserved
-            // onToggleKpiEdit={() => setKpiEditMode(!kpiEditMode)} // Hidden but functionality preserved
+            showSettings={showSettings}
+            onToggleSettings={handleSettingsToggle}
+            kpiEditMode={kpiEditMode}
+            onToggleKpiEdit={() => setKpiEditMode(!kpiEditMode)}
             availableColumns={availableColumnsArray}
           />
 
