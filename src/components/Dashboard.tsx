@@ -135,8 +135,8 @@ export function Dashboard({
 
   // Settings toggle handler
   const handleSettingsToggle = useCallback(() => {
-    setShowSettings(!showSettings);
-  }, [showSettings]);
+    setShowSettings(prev => !prev);
+  }, []);
 
 
 

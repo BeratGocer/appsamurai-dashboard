@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -117,7 +117,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const [editingRule, setEditingRule] = useState<string | null>(null);
 
-  const handleDateRangeChange = (field: 'startDate' | 'endDate', value: string) => {
+  const handleDateRangeChange = useCallback((field: 'startDate' | 'endDate', value: string) => {
     onSettingsChange({
       ...safeSettings,
       dateRange: {
@@ -125,9 +125,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         [field]: value,
       },
     });
-  };
+  }, [safeSettings, onSettingsChange]);
 
-  const setDatePreset = (preset: string) => {
+  const setDatePreset = useCallback((preset: string) => {
     const today = new Date();
     const endDate = today.toISOString().split('T')[0];
     let startDate = '';
@@ -167,9 +167,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         endDate,
       },
     });
-  };
+  }, [safeSettings, onSettingsChange]);
 
-  const addConditionalRule = () => {
+  const addConditionalRule = useCallback(() => {
     const rule: ConditionalFormattingRule = {
       id: Date.now().toString(),
       column: newRule.column as ConditionalFormattingRule['column'],
@@ -194,23 +194,23 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       backgroundColor: COLOR_PRESETS[0].backgroundColor,
       isActive: true,
     });
-  };
+  }, [newRule, safeSettings, onSettingsChange]);
 
-  const removeConditionalRule = (ruleId: string) => {
+  const removeConditionalRule = useCallback((ruleId: string) => {
     onSettingsChange({
       ...safeSettings,
       conditionalRules: (safeSettings.conditionalRules || []).filter(rule => rule.id !== ruleId),
     });
-  };
+  }, [safeSettings, onSettingsChange]);
 
-  const toggleRuleActive = (ruleId: string) => {
+  const toggleRuleActive = useCallback((ruleId: string) => {
     onSettingsChange({
       ...safeSettings,
       conditionalRules: (safeSettings.conditionalRules || []).map(rule =>
         rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
       ),
     });
-  };
+  }, [safeSettings, onSettingsChange]);
 
   const startEditingRule = (rule: ConditionalFormattingRule) => {
     setEditingRule(rule.id);
@@ -277,7 +277,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   // Column visibility management
-  const handleColumnToggle = (column: string) => {
+  const handleColumnToggle = useCallback((column: string) => {
     const currentColumns = safeSettings.visibleColumns || ['installs', 'roas_d0', 'roas_d7'];
     const newColumns = currentColumns.includes(column)
       ? currentColumns.filter(col => col !== column)
@@ -287,7 +287,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       ...safeSettings,
       visibleColumns: newColumns,
     });
-  };
+  }, [safeSettings, onSettingsChange]);
 
   // Get column label for display
   const getColumnLabel = (column: string): string => {
