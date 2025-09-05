@@ -8,6 +8,9 @@ export function parseCSV(csvContent: string): CampaignData[] {
   if (firstLine.startsWith('m app,')) {
     firstLine = firstLine.substring(2); // Remove 'm ' prefix
     lines[0] = firstLine;
+  } else if (firstLine.startsWith('gönder app,')) {
+    firstLine = firstLine.replace('gönder app,', 'app,'); // Fix corrupted header
+    lines[0] = firstLine;
   }
   
   const headers = firstLine.split(',').map(h => h.trim());
@@ -15,6 +18,7 @@ export function parseCSV(csvContent: string): CampaignData[] {
   // Check format type based on headers
   const isDetailedFormat = headers.includes('ecpi') && headers.includes('adjust_cost');
   const isAzulaFormat = headers.includes('all_revenue') && !headers.includes('app');
+  const isBusFrenzyFormat = headers.includes('all_revenue') && headers.includes('cost') && headers.includes('roas_d0');
   
   // Create a mapping function to find column indices with flexible matching
   const getColumnIndex = (columnName: string): number => {
@@ -65,6 +69,36 @@ export function parseCSV(csvContent: string): CampaignData[] {
         ecpi: 0,
         cohort_ad_revenue: 0,
         gross_profit: parseFloat(values[5]) || 0, // Use all_revenue as gross_profit approximation
+        roas_subscription: 0,
+        subscrevnt_revenue: 0,
+      };
+    } else if (isBusFrenzyFormat) {
+      // Parse BusFrenzy format: app,campaign_network,adgroup_network,day,installs,ecpi,cost,all_revenue,roas_d0,roas_d1,roas_d2,roas_d3,roas_d4,roas_d5,roas_d6,roas_d7,roas_d14,roas_d21,roas_d30,roas_d45
+      return {
+        app: values[0] || '',
+        campaign_network: values[1] || '',
+        adgroup_network: values[2] || '',
+        day: values[3] || '',
+        installs: parseInt(values[4]) || 0,
+        ecpi: parseFloat(values[5]) || 0,
+        adjust_cost: parseFloat(values[6]) || 0, // Map cost to adjust_cost
+        ad_revenue: parseFloat(values[7]) || 0, // Map all_revenue to ad_revenue
+        roas_d0: parseFloat(values[8]) || 0,
+        roas_d1: parseFloat(values[9]) || 0,
+        roas_d2: parseFloat(values[10]) || 0,
+        roas_d3: parseFloat(values[11]) || 0,
+        roas_d4: parseFloat(values[12]) || 0,
+        roas_d5: parseFloat(values[13]) || 0,
+        roas_d6: parseFloat(values[14]) || 0,
+        roas_d7: parseFloat(values[15]) || 0,
+        roas_d14: parseFloat(values[16]) || 0,
+        roas_d21: parseFloat(values[17]) || 0,
+        roas_d30: parseFloat(values[18]) || 0,
+        roas_d45: parseFloat(values[19]) || 0,
+        // Set default values for missing fields
+        roas: parseFloat(values[15]) || 0, // Use roas_d7 as roas
+        cohort_ad_revenue: 0,
+        gross_profit: parseFloat(values[7]) || 0, // Use all_revenue as gross_profit approximation
         roas_subscription: 0,
         subscrevnt_revenue: 0,
       };

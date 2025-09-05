@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ChevronDown, ChevronRight, GripVertical, Eye, EyeOff, Settings, Edit3 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, EyeOff, Settings, Edit3 } from 'lucide-react';
 import type { GameCountryPublisherGroup } from '@/types'
 import type { ConditionalFormattingRule } from './SettingsPanel'
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -57,8 +57,6 @@ interface SortableHeaderItemProps {
 function SortableHeaderItem({ game, country, platform, campaignCount, totalVolume, dateRange, sortCriteria, totalValue }: SortableHeaderItemProps) {
   const groupKey = `${game}-${country}-${platform}`;
   const {
-    attributes,
-    listeners,
     setNodeRef,
     transform,
     transition,
@@ -78,9 +76,6 @@ function SortableHeaderItem({ game, country, platform, campaignCount, totalVolum
     >
       <div className="bg-muted hover:bg-muted/80 p-4 rounded-lg border mb-4 min-w-[320px] cursor-pointer transition-colors shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="cursor-grab" {...attributes} {...listeners}>
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </div>
           <div>
             <h3 className="text-lg font-semibold whitespace-nowrap">
               {game}
@@ -93,9 +88,7 @@ function SortableHeaderItem({ game, country, platform, campaignCount, totalVolum
             </p>
             <p className="text-xs font-semibold text-blue-600">
               {sortCriteria === 'volume' && `${totalVolume.toLocaleString()} install`}
-              {sortCriteria === 'roas_d0' && `${(totalValue * 100).toFixed(1)}% D0 ROAS`}
-              {sortCriteria === 'roas_d7' && `${(totalValue * 100).toFixed(1)}% D7 ROAS`}
-              {sortCriteria === 'roas_d30' && `${(totalValue * 100).toFixed(1)}% D30 ROAS`}
+              {sortCriteria.startsWith('roas_') && `${(totalValue * 100).toFixed(1)}% ROAS D${sortCriteria.replace('roas_', '')}`}
               {sortCriteria === 'cost' && `$${totalValue.toLocaleString()} harcama`}
               {sortCriteria === 'revenue' && `$${totalValue.toLocaleString()} gelir`}
               {sortCriteria === 'alphabetical' && 'Alfabetik sıralama'}
@@ -110,8 +103,6 @@ function SortableHeaderItem({ game, country, platform, campaignCount, totalVolum
 
 function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVisibilityChange, visibleColumns = ['installs', 'roas_d0', 'roas_d7'] }: SortableTableItemProps) {
   const {
-    attributes,
-    listeners,
     setNodeRef,
     transform,
     transition,
@@ -240,9 +231,6 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
         <CardHeader className="pb-3 cursor-pointer flex-shrink-0" onClick={onToggle}>
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3 min-w-0 flex-1">
-              <div className="cursor-grab flex-shrink-0" {...attributes} {...listeners}>
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
-              </div>
               <div className="min-w-0 flex-1">
                 <CardTitle className="card-title-fixed mb-3 truncate">{group.game}</CardTitle>
                 <div className="card-content-fixed text-muted-foreground space-y-2">
@@ -386,7 +374,7 @@ export function GameTables({
   onToggleSettings,
   kpiEditMode = false,
   onToggleKpiEdit,
-  availableColumns = [],
+  availableColumns: _availableColumns = [],
 }: GameTablesProps) {
   // DnD Sensors for React 19 compatibility
   // const sensors = useSensors(
@@ -406,15 +394,15 @@ export function GameTables({
   // State for sorting criteria
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>('volume');
 
-  // Generate dynamic sorting options based on available columns
+  // Generate dynamic sorting options based on visible columns from settings
   const getSortingOptions = () => {
     const options = [
       { value: 'volume', label: 'Hacim (Install)' },
       { value: 'alphabetical', label: 'Alfabetik' }
     ];
 
-    // Add ROAS options based on available columns
-    const roasColumns = availableColumns.filter(col => col.startsWith('roas_'));
+    // Add ROAS options based on visible columns only
+    const roasColumns = visibleColumns.filter(col => col.startsWith('roas_'));
     roasColumns.forEach(col => {
       const day = col.replace('roas_', '');
       options.push({
@@ -423,11 +411,11 @@ export function GameTables({
       });
     });
 
-    // Add cost and revenue if available
-    if (availableColumns.includes('adjust_cost')) {
+    // Add cost and revenue if visible
+    if (visibleColumns.includes('adjust_cost')) {
       options.push({ value: 'cost', label: 'Harcama' });
     }
-    if (availableColumns.includes('ad_revenue')) {
+    if (visibleColumns.includes('ad_revenue')) {
       options.push({ value: 'revenue', label: 'Gelir' });
     }
 
