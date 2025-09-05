@@ -309,38 +309,28 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
       return out
     }
 
-    // Parse header (strip BOM if exists)
-    let headerLine = lines[0]
-    if (headerLine.charCodeAt(0) === 0xFEFF) {
-      headerLine = headerLine.slice(1)
-    }
-    const headers = parseCsvLine(headerLine).map((h: string) => h.trim())
-    const idx = (name: string) => headers.indexOf(name)
-    const iApp = idx('gönder app')
-    const iCN = idx('campaign_network')
-    const iAN = idx('adgroup_network')
-    const iDay = idx('day')
-    const iInst = idx('installs')
-    const iEcpi = idx('ecpi')
-    const iCost = idx('cost')
-    const iRev = idx('all_revenue')
-    const iD0 = idx('roas_d0')
-    const iD1 = idx('roas_d1')
-    const iD2 = idx('roas_d2')
-    const iD3 = idx('roas_d3')
-    const iD4 = idx('roas_d4')
-    const iD5 = idx('roas_d5')
-    const iD6 = idx('roas_d6')
-    const iD7 = idx('roas_d7')
-    const iD14 = idx('roas_d14')
-    const iD21 = idx('roas_d21')
-    const iD30 = idx('roas_d30')
-    const iD45 = idx('roas_d45')
-
-    if (iApp < 0 || iCN < 0 || iAN < 0 || iDay < 0 || iInst < 0) {
-      activeIngests.delete(id) // Release lock
-      return reply.code(400).send({ error: 'Missing required headers' })
-    }
+    // Hardcoded column indices for CSV without headers
+    // CSV format: gönder app,campaign_network,adgroup_network,day,installs,ecpi,cost,all_revenue,roas_d0,roas_d1,roas_d2,roas_d3,roas_d4,roas_d5,roas_d6,roas_d7,roas_d14,roas_d21,roas_d30,roas_d45
+    const iApp = 0      // gönder app
+    const iCN = 1       // campaign_network
+    const iAN = 2       // adgroup_network
+    const iDay = 3      // day
+    const iInst = 4     // installs
+    const iEcpi = 5     // ecpi
+    const iCost = 6     // cost
+    const iRev = 7      // all_revenue
+    const iD0 = 8       // roas_d0
+    const iD1 = 9       // roas_d1
+    const iD2 = 10      // roas_d2
+    const iD3 = 11      // roas_d3
+    const iD4 = 12      // roas_d4
+    const iD5 = 13      // roas_d5
+    const iD6 = 14      // roas_d6
+    const iD7 = 15      // roas_d7
+    const iD14 = 16     // roas_d14
+    const iD21 = 17     // roas_d21
+    const iD30 = 18     // roas_d30
+    const iD45 = 19     // roas_d45
 
     const rows: CampaignRowInput[] = []
     const toNullIfEmpty = (val: string | undefined) => {
@@ -357,7 +347,7 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     }
     let skipped = 0
     let firstError: string | null = null
-    for (let li = 1; li < lines.length; li++) {
+    for (let li = 0; li < lines.length; li++) {
       const row = lines[li]
       if (!row.trim()) continue
       const v = parseCsvLine(row)
