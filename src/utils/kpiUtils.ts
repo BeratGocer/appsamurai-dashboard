@@ -98,11 +98,6 @@ export function calculateKPIValue(
   // Filter out data from hidden tables if hiddenTables is provided
   let filteredData = data;
   
-  // If a specific game is selected, filter data to only that game first
-  if (selectedGame) {
-    filteredData = filteredData.filter(row => row.app === selectedGame);
-  }
-  
   if (hiddenTables && hiddenTables.size > 0 && gameGroups) {
     // Use the gameGroups dailyData directly instead of trying to match with raw data
     const visibleData: CampaignData[] = [];
@@ -115,12 +110,12 @@ export function calculateKPIValue(
       }
     });
     
-    // If a specific game is selected, filter visible data to only that game
-    if (selectedGame) {
-      filteredData = visibleData.filter(row => row.app === selectedGame);
-    } else {
-      filteredData = visibleData;
-    }
+    filteredData = visibleData;
+  }
+  
+  // If a specific game is selected, filter data to only that game
+  if (selectedGame) {
+    filteredData = filteredData.filter(row => row.app === selectedGame);
   }
   
   const validData = filteredData.filter(row => {
