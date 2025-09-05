@@ -254,7 +254,7 @@ function parseCampaignNetworkBasic(cn: string) {
 function decodeAdNetwork(adNetworkCode: string): string {
   if (!adNetworkCode || adNetworkCode.toLowerCase() === 'unknown') return 'Unknown';
   
-  const code = adNetworkCode.toUpperCase();
+  const code = adNetworkCode;
   
   // Ad network mappings from Adnetworks.csv
   const adNetworkMappings: Record<string, string> = {
@@ -289,7 +289,20 @@ function decodeAdNetwork(adNetworkCode: string): string {
     'SG9waSBTMlM=': 'Hopi S2S',
     'TW9kZSBFYXJuIEFwcA==': 'Mode Earn App',
     
-    // Direct codes
+    // Direct codes (case insensitive)
+    'SCR': 'Copper',
+    'ScR': 'Copper', 
+    'ScR_': 'Copper',
+    'SPE': 'Prime',
+    'SPE_': 'Prime',
+    'SFT': 'Fluent',
+    'SFT_': 'Fluent',
+    'SDA': 'Dynata',
+    'SDA_': 'Dynata',
+    'SAP': 'Ad it Up',
+    'SAP_': 'Ad it Up',
+    'SKK': 'Klink',
+    'SKK_': 'Klink',
     'TEST': 'Test',
     'UNKNOWN': 'Unknown'
   };
