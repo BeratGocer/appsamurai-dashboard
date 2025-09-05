@@ -51,7 +51,16 @@ const adNetworkMap = {
   'MT': 'Fluent',
   'ZU': 'Eneba',
   'OT': 'Copper',
-  'e3': 'Test'
+  'e3': 'Test',
+  'unknown': 'Test',
+  'UF': 'Ayet Studios',
+  'ZG': 'EmberFund',
+  'Ql': 'Ad it Up',
+  'Y2': 'Lootably',
+  'Zn': 'RePocket',
+  'Z0': 'Ad for Us',
+  'OX': 'Buzzvil',
+  'U0': 'TapChamps'
 }
 ```
 
@@ -89,9 +98,20 @@ function decodeAdNetwork(encryptedCode: string): string {
 - `e3N1Yl9hZmZ9` → **Test** (e3 prefix)
 - `ScR_OTlwSkZrSHNEcm01` → **Copper** (SCR prefix)
 - `OTlwSkZrSHNEcm01` → **Copper** (OT prefix)
+- `UFVCLTEyODIy` → **Ayet Studios** (UF prefix)
+- `UFVCLTgwMHx8` → **Ayet Studios** (UF prefix)
+- `UFVCLTI1MTV8` → **Ayet Studios** (UF prefix)
+- `ZG5BU2hhUEFyeEE0` → **EmberFund** (ZG prefix)
+- `QlEyeEpEdEM4N295` → **Ad it Up** (Ql prefix)
+- `Y20xaHo1b2JuMDBjMzAxMGFjcG54YmhyYnx8` → **Lootably** (Y2 prefix)
+- `Y2xldmtkNTlzMGdkdzAxMTgzM2QxZ3dtbXx8` → **Lootably** (Y2 prefix)
+- `ZnRsYllUZHRUWGRh` → **RePocket** (Zn prefix)
+- `Z0xOSkVKZm1hS0lm` → **Ad for Us** (Z0 prefix)
+- `OXBJQnZVZ0Rjclhn` → **Buzzvil** (OX prefix)
+- `U0lUMGVWeWhvZWtn` → **TapChamps** (U0 prefix)
 
 ### Fallback Cases
-- `unknown` → **Unknown**
+- `unknown` → **Test**
 - `test` → **Test**
 - Unmatched codes → Return original encrypted code
 
