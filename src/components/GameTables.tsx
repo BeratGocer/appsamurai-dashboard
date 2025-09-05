@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ChevronDown, ChevronRight, GripVertical, Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, ChevronRight, GripVertical, Eye, EyeOff, Settings, Edit3 } from 'lucide-react';
 import type { GameCountryPublisherGroup } from '@/types'
 import type { ConditionalFormattingRule } from './SettingsPanel'
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -22,9 +22,16 @@ interface GameTablesProps {
   visibleColumns?: string[];
   focusPublisher?: string | null;
   dateRange?: { startDate: string; endDate: string } | null;
+  // New props for settings and KPI functionality
+  showSettings?: boolean;
+  onToggleSettings?: () => void;
+  kpiEditMode?: boolean;
+  onToggleKpiEdit?: () => void;
+  // Available columns for dynamic sorting
+  availableColumns?: string[];
 }
 
-type SortCriteria = 'volume' | 'roas_d0' | 'roas_d7' | 'roas_d30' | 'cost' | 'revenue' | 'alphabetical';
+type SortCriteria = 'volume' | 'roas_d0' | 'roas_d7' | 'roas_d14' | 'roas_d21' | 'roas_d30' | 'roas_d45' | 'roas_d60' | 'cost' | 'revenue' | 'alphabetical';
 
 interface SortableTableItemProps {
   group: GameCountryPublisherGroup;
@@ -375,6 +382,11 @@ export function GameTables({
   visibleColumns = ['installs', 'roas_d0', 'roas_d7'],
   focusPublisher = null,
   dateRange = null,
+  showSettings: _showSettings = false,
+  onToggleSettings,
+  kpiEditMode = false,
+  onToggleKpiEdit,
+  availableColumns = [],
 }: GameTablesProps) {
   // DnD Sensors for React 19 compatibility
   // const sensors = useSensors(
@@ -393,6 +405,34 @@ export function GameTables({
   
   // State for sorting criteria
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>('volume');
+
+  // Generate dynamic sorting options based on available columns
+  const getSortingOptions = () => {
+    const options = [
+      { value: 'volume', label: 'Hacim (Install)' },
+      { value: 'alphabetical', label: 'Alfabetik' }
+    ];
+
+    // Add ROAS options based on available columns
+    const roasColumns = availableColumns.filter(col => col.startsWith('roas_'));
+    roasColumns.forEach(col => {
+      const day = col.replace('roas_', '');
+      options.push({
+        value: col as SortCriteria,
+        label: `ROAS D${day}`
+      });
+    });
+
+    // Add cost and revenue if available
+    if (availableColumns.includes('adjust_cost')) {
+      options.push({ value: 'cost', label: 'Harcama' });
+    }
+    if (availableColumns.includes('ad_revenue')) {
+      options.push({ value: 'revenue', label: 'Gelir' });
+    }
+
+    return options;
+  };
   
   // State for custom sort mode (when user drags & drops)
   const [isCustomSortMode, setIsCustomSortMode] = useState(false);
@@ -443,7 +483,7 @@ export function GameTables({
   };
 
   // Calculate average ROAS for a group
-  const calculateGroupRoas = (group: GameCountryPublisherGroup, roasType: 'roas_d0' | 'roas_d7' | 'roas_d30'): number => {
+  const calculateGroupRoas = (group: GameCountryPublisherGroup, roasType: string): number => {
     let relevantData = group.dailyData;
     
     if (dateRange && dateRange.startDate && dateRange.endDate) {
@@ -458,8 +498,8 @@ export function GameTables({
       relevantData = sortedData.slice(-7);
     }
     
-    const validRoas = relevantData.filter(day => day[roasType] > 0);
-    return validRoas.length > 0 ? validRoas.reduce((sum, day) => sum + day[roasType], 0) / validRoas.length : 0;
+    const validRoas = relevantData.filter(day => (day as any)[roasType] > 0);
+    return validRoas.length > 0 ? validRoas.reduce((sum, day) => sum + (day as any)[roasType], 0) / validRoas.length : 0;
   };
 
   // Calculate total cost for a group
@@ -506,11 +546,13 @@ export function GameTables({
       case 'volume':
         return calculateGroupVolume(group);
       case 'roas_d0':
-        return calculateGroupRoas(group, 'roas_d0');
       case 'roas_d7':
-        return calculateGroupRoas(group, 'roas_d7');
+      case 'roas_d14':
+      case 'roas_d21':
       case 'roas_d30':
-        return calculateGroupRoas(group, 'roas_d30');
+      case 'roas_d45':
+      case 'roas_d60':
+        return calculateGroupRoas(group, criteria);
       case 'cost':
         return calculateGroupCost(group);
       case 'revenue':
@@ -526,11 +568,13 @@ export function GameTables({
       case 'volume':
         return calculateAppCountryPlatformVolume(groups);
       case 'roas_d0':
-        return groups.reduce((sum, group) => sum + calculateGroupRoas(group, 'roas_d0'), 0) / groups.length;
       case 'roas_d7':
-        return groups.reduce((sum, group) => sum + calculateGroupRoas(group, 'roas_d7'), 0) / groups.length;
+      case 'roas_d14':
+      case 'roas_d21':
       case 'roas_d30':
-        return groups.reduce((sum, group) => sum + calculateGroupRoas(group, 'roas_d30'), 0) / groups.length;
+      case 'roas_d45':
+      case 'roas_d60':
+        return groups.reduce((sum, group) => sum + calculateGroupRoas(group, criteria), 0) / groups.length;
       case 'cost':
         return groups.reduce((sum, group) => sum + calculateGroupCost(group), 0);
       case 'revenue':
@@ -764,13 +808,11 @@ export function GameTables({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="volume">Hacim (Install)</SelectItem>
-                  <SelectItem value="roas_d0">D0 ROAS</SelectItem>
-                  <SelectItem value="roas_d7">D7 ROAS</SelectItem>
-                  <SelectItem value="roas_d30">D30 ROAS</SelectItem>
-                  <SelectItem value="cost">Harcama</SelectItem>
-                  <SelectItem value="revenue">Gelir</SelectItem>
-                  <SelectItem value="alphabetical">Alfabetik</SelectItem>
+                  {getSortingOptions().map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                   {isCustomSortMode && <SelectItem value="custom">Özel Sıralama</SelectItem>}
                 </SelectContent>
               </Select>
@@ -788,6 +830,28 @@ export function GameTables({
                   Sıfırla
                 </Button>
               )}
+            </div>
+            
+            {/* Settings and Edit KPI Cards buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToggleSettings}
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Ayarlar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToggleKpiEdit}
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="h-4 w-4" />
+                {kpiEditMode ? 'Exit Edit Mode' : 'Edit KPI Cards'}
+              </Button>
             </div>
             {hiddenCount > 0 && (
               <Button

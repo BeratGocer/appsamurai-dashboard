@@ -44,6 +44,7 @@ interface SettingsPanelProps {
   hiddenTables?: HiddenTable[];
   onTableVisibilityChange?: (tableId: string, isHidden: boolean) => void;
   availableColumns?: string[];
+  csvData?: any[]; // Raw CSV data to extract actual column names
 }
 
 const COLOR_PRESETS = [
@@ -90,6 +91,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   hiddenTables = [],
   onTableVisibilityChange,
   availableColumns = [],
+  csvData = [],
 }) => {
   // Simple local state - no complex dependencies
   const [newRule, setNewRule] = useState<Partial<ConditionalFormattingRule>>({
@@ -275,32 +277,34 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     });
   };
 
+  // Get actual column names from CSV data
+  const getActualColumnNames = () => {
+    if (csvData.length === 0) return {};
+    
+    const firstRow = csvData[0];
+    const columnNames: Record<string, string> = {};
+    
+    // Extract actual column names from the first row of data
+    Object.keys(firstRow).forEach(key => {
+      // Use the key as is, or create a more readable version
+      if (key.startsWith('roas_')) {
+        const day = key.replace('roas_', '');
+        columnNames[key] = `ROAS D${day}`;
+      } else if (key.startsWith('retention_rate_')) {
+        const day = key.replace('retention_rate_', '');
+        columnNames[key] = `Retention D${day}`;
+      } else {
+        // Use the actual column name from CSV
+        columnNames[key] = key;
+      }
+    });
+    
+    return columnNames;
+  };
+
   const getColumnLabel = (column: string): string => {
-    const columnLabels: Record<string, string> = {
-      installs: 'Install Sayısı',
-      roas_d0: 'ROAS D0',
-      roas_d1: 'ROAS D1',
-      roas_d2: 'ROAS D2',
-      roas_d3: 'ROAS D3',
-      roas_d4: 'ROAS D4',
-      roas_d5: 'ROAS D5',
-      roas_d6: 'ROAS D6',
-      roas_d7: 'ROAS D7',
-      roas_d14: 'ROAS D14',
-      roas_d21: 'ROAS D21',
-      roas_d30: 'ROAS D30',
-      roas_d45: 'ROAS D45',
-      roas_d60: 'ROAS D60',
-      retention_rate_d1: 'Retention D1',
-      retention_rate_d7: 'Retention D7',
-      retention_rate_d14: 'Retention D14',
-      retention_rate_d30: 'Retention D30',
-      ecpi: 'eCPI',
-      adjust_cost: 'Maliyet',
-      ad_revenue: 'Reklam Geliri',
-      gross_profit: 'Brüt Kar',
-    };
-    return columnLabels[column] || column;
+    const actualNames = getActualColumnNames();
+    return actualNames[column] || column;
   };
 
   if (!isOpen) {

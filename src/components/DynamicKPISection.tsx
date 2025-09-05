@@ -24,6 +24,13 @@ export function DynamicKPISection({
   const [kpiConfigs, setKpiConfigs] = useState<KPICardConfig[]>([]);
   const [showKPISettings, setShowKPISettings] = useState(false);
 
+  // Show KPI settings when edit mode is activated
+  useEffect(() => {
+    if (isEditMode) {
+      setShowKPISettings(true);
+    }
+  }, [isEditMode]);
+
   // Get available columns from data
   const availableColumns = useMemo(() => {
     return getAvailableColumns(data);

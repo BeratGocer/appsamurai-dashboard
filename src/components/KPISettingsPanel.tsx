@@ -115,7 +115,7 @@ export function KPISettingsPanel({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              <CardTitle className="text-base">KPI Settings</CardTitle>
+              <CardTitle className="text-base flex items-center">KPI Settings</CardTitle>
               <Badge variant="outline" className="text-xs">
                 {visibleConfigs}/{totalConfigs}
               </Badge>

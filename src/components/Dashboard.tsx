@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
-import { ChevronDown, ChevronRight, Edit3 } from "lucide-react"
+import { ChevronDown, ChevronRight } from "lucide-react"
 import { DynamicKPISection } from './DynamicKPISection'
 
 import { FileUpload } from './FileUpload'
@@ -381,6 +381,7 @@ export function Dashboard({
           hiddenTables={hiddenTablesArray}
           onTableVisibilityChange={handleTableVisibilityChange}
           availableColumns={availableColumnsArray}
+          csvData={data}
         />
       )}
 
@@ -396,15 +397,6 @@ export function Dashboard({
                 </span>
               )}
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setKpiEditMode(!kpiEditMode)}
-              className="flex items-center gap-2"
-            >
-              <Edit3 className="h-4 w-4" />
-              {kpiEditMode ? 'Exit Edit Mode' : 'Edit KPI Cards'}
-            </Button>
           </div>
 
           <DynamicKPISection
@@ -495,6 +487,11 @@ export function Dashboard({
             visibleColumns={settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']}
             focusPublisher={focusPublisher}
             dateRange={settings.dateRange.startDate && settings.dateRange.endDate ? settings.dateRange : null}
+            showSettings={showSettings}
+            onToggleSettings={handleSettingsToggle}
+            kpiEditMode={kpiEditMode}
+            onToggleKpiEdit={() => setKpiEditMode(!kpiEditMode)}
+            availableColumns={availableColumnsArray}
           />
 
         </div>
