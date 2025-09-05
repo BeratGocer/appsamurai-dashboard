@@ -8,7 +8,7 @@ interface ChatAssistantProps {
   getTodayContext?: () => any
 }
 
-export default function ChatAssistant({ onNavigateToOverview, onSelectGame, onFocusPublisher, getTodayContext }: ChatAssistantProps) {
+export default function ChatAssistant({ onNavigateToOverview, onSelectGame, onFocusPublisher }: ChatAssistantProps) {
   const [open, setOpen] = React.useState(false)
   const [input, setInput] = React.useState('')
   const [loading, setLoading] = React.useState(false)

@@ -1,0 +1,97 @@
+---
+alwaysApply: true
+description: Frontend-only storage policy - no backend dependencies
+---
+
+# Frontend-Only Storage Policy
+
+## Core Principle
+**NEVER add backend dependencies**. The AppSamurai Dashboard operates exclusively as a frontend-only application using localStorage for data persistence.
+
+## Storage Architecture
+- **Data Storage**: localStorage only
+- **File Processing**: Client-side CSV parsing
+- **State Management**: React state + localStorage
+- **No Server Calls**: Zero backend API dependencies
+
+## Implementation Rules
+
+### Data Persistence
+```typescript
+// ✅ CORRECT - Use localStorage
+localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(files))
+localStorage.setItem('appsamurai-active-file-id', fileId)
+
+// ❌ FORBIDDEN - No backend calls
+fetch('/api/files', { method: 'POST', body: data })
+axios.post('https://backend.example.com/files', data)
+```
+
+### File Upload Flow
+```typescript
+// ✅ CORRECT - Client-side processing
+const handleFiles = async (files: FileList) => {
+  const text = await file.text()
+  const data = parseCSV(text) // Client-side parsing
+  const uploadedFile = { id: generateId(), data, ... }
+  onFileUpload(uploadedFile) // Store in localStorage
+}
+```
+
+### Error Handling
+```typescript
+// ✅ CORRECT - Local error handling
+try {
+  const data = parseCSV(text)
+  if (data.length === 0) throw new Error('Invalid CSV')
+} catch (err) {
+  setError(err.message)
+}
+
+// ❌ FORBIDDEN - Backend error handling
+try {
+  await fetch('/api/upload', { method: 'POST' })
+} catch (err) {
+  // This should never exist
+}
+```
+
+## Critical Restrictions
+
+### Never Add:
+- ❌ Backend API calls (`fetch`, `axios`, `XMLHttpRequest`)
+- ❌ Server endpoints (`/api/*`, external URLs)
+- ❌ Database connections
+- ❌ Server-side rendering
+- ❌ CORS configurations
+- ❌ Authentication tokens
+- ❌ WebSocket connections
+- ❌ Server-side file processing
+
+### Always Use:
+- ✅ localStorage for data persistence
+- ✅ Client-side CSV parsing
+- ✅ React state management
+- ✅ Browser file APIs
+- ✅ Client-side validation
+- ✅ Local error handling
+
+## File Structure
+- **Data Processing**: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- **Storage Management**: [src/App.tsx](mdc:src/App.tsx) - localStorage operations
+- **File Upload**: [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx) - client-side only
+- **No Backend**: [src/utils/api.ts](mdc:src/utils/api.ts) - intentionally empty
+
+## Deployment
+- **Frontend Only**: Netlify static hosting
+- **No Backend**: No server-side components
+- **Build Process**: `npm run build` → `dist/` → Netlify deploy
+
+## User Experience
+- Files uploaded → Processed in browser → Stored in localStorage
+- Data persists across browser sessions
+- No network dependencies for core functionality
+- Works offline after initial load
+
+## Enforcement
+This rule is **MANDATORY** and **NON-NEGOTIABLE**. Any attempt to add backend dependencies will be rejected. The application must remain completely frontend-only until explicitly requested otherwise by the user.

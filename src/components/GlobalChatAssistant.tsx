@@ -16,7 +16,7 @@ export default function GlobalChatAssistant() {
     onNavigateToOverview,
     onSelectGame,
     onFocusPublisher,
-    getTodayContext
+    // getTodayContext
   } = useChat()
 
   const parseIntent = (text: string) => {
