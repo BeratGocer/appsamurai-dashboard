@@ -1,0 +1,83 @@
+---
+description: Critical data integrity issue - install count data loss persists despite multiple fixes
+alwaysApply: false
+---
+
+# Critical Data Integrity Issue
+
+## Issue Status: CRITICAL - UNRESOLVED ❌
+
+### Problem Summary
+- **CSV Source**: 70,010 total installs (verified)
+- **Frontend Display**: Shows 70K initially, drops to 45K after refresh
+- **Impact**: Critical data integrity issue affecting business metrics
+- **Status**: Multiple attempted fixes have failed
+
+## Failed Fix Attempts
+1. ❌ Frontend/Backend ad network mapping synchronization
+2. ❌ localStorage dependency removal
+3. ❌ Refresh button implementation
+4. ❌ Backend logging improvements
+5. ❌ KPI calculation hidden tables bypass
+6. ❌ DynamicKPISection unfiltered data usage
+
+## Current System State
+- **Frontend**: Deployed to Netlify (https://ubiquitous-sherbet-b4f6bf.netlify.app)
+- **Backend**: Running on Railway (https://backend-production-80f6.up.railway.app)
+- **Database**: PostgreSQL on Railway
+- **Data Source**: [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv)
+
+## Immediate Action Required
+
+### 1. Backend Data Verification
+```bash
+# Check if backend stores complete data
+curl -s https://backend-production-80f6.up.railway.app/files/{fileId}/groups | jq '.[] | .byDate | map(.installs) | add'
+```
+
+### 2. Frontend Data Flow Analysis
+- Add comprehensive logging to trace data from backend to display
+- Verify data aggregation in `getGameCountryPublisherGroups`
+- Check KPI calculation logic in `calculateKPIValue`
+
+### 3. Database Integrity Check
+- Verify all CSV rows are stored in database
+- Check for data type conversion issues
+- Ensure no data is lost during ingest process
+
+## Root Cause Hypotheses
+1. **Backend Data Loss**: Incomplete data storage during CSV ingest
+2. **Frontend Aggregation Bug**: Data lost during grouping/aggregation
+3. **Filtering Logic Error**: Date/game filters excluding data
+4. **Data Type Issues**: Install values converted incorrectly
+5. **Database Query Problems**: Backend queries not returning complete data
+
+## Critical Files Requiring Investigation
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Data processing pipeline
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Data loading logic
+- [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts) - KPI calculation
+- [server/src/index.ts](mdc:server/src/index.ts) - Backend data processing
+- [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv) - Source data
+
+## Debugging Strategy
+1. **Start with Source**: Verify CSV contains 70,010 installs
+2. **Check Backend**: Ensure backend stores complete data
+3. **Trace Frontend**: Follow data from backend to display
+4. **Identify Bottleneck**: Find where data is lost
+5. **Implement Fix**: Address root cause
+6. **Verify Solution**: Test with multiple scenarios
+
+## Business Impact
+- **Data Accuracy**: Critical metrics showing incorrect values
+- **User Trust**: Dashboard reliability compromised
+- **Decision Making**: Business decisions based on incorrect data
+- **System Reliability**: Core functionality not working as expected
+
+## Next Steps
+1. **Immediate**: Add comprehensive logging to identify data loss point
+2. **Short-term**: Implement systematic debugging approach
+3. **Long-term**: Establish data integrity monitoring
+4. **Prevention**: Add automated tests for data accuracy
+
+## Status: URGENT - REQUIRES IMMEDIATE ATTENTION
+This is a critical data integrity issue that affects the core functionality of the dashboard. Multiple fix attempts have failed, indicating a deeper systemic issue that requires systematic investigation and resolution.

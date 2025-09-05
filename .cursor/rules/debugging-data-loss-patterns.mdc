@@ -1,98 +1,125 @@
 ---
 description: Systematic debugging patterns for data loss issues
+alwaysApply: false
 ---
 
-# Debugging Data Loss Patterns
+# Systematic Debugging Patterns for Data Loss Issues
 
-## Systematic Approach to Data Loss Issues
-When install counts drop or data disappears after page refresh, follow this systematic debugging approach.
+## Data Loss Investigation Framework
 
-### Step 1: Verify CSV Content
-```typescript
-// Check original CSV file
-const csvContent = await fetch('path/to/csv').then(r => r.text());
-const lines = csvContent.split('\n');
-const totalInstalls = lines.slice(1).reduce((sum, line) => {
-  const installs = line.split(',')[1]; // Assuming installs is column 1
-  return sum + Number(installs || 0);
-}, 0);
-console.log('CSV total installs:', totalInstalls);
+### 1. Source Data Verification
+```bash
+# Always verify source CSV first
+awk -F',' 'NR>1 {sum+=$5} END {print "Total installs:", sum}' filename.csv
+wc -l filename.csv  # Count total rows
 ```
 
-### Step 2: Check Frontend Parsing
-```typescript
-// Verify frontend parsing results
-const parsedData = parseCSV(csvContent);
-const frontendTotal = parsedData.reduce((sum, row) => sum + Number(row.installs || 0), 0);
-console.log('Frontend parsed installs:', frontendTotal);
+### 2. Backend Data Integrity Check
+```bash
+# Check backend health
+curl -s https://backend-production-80f6.up.railway.app/health
+
+# Verify file groups endpoint returns complete data
+curl -s https://backend-production-80f6.up.railway.app/files/{fileId}/groups | jq '.[] | .byDate | map(.installs) | add'
+
+# Check database schema
+curl -s https://backend-production-80f6.up.railway.app/debug/schema
 ```
 
-### Step 3: Check localStorage Data
+### 3. Frontend Data Flow Tracing
 ```typescript
-// Verify localStorage contains correct data
-const files = JSON.parse(localStorage.getItem('appsamurai-uploaded-files'));
-const localStorageFile = files.find(f => f.name === 'filename.csv');
-const localStorageTotal = localStorageFile.data.reduce((sum, row) => sum + Number(row.installs || 0), 0);
-console.log('localStorage installs:', localStorageTotal);
+// Add console.log statements to trace data flow
+console.log('Raw data length:', data.length);
+console.log('Total installs in raw data:', data.reduce((sum, row) => sum + row.installs, 0));
+
+// Check filtered data
+console.log('Filtered data length:', filteredData.length);
+console.log('Total installs in filtered data:', filteredData.reduce((sum, row) => sum + row.installs, 0));
+
+// Check game groups
+console.log('Game groups length:', gameGroups.length);
+console.log('Total installs in game groups:', gameGroups.reduce((sum, group) => 
+  sum + group.dailyData.reduce((groupSum, day) => groupSum + day.installs, 0), 0));
 ```
 
-### Step 4: Check Backend Data
+### 4. Data Processing Pipeline Debugging
 ```typescript
-// Verify backend ingestion results
-const backendResponse = await fetch('/api/files/active/groups');
-const backendData = await backendResponse.json();
-const backendTotal = backendData.reduce((sum, group) => {
-  return sum + group.dailyData.reduce((groupSum, day) => groupSum + Number(day.installs || 0), 0);
-}, 0);
-console.log('Backend installs:', backendTotal);
+// In csvParser.ts - add logging to getGameCountryPublisherGroups
+export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountryPublisherGroup[] {
+  console.log('Input data length:', data.length);
+  console.log('Input total installs:', data.reduce((sum, row) => sum + row.installs, 0));
+  
+  // ... processing logic ...
+  
+  console.log('Output groups length:', groups.size);
+  console.log('Output total installs:', Array.from(groups.values()).reduce((sum, group) => 
+    sum + group.dailyData.reduce((groupSum, day) => groupSum + day.installs, 0), 0));
+  
+  return Array.from(groups.values());
+}
+```
+
+### 5. KPI Calculation Debugging
+```typescript
+// In kpiUtils.ts - add logging to calculateKPIValue
+export function calculateKPIValue(data: CampaignData[], config: KPICardConfig, ...): KPIValue {
+  console.log('KPI calculation - Column:', config.column);
+  console.log('KPI calculation - Input data length:', data.length);
+  console.log('KPI calculation - Input total installs:', data.reduce((sum, row) => sum + row.installs, 0));
+  
+  // ... calculation logic ...
+  
+  console.log('KPI calculation - Result:', rawValue);
+  return { raw: rawValue, formatted: formatKPIValue(rawValue, config.format, config.decimalPlaces) };
+}
 ```
 
 ## Common Data Loss Scenarios
 
-### Scenario 1: Frontend Parsing Issues
-**Symptoms**: Initial load shows wrong count
-**Debug**: Check CSV header parsing and column mapping
-**Solution**: Fix corrupted header handling
+### Scenario 1: Backend Incomplete Processing
+- **Symptom**: Install count drops after refresh
+- **Cause**: Backend skipping rows during ingest
+- **Debug**: Check backend logs for skipped rows
+- **Fix**: Improve backend error handling
 
-### Scenario 2: Backend Double Processing
-**Symptoms**: Count drops after refresh, data appears decoded but missing
-**Debug**: Check if backend re-processes already decoded data
-**Solution**: Remove redundant decoding in grouped endpoint
+### Scenario 2: Frontend Aggregation Issues
+- **Symptom**: Data shows correctly initially, drops after processing
+- **Cause**: Frontend grouping/aggregation logic
+- **Debug**: Check `getGameCountryPublisherGroups` function
+- **Fix**: Verify data merging logic
 
-### Scenario 3: localStorage Priority Issues
-**Symptoms**: Count drops after refresh, localStorage has correct data
-**Debug**: Check Dashboard component data loading logic
-**Solution**: Prioritize localStorage data over backend data
+### Scenario 3: Filtering Logic Problems
+- **Symptom**: Data varies based on settings
+- **Cause**: Date range or game filtering
+- **Debug**: Check `filteredData` calculation
+- **Fix**: Ensure KPI calculations use unfiltered data
 
-### Scenario 4: ID Mismatch Issues
-**Symptoms**: localStorage data not found after refresh
-**Debug**: Check file ID consistency between localStorage and backend
-**Solution**: Use filename matching as fallback
+### Scenario 4: Data Type Conversion Issues
+- **Symptom**: Numbers become strings or NaN
+- **Cause**: CSV parsing or data conversion
+- **Debug**: Check data types in console
+- **Fix**: Ensure proper number parsing
 
 ## Debugging Checklist
-- ✅ **CSV Content**: Verify original file has expected data
-- ✅ **Frontend Parsing**: Check parseCSV function results
-- ✅ **localStorage**: Verify data is stored correctly
-- ✅ **Backend Ingestion**: Check server processing
-- ✅ **Data Loading**: Verify Dashboard component logic
-- ✅ **ID Consistency**: Check file ID matching
-- ✅ **Page Refresh**: Test persistence after F5
+- [ ] Verify source CSV data integrity
+- [ ] Check backend data storage
+- [ ] Trace frontend data flow
+- [ ] Verify data processing pipeline
+- [ ] Check KPI calculation logic
+- [ ] Test with different data sets
+- [ ] Monitor browser console for errors
+- [ ] Check network requests in DevTools
 
-## Testing Commands
-```bash
-# Check browser console for data
-console.log('Active file ID:', localStorage.getItem('appsamurai-active-file-id'));
-console.log('localStorage files:', JSON.parse(localStorage.getItem('appsamurai-uploaded-files')));
+## Files to Monitor During Debugging
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Main data loading
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Data processing
+- [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts) - KPI calculations
+- [server/src/index.ts](mdc:server/src/index.ts) - Backend processing
+- [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv) - Source data
 
-# Verify install counts at each step
-# 1. CSV: Count rows manually or with script
-# 2. Frontend: Check parsed data length and sum
-# 3. localStorage: Check stored data
-# 4. Backend: Check API response
-# 5. Dashboard: Check displayed count
-```
-
-## File Locations
-- Dashboard Component: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
-- CSV Parser: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
-- Backend API: [server/src/index.ts](mdc:server/src/index.ts)
+## Critical Functions to Debug
+- `parseCSV()` - CSV parsing logic
+- `getGameCountryPublisherGroups()` - Data aggregation
+- `calculateKPIValue()` - KPI calculations
+- Backend ingest endpoint - Data storage
+- Frontend data loading - Data retrieval

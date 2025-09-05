@@ -1,54 +1,79 @@
 ---
-description: Install count data loss issue - 70K drops to 45K on page refresh
+description: Install count data loss issue - 70K drops to 45K on page refresh - PERSISTS
 alwaysApply: false
 ---
 
-# Install Count Data Loss Issue
+# Install Count Data Loss Issue - PERSISTS
 
-## Problem Description
+## Problem Status: UNRESOLVED ❌
 - CSV file contains 70,010 total installs (verified with `awk -F',' 'NR>1 {sum+=$5} END {print "Total installs:", sum}'`)
 - Frontend shows 70K installs initially
 - After page refresh, install count drops to 45K
-- Fluent campaigns not decoded until page refresh
+- **Issue persists despite attempted fixes**
 
-## Root Cause Analysis
-1. **Frontend localStorage dependency**: Dashboard was loading cached data from localStorage instead of fresh backend data
-2. **Ad network decoding inconsistency**: Frontend and backend had different `decodeAdNetwork` mappings
-3. **Data synchronization issues**: localStorage contained incomplete/outdated data
+## Attempted Solutions (All Failed)
+1. ❌ Synchronized frontend `decodeAdNetwork` with backend mapping
+2. ❌ Removed localStorage dependency for CSV data loading
+3. ❌ Added refresh button to force backend data reload
+4. ❌ Improved backend logging for debugging
+5. ❌ Fixed KPI calculation to bypass hidden tables filter for installs
+6. ❌ Ensured DynamicKPISection uses unfiltered data
 
-## Attempted Solutions
-1. ✅ Synchronized frontend `decodeAdNetwork` with backend mapping
-2. ✅ Removed localStorage dependency for CSV data loading
-3. ✅ Added refresh button to force backend data reload
-4. ✅ Improved backend logging for debugging
-5. ✅ Always use backend data for consistency
-
-## Current Status
-- **Issue persists**: Despite fixes, install count still drops on refresh
-- **Need investigation**: Backend data integrity or frontend data processing
-
-## Files Modified
+## Current Code Changes Made
 - [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Updated decodeAdNetwork mapping
 - [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Removed localStorage data dependency
 - [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Added refresh button
+- [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts) - Added installs column bypass for hidden tables
 - [server/src/index.ts](mdc:server/src/index.ts) - Added logging for debugging
 
-## Next Steps Required
-1. **Verify backend data integrity**: Check if backend is storing complete 70K installs
-2. **Debug data processing**: Investigate frontend data aggregation logic
-3. **Test refresh functionality**: Verify refresh button works correctly
-4. **Check database queries**: Ensure backend returns complete dataset
+## Root Cause Analysis Required
+The issue persists despite multiple fixes. Need deeper investigation:
+
+### Possible Remaining Causes:
+1. **Backend Data Processing**: Backend may not be storing complete dataset
+2. **Database Query Issues**: Backend queries may be filtering data incorrectly
+3. **Frontend Data Aggregation**: `getGameCountryPublisherGroups` may be losing data
+4. **Date Filtering Logic**: Date range filtering may be excluding data
+5. **Game Filtering**: Selected game filter may be reducing data
+6. **Data Type Conversion**: Install values may be converted incorrectly
+
+## Debugging Steps Required
+1. **Verify Backend Data Integrity**:
+   ```bash
+   curl https://backend-production-80f6.up.railway.app/files/{fileId}/groups
+   ```
+2. **Check Database Schema**:
+   ```bash
+   curl https://backend-production-80f6.up.railway.app/debug/schema
+   ```
+3. **Monitor Backend Logs**: Check Railway logs during CSV upload
+4. **Test Data Flow**: Verify data from CSV → Backend → Frontend
+
+## Critical Files to Investigate
+- [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv) - Source data (70,010 installs)
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Data processing logic
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Data loading and filtering
+- [server/src/index.ts](mdc:server/src/index.ts) - Backend data processing
+- [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts) - KPI calculation logic
 
 ## Test Commands
 ```bash
 # Verify CSV total installs
 awk -F',' 'NR>1 {sum+=$5} END {print "Total installs:", sum}' 2025-9-5_10_50_adjust_report_export.csv
 
-# Check backend logs for data processing
-# Monitor Railway logs during CSV upload
+# Check backend health
+curl https://backend-production-80f6.up.railway.app/health
+
+# Verify file groups endpoint
+curl https://backend-production-80f6.up.railway.app/files/{fileId}/groups
 ```
 
-## Critical Files to Monitor
-- [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv) - Source data
-- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Data loading logic
-- [server/src/index.ts](mdc:server/src/index.ts) - Backend data processing
+## Next Investigation Steps
+1. **Backend Data Verification**: Check if backend stores complete 70K installs
+2. **Frontend Data Flow**: Trace data from backend to KPI display
+3. **Database Queries**: Verify backend queries return complete dataset
+4. **Data Aggregation**: Check if `getGameCountryPublisherGroups` loses data
+5. **Filtering Logic**: Verify date/game filters don't exclude data
+
+## Status: CRITICAL ISSUE - REQUIRES IMMEDIATE ATTENTION
+The install count data loss issue persists despite multiple attempted fixes. This is a critical data integrity issue that needs immediate investigation and resolution.
