@@ -297,6 +297,8 @@ function decodeAdNetwork(adNetworkCode: string): string {
     'SPE_': 'Prime',
     'SFT': 'Fluent',
     'SFT_': 'Fluent',
+    'SFT_MTkwMzZ8': 'Fluent',
+    'SFT_MTkxNDF8': 'Fluent',
     'SDA': 'Dynata',
     'SDA_': 'Dynata',
     'SAP': 'Ad it Up',
@@ -347,11 +349,6 @@ function normalizePublisherPrefix(adg: string): string {
     // If the prefix itself decodes to a known ad network, return the decoded name
     if (decodedAdNetworks.includes(decodedPrefix)) {
       return decodedPrefix;
-    }
-    // Also check if the full string (with underscore) can be decoded
-    const decodedFullString = decodeAdNetwork(adg);
-    if (decodedAdNetworks.includes(decodedFullString)) {
-      return decodedFullString;
     }
     return `${prefix}_`;
   }

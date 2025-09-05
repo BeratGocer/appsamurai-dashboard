@@ -778,6 +778,8 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'SPE_': 'Prime',
     'SFT': 'Fluent',
     'SFT_': 'Fluent',
+    'SFT_MTkwMzZ8': 'Fluent',
+    'SFT_MTkxNDF8': 'Fluent',
     'SDA': 'Dynata',
     'SDA_': 'Dynata',
     'SAP': 'Ad it Up',
