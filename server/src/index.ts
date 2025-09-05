@@ -337,11 +337,12 @@ function normalizePublisherPrefix(adg: string): string {
   // Handle decoded ad network names - return them as-is
   const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App'];
   
+  // If the decoded result is a known ad network, return it directly
   if (decodedAdNetworks.includes(decodedAdNetwork)) {
     return decodedAdNetwork;
   }
   
-  // Handle prefix patterns for raw codes - but check if the prefix itself can be decoded
+  // Handle prefix patterns for raw codes that couldn't be decoded
   const m = adg.match(/^([A-Za-z]{3})_/)
   if (m) {
     const prefix = m[1];
