@@ -81,7 +81,7 @@ export function DynamicKPISection({
 
   return (
     <div className="space-y-6">
-      {/* KPI Settings Panel */}
+      {/* KPI Settings Panel - Hidden but functional */}
       <KPISettingsPanel
         configs={kpiConfigs}
         availableColumns={availableColumns}

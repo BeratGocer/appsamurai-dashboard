@@ -106,147 +106,149 @@ export function KPISettingsPanel({
 
   return (
     <>
-      {/* Compact Settings Panel */}
-      <Card className={`transition-all duration-300 ${isOpen ? 'shadow-lg' : ''}`}>
-        <CardHeader 
-          className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors"
-          onClick={onToggle}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <CardTitle className="text-base flex items-center">KPI Settings</CardTitle>
-              <Badge variant="outline" className="text-xs">
-                {visibleConfigs}/{totalConfigs}
-              </Badge>
+      {/* KPI Settings Panel - Hidden but functional */}
+      <div style={{ display: 'none' }}>
+        <Card className={`transition-all duration-300 ${isOpen ? 'shadow-lg' : ''}`}>
+          <CardHeader 
+            className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={onToggle}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <CardTitle className="text-base flex items-center">KPI Settings</CardTitle>
+                <Badge variant="outline" className="text-xs">
+                  {visibleConfigs}/{totalConfigs}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddNewConfig();
+                  }}
+                  className="h-7 px-2"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggle();
+                  }}
+                  className="h-7 px-2"
+                >
+                  {isOpen ? 'Hide' : 'Show'}
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddNewConfig();
-                }}
-                className="h-7 px-2"
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Add
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggle();
-                }}
-                className="h-7 px-2"
-              >
-                {isOpen ? 'Hide' : 'Show'}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
 
-        {isOpen && (
-          <CardContent className="pt-0 pb-3">
-            {/* Compact KPI List */}
-            <div className="space-y-1 max-h-64 overflow-y-auto">
-              {configs
-                .sort((a, b) => a.order - b.order)
-                .map((config) => (
-                  <div
-                    key={config.id}
-                    className={`p-2 border rounded-md text-sm ${
-                      config.isVisible ? 'bg-card' : 'bg-muted/20 opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium truncate">{config.title}</h4>
-                          <Badge variant="secondary" className="text-xs px-1 py-0">
-                            {config.calculationType}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs px-1 py-0">
-                            {config.column}
-                          </Badge>
+          {isOpen && (
+            <CardContent className="pt-0 pb-3">
+              {/* Compact KPI List */}
+              <div className="space-y-1 max-h-64 overflow-y-auto">
+                {configs
+                  .sort((a, b) => a.order - b.order)
+                  .map((config) => (
+                    <div
+                      key={config.id}
+                      className={`p-2 border rounded-md text-sm ${
+                        config.isVisible ? 'bg-card' : 'bg-muted/20 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium truncate">{config.title}</h4>
+                            <Badge variant="secondary" className="text-xs px-1 py-0">
+                              {config.calculationType}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs px-1 py-0">
+                              {config.column}
+                            </Badge>
+                          </div>
+                          {config.description && (
+                            <p className="text-xs text-muted-foreground truncate mt-1">
+                              {config.description}
+                            </p>
+                          )}
                         </div>
-                        {config.description && (
-                          <p className="text-xs text-muted-foreground truncate mt-1">
-                            {config.description}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                        {/* Move buttons */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleMoveConfig(config.id, 'up')}
-                          className="p-1 h-6 w-6"
-                        >
-                          <ArrowUp className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleMoveConfig(config.id, 'down')}
-                          className="p-1 h-6 w-6"
-                        >
-                          <ArrowDown className="h-3 w-3" />
-                        </Button>
                         
-                        {/* Visibility toggle */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleVisibility(config.id)}
-                          className="p-1 h-6 w-6"
-                        >
-                          {config.isVisible ? 
-                            <Eye className="h-3 w-3" /> : 
-                            <EyeOff className="h-3 w-3" />
-                          }
-                        </Button>
-                        
-                        {/* Edit button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditConfig(config)}
-                          className="p-1 h-6 w-6"
-                        >
-                          <Edit3 className="h-3 w-3" />
-                        </Button>
-                        
-                        {/* Delete button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteConfig(config.id)}
-                          className="p-1 h-6 w-6 text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                          {/* Move buttons */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMoveConfig(config.id, 'up')}
+                            className="p-1 h-6 w-6"
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleMoveConfig(config.id, 'down')}
+                            className="p-1 h-6 w-6"
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                          
+                          {/* Visibility toggle */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleVisibility(config.id)}
+                            className="p-1 h-6 w-6"
+                          >
+                            {config.isVisible ? 
+                              <Eye className="h-3 w-3" /> : 
+                              <EyeOff className="h-3 w-3" />
+                            }
+                          </Button>
+                          
+                          {/* Edit button */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditConfig(config)}
+                            className="p-1 h-6 w-6"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          
+                          {/* Delete button */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteConfig(config.id)}
+                            className="p-1 h-6 w-6 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                  
+                {configs.length === 0 && (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <p className="text-sm">No KPI cards configured yet.</p>
+                    <Button onClick={handleAddNewConfig} className="mt-2" size="sm">
+                      Add your first KPI
+                    </Button>
                   </div>
-                ))}
-                
-              {configs.length === 0 && (
-                <div className="text-center py-4 text-muted-foreground">
-                  <p className="text-sm">No KPI cards configured yet.</p>
-                  <Button onClick={handleAddNewConfig} className="mt-2" size="sm">
-                    Add your first KPI
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        )}
-      </Card>
+                )}
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      </div>
 
       {/* Compact Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
