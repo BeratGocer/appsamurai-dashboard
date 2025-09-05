@@ -420,11 +420,19 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     })
     
     // Get column indices dynamically
-    const iApp = columnMap.get('gönder app') ?? columnMap.get('gönderapp') ?? 0
+    const iApp = columnMap.get('gönderapp') ?? columnMap.get('gönder app') ?? 0
     const iCN = columnMap.get('campaign_network') ?? 1
     const iAN = columnMap.get('adgroup_network') ?? 2
     const iDay = columnMap.get('day') ?? 3
     const iInst = columnMap.get('installs') ?? 4
+    
+    // Log column mapping for debugging
+    req.log.info({ 
+      fileId: id,
+      headerRow,
+      columnMap: Object.fromEntries(columnMap),
+      columnIndices: { iApp, iCN, iAN, iDay, iInst }
+    }, 'CSV column mapping');
     const iEcpi = columnMap.get('ecpi') ?? 5
     const iCost = columnMap.get('cost') ?? 6
     const iRev = columnMap.get('all_revenue') ?? 7
