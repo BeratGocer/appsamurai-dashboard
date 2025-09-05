@@ -114,8 +114,6 @@ export function KPISettingsPanel({
         >
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
-          </div>
-          <div className="flex items-center gap-2">
             <CardTitle className="text-base">KPI Settings</CardTitle>
             <Badge variant="outline" className="text-xs">
               {visibleConfigs}/{totalConfigs}
@@ -146,7 +144,6 @@ export function KPISettingsPanel({
                 {isOpen ? 'Hide' : 'Show'}
               </Button>
             </div>
-          </div>
         </CardHeader>
 
         {isOpen && (
