@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Edit3 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, EyeOff, Settings, Edit3 } from 'lucide-react';
 import type { GameCountryPublisherGroup } from '@/types'
 import type { ConditionalFormattingRule } from './SettingsPanel'
 import { DndContext, closestCenter } from '@dnd-kit/core';
@@ -22,7 +22,9 @@ interface GameTablesProps {
   visibleColumns?: string[];
   focusPublisher?: string | null;
   dateRange?: { startDate: string; endDate: string } | null;
-  // New props for KPI functionality
+  // New props for settings and KPI functionality
+  showSettings?: boolean;
+  onToggleSettings?: () => void;
   kpiEditMode?: boolean;
   onToggleKpiEdit?: () => void;
   // Available columns for dynamic sorting
@@ -368,6 +370,8 @@ export function GameTables({
   visibleColumns = ['installs', 'roas_d0', 'roas_d7'],
   focusPublisher = null,
   dateRange = null,
+  showSettings: _showSettings = false,
+  onToggleSettings,
   kpiEditMode = false,
   onToggleKpiEdit,
   availableColumns: _availableColumns = [],
@@ -816,8 +820,17 @@ export function GameTables({
               )}
             </div>
             
-            {/* Edit KPI Cards button */}
+            {/* Settings and Edit KPI Cards buttons */}
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToggleSettings}
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Ayarlar
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

@@ -13,7 +13,7 @@ import { getCustomers, getAccountManagers, getGameCountryPublisherGroups, synchr
 import type { GameCountryPublisherGroup } from '@/types'
 import type { CampaignData, UploadedFile } from '@/types'
 import { GameTables } from './GameTables'
-import { type SettingsData } from './SettingsPanel'
+import SettingsPanel, { type SettingsData } from './SettingsPanel'
 
 import { useChat } from '@/contexts/ChatContext'
 
@@ -55,6 +55,7 @@ export function Dashboard({
   const [kpiEditMode, setKpiEditMode] = useState(false);
   
   // Settings state with per-file localStorage persistence
+  const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<SettingsData>(() => {
     // Initialize with default settings
     return {
@@ -74,6 +75,12 @@ export function Dashboard({
 
   // Load settings for current file - REMOVED (moved inline to useEffect)
 
+  // Save settings to localStorage for current file
+  const handleSettingsChange = useCallback((newSettings: SettingsData) => {
+    setSettings(newSettings);
+    const settingsKey = activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
+    localStorage.setItem(settingsKey, JSON.stringify(newSettings));
+  }, [activeFileId]);
 
   // Hidden tables management
   const handleTableVisibilityChange = useCallback((tableId: string, isHidden: boolean) => {
@@ -110,6 +117,10 @@ export function Dashboard({
     localStorage.setItem(hiddenTablesKey, JSON.stringify([]));
   };
 
+  // Settings toggle handler
+  const handleSettingsToggle = useCallback(() => {
+    setShowSettings(prev => !prev);
+  }, []);
 
   // Load settings when activeFileId changes - REMOVED DUPLICATE
   // Settings loading is handled in the main useEffect below
@@ -153,6 +164,20 @@ export function Dashboard({
     return synchronizeGroupDates(rawGameGroups); // Synchronize to overall date range
   }, [rawGameGroups, settings.dateRange.startDate, settings.dateRange.endDate]);
 
+  // Memoize hiddenTables array to prevent infinite re-renders
+  const hiddenTablesArray = React.useMemo(() => {
+    return hiddenTables.size > 0 ? Array.from(hiddenTables).map(tableId => {
+      const parts = tableId.split('-');
+      const publisher = parts.slice(3).join('-'); // Handle publishers with hyphens
+      return {
+        id: tableId,
+        game: parts[0],
+        country: parts[1],
+        platform: parts[2],
+        publisher: publisher
+      };
+    }) : [];
+  }, [hiddenTables]);
 
   // Memoize availableColumns array to prevent infinite re-renders
   const availableColumnsArray = React.useMemo(() => {
@@ -346,6 +371,19 @@ export function Dashboard({
         {/* Main Content Area */}
         <div className="flex-1 container mx-auto p-6 space-y-6">
 
+      {/* Settings Panel - Show in overview tab */}
+      {currentTab === 'overview' && (
+        <SettingsPanel
+          settings={settings}
+          onSettingsChange={handleSettingsChange}
+          isOpen={showSettings}
+          onToggle={handleSettingsToggle}
+          hiddenTables={hiddenTablesArray}
+          onTableVisibilityChange={handleTableVisibilityChange}
+          availableColumns={availableColumnsArray}
+          csvData={data}
+        />
+      )}
 
       {/* Dynamic KPI Section - Only on overview (Dashboard) tab */}
       {currentTab === 'overview' && (
@@ -449,6 +487,8 @@ export function Dashboard({
             visibleColumns={settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']}
             focusPublisher={focusPublisher}
             dateRange={settings.dateRange.startDate && settings.dateRange.endDate ? settings.dateRange : null}
+            showSettings={showSettings}
+            onToggleSettings={handleSettingsToggle}
             kpiEditMode={kpiEditMode}
             onToggleKpiEdit={() => setKpiEditMode(!kpiEditMode)}
             availableColumns={availableColumnsArray}

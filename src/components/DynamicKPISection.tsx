@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { EditableKPICard } from './EditableKPICard';
-import { calculateKPIValue, loadKPISettings } from '@/utils/kpiUtils';
+import { KPISettingsPanel } from './KPISettingsPanel';
+import { getAvailableColumns, calculateKPIValue, loadKPISettings, saveKPISettings } from '@/utils/kpiUtils';
 import type { CampaignData, KPICardConfig } from '@/types';
 
 interface DynamicKPISectionProps {
@@ -21,7 +22,19 @@ export function DynamicKPISection({
   onEditModeToggle 
 }: DynamicKPISectionProps) {
   const [kpiConfigs, setKpiConfigs] = useState<KPICardConfig[]>([]);
+  const [showKPISettings, setShowKPISettings] = useState(false);
 
+  // Show KPI settings when edit mode is activated
+  useEffect(() => {
+    if (isEditMode) {
+      setShowKPISettings(true);
+    }
+  }, [isEditMode]);
+
+  // Get available columns from data
+  const availableColumns = useMemo(() => {
+    return getAvailableColumns(data);
+  }, [data]);
 
   // Load KPI settings when activeFileId changes
   useEffect(() => {
@@ -31,6 +44,13 @@ export function DynamicKPISection({
     }
   }, [activeFileId]);
 
+  // Save KPI settings when configs change
+  const handleConfigsChange = (newConfigs: KPICardConfig[]) => {
+    setKpiConfigs(newConfigs);
+    if (activeFileId) {
+      saveKPISettings(activeFileId, newConfigs);
+    }
+  };
 
   // Calculate KPI values (excluding hidden tables)
   const kpiValues = useMemo(() => {
@@ -48,7 +68,7 @@ export function DynamicKPISection({
   // Handle KPI card edit
   const handleEditKPI = (_configId: string) => {
     // If in edit mode, clicking on a card should open settings focused on that card
-    // Settings are now always visible when in edit mode
+    setShowKPISettings(true);
   };
 
   if (!activeFileId || data.length === 0) {
@@ -61,6 +81,14 @@ export function DynamicKPISection({
 
   return (
     <div className="space-y-6">
+      {/* KPI Settings Panel */}
+      <KPISettingsPanel
+        configs={kpiConfigs}
+        availableColumns={availableColumns}
+        onConfigsChange={handleConfigsChange}
+        isOpen={showKPISettings || isEditMode}
+        onToggle={() => setShowKPISettings(!showKPISettings)}
+      />
 
       {/* KPI Cards Grid */}
       {visibleKPIConfigs.length > 0 && (
@@ -91,7 +119,7 @@ export function DynamicKPISection({
               Add KPI cards to display your campaign metrics
             </p>
             <button
-              onClick={() => onEditModeToggle?.()}
+              onClick={() => setShowKPISettings(true)}
               className="text-primary hover:underline text-sm font-medium"
             >
               Configure KPI Cards
