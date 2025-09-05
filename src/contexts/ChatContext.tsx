@@ -9,6 +9,8 @@ interface ChatMessage {
 interface ChatContextType {
   isOpen: boolean
   setIsOpen: (open: boolean) => void
+  isMinimized: boolean
+  setIsMinimized: (minimized: boolean) => void
   messages: ChatMessage[]
   setMessages: (messages: ChatMessage[]) => void
   addMessage: (message: ChatMessage) => void
@@ -33,6 +35,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -50,6 +53,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const value: ChatContextType = {
     isOpen,
     setIsOpen,
+    isMinimized,
+    setIsMinimized,
     messages,
     setMessages,
     addMessage,

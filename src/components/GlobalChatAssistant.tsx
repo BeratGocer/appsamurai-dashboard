@@ -1,4 +1,4 @@
-import { MessageSquare, Send, X } from 'lucide-react'
+import { MessageSquare, Send, X, Minimize2, Maximize2 } from 'lucide-react'
 import { apiChat } from '@/utils/api'
 import { useChat } from '@/contexts/ChatContext'
 
@@ -6,6 +6,8 @@ export default function GlobalChatAssistant() {
   const {
     isOpen,
     setIsOpen,
+    isMinimized,
+    setIsMinimized,
     messages,
     addMessage,
     input,
@@ -35,8 +37,11 @@ export default function GlobalChatAssistant() {
     setLoading(true)
 
     const intent = parseIntent(userText)
-    onNavigateToOverview?.()
-    if (intent.game) onSelectGame?.(intent.game.replace(/\s+/g, ' ').trim())
+    // Only navigate to overview if user asks for specific game data
+    if (intent.game) {
+      onNavigateToOverview?.()
+      onSelectGame?.(intent.game.replace(/\s+/g, ' ').trim())
+    }
     if (intent.publisher) onFocusPublisher?.(intent.publisher)
 
     try {
@@ -63,18 +68,73 @@ export default function GlobalChatAssistant() {
         </button>
       )}
 
-      {/* Chat Panel - Takes up the right side of Dashboard */}
-      {isOpen && (
+      {/* Minimized Chat Panel */}
+      {isOpen && isMinimized && (
+        <div className="fixed bottom-4 right-4 z-50 bg-card border rounded-lg shadow-xl">
+          <div className="p-3 border-b flex items-center justify-between bg-primary/5">
+            <div className="font-semibold text-sm">Yardımcı</div>
+            <div className="flex items-center gap-1">
+              <button 
+                className="text-xs opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted"
+                onClick={() => setIsMinimized(false)}
+                title="Genişlet"
+              >
+                <Maximize2 className="w-3 h-3" />
+              </button>
+              <button 
+                className="text-xs opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted"
+                onClick={() => setIsOpen(false)}
+                title="Kapat"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+          <div className="p-3">
+            <div className="flex items-center gap-2">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Mesaj yazın..."
+                className="flex-1 px-2 py-1 border rounded text-xs"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
+                disabled={loading}
+              />
+              <button
+                onClick={handleSend}
+                disabled={loading || !input.trim()}
+                className="px-2 py-1 rounded bg-primary text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
+                title="Gönder"
+              >
+                <Send className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Chat Panel - Takes up the right side of Dashboard */}
+      {isOpen && !isMinimized && (
         <div className="fixed top-0 right-0 h-full w-80 md:w-96 bg-card border-l shadow-xl z-40 flex flex-col">
           {/* Header */}
           <div className="p-4 border-b flex items-center justify-between bg-primary/5">
             <div className="font-semibold text-lg">Yardımcı</div>
-            <button 
-              className="text-sm opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted"
-              onClick={() => setIsOpen(false)}
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button 
+                className="text-sm opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted"
+                onClick={() => setIsMinimized(true)}
+                title="Küçült"
+              >
+                <Minimize2 className="w-4 h-4" />
+              </button>
+              <button 
+                className="text-sm opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted"
+                onClick={() => setIsOpen(false)}
+                title="Kapat"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
