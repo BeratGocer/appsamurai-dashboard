@@ -245,6 +245,21 @@ export function Dashboard({
     // Update data when active file changes
     const activeFile = uploadedFiles.find(f => f.id === activeFileId);
     if (activeFile) {
+      // Use localStorage data if available, otherwise use backend data
+      const localStorageFiles = localStorage.getItem('appsamurai-uploaded-files');
+      if (localStorageFiles) {
+        try {
+          const files = JSON.parse(localStorageFiles);
+          const localStorageFile = files.find((f: any) => f.id === activeFileId);
+          if (localStorageFile && localStorageFile.data) {
+            setData(localStorageFile.data);
+            return;
+          }
+        } catch (error) {
+          console.warn('Failed to parse localStorage files:', error);
+        }
+      }
+      // Fallback to backend data
       setData(activeFile.data);
     } else {
       setData([]);
