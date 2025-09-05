@@ -12,6 +12,7 @@ if (!databaseUrl) {
   console.error('❌ DATABASE_URL environment variable is required but not set')
   console.error('Please set DATABASE_URL in your Railway environment variables')
   console.error('Example: postgresql://username:password@host:port/database')
+  console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE')))
   process.exit(1)
 }
 
