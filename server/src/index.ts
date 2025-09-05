@@ -8,35 +8,34 @@ dotenv.config()
 
 // Check for required environment variables
 const databaseUrl = process.env.DATABASE_URL
+let prisma: PrismaClient | null = null
+
 if (!databaseUrl) {
-  console.error('❌ DATABASE_URL environment variable is required but not set')
-  console.error('Please set DATABASE_URL in your Railway environment variables')
-  console.error('Example: postgresql://username:password@host:port/database')
-  console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE')))
-  process.exit(1)
-}
-
-const prisma = new PrismaClient()
-
-// Run migrations on startup
-try {
-  await prisma.$executeRaw`SELECT 1`
-  console.log('✅ Database connection successful')
+  console.warn('⚠️ DATABASE_URL not set, running in limited mode')
+  console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE')))
+} else {
+  prisma = new PrismaClient()
   
-  // Check if tables exist, if not run migrations
+  // Run migrations on startup
   try {
-    await prisma.$executeRaw`SELECT * FROM "CampaignRow" LIMIT 1`
-    console.log('✅ Tables already exist')
+    await prisma.$executeRaw`SELECT 1`
+    console.log('✅ Database connection successful')
+    
+    // Check if tables exist, if not run migrations
+    try {
+      await prisma.$executeRaw`SELECT * FROM "CampaignRow" LIMIT 1`
+      console.log('✅ Tables already exist')
+    } catch (error) {
+      console.log('🔄 Tables do not exist, running migrations...')
+      const { execSync } = require('child_process')
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' })
+      console.log('✅ Migrations completed')
+    }
   } catch (error) {
-    console.log('🔄 Tables do not exist, running migrations...')
-    const { execSync } = require('child_process')
-    execSync('npx prisma migrate deploy', { stdio: 'inherit' })
-    console.log('✅ Migrations completed')
+    console.error('❌ Database connection failed:', error)
+    console.error('Running in limited mode without database')
+    prisma = null
   }
-} catch (error) {
-  console.error('❌ Database connection failed:', error)
-  console.error('Please check your DATABASE_URL environment variable')
-  process.exit(1)
 }
 
 const app = Fastify({ 
@@ -64,9 +63,9 @@ app.addContentTypeParser('application/octet-stream', { parseAs: 'string' }, (_re
 app.get('/health', async () => ({ 
   ok: true, 
   timestamp: new Date().toISOString(),
-  database: databaseUrl ? 'configured' : 'missing',
-  version: '1.0.1',
-  status: 'Railway restart fix applied'
+  database: prisma ? 'connected' : 'disconnected',
+  version: '1.0.2',
+  status: 'Railway 502 fix - database optional'
 }))
 
 // Types
