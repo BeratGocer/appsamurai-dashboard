@@ -250,10 +250,10 @@ export function Dashboard({
       if (localStorageFiles) {
         try {
           const files = JSON.parse(localStorageFiles);
-          // Try to find by ID first, then by filename
+          // Try to find by ID first, then by name
           let localStorageFile = files.find((f: any) => f.id === activeFileId);
           if (!localStorageFile) {
-            localStorageFile = files.find((f: any) => f.filename === activeFile.name);
+            localStorageFile = files.find((f: any) => f.name === activeFile.name);
           }
           if (localStorageFile && localStorageFile.data) {
             setData(localStorageFile.data);
