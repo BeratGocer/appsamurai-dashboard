@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { EditableKPICard } from './EditableKPICard';
-import { KPISettingsPanel } from './KPISettingsPanel';
-import { getAvailableColumns, calculateKPIValue, loadKPISettings, saveKPISettings } from '@/utils/kpiUtils';
+// import { KPISettingsPanel } from './KPISettingsPanel'; // Hidden but functionality preserved
+import { calculateKPIValue, loadKPISettings } from '@/utils/kpiUtils';
+// import { getAvailableColumns, saveKPISettings } from '@/utils/kpiUtils'; // Hidden but functionality preserved
 import type { CampaignData, KPICardConfig } from '@/types';
 
 interface DynamicKPISectionProps {
@@ -22,19 +23,19 @@ export function DynamicKPISection({
   onEditModeToggle 
 }: DynamicKPISectionProps) {
   const [kpiConfigs, setKpiConfigs] = useState<KPICardConfig[]>([]);
-  const [showKPISettings, setShowKPISettings] = useState(false);
+  // const [showKPISettings, setShowKPISettings] = useState(false); // Hidden but functionality preserved
 
-  // Show KPI settings when edit mode is activated
-  useEffect(() => {
-    if (isEditMode) {
-      setShowKPISettings(true);
-    }
-  }, [isEditMode]);
+  // Show KPI settings when edit mode is activated - Hidden but functionality preserved
+  // useEffect(() => {
+  //   if (isEditMode) {
+  //     setShowKPISettings(true);
+  //   }
+  // }, [isEditMode]);
 
-  // Get available columns from data
-  const availableColumns = useMemo(() => {
-    return getAvailableColumns(data);
-  }, [data]);
+  // Get available columns from data - Hidden but functionality preserved
+  // const availableColumns = useMemo(() => {
+  //   return getAvailableColumns(data);
+  // }, [data]);
 
   // Load KPI settings when activeFileId changes
   useEffect(() => {
@@ -44,13 +45,13 @@ export function DynamicKPISection({
     }
   }, [activeFileId]);
 
-  // Save KPI settings when configs change
-  const handleConfigsChange = (newConfigs: KPICardConfig[]) => {
-    setKpiConfigs(newConfigs);
-    if (activeFileId) {
-      saveKPISettings(activeFileId, newConfigs);
-    }
-  };
+  // Save KPI settings when configs change - Hidden but functionality preserved
+  // const handleConfigsChange = (newConfigs: KPICardConfig[]) => {
+  //   setKpiConfigs(newConfigs);
+  //   if (activeFileId) {
+  //     saveKPISettings(activeFileId, newConfigs);
+  //   }
+  // };
 
   // Calculate KPI values (excluding hidden tables)
   const kpiValues = useMemo(() => {
@@ -65,11 +66,11 @@ export function DynamicKPISection({
     .filter(config => config.isVisible)
     .sort((a, b) => a.order - b.order);
 
-  // Handle KPI card edit
-  const handleEditKPI = (_configId: string) => {
-    // If in edit mode, clicking on a card should open settings focused on that card
-    setShowKPISettings(true);
-  };
+  // Handle KPI card edit - Hidden but functionality preserved
+  // const handleEditKPI = (_configId: string) => {
+  //   // If in edit mode, clicking on a card should open settings focused on that card
+  //   setShowKPISettings(true);
+  // };
 
   if (!activeFileId || data.length === 0) {
     return (
@@ -104,7 +105,7 @@ export function DynamicKPISection({
                 key={config.id}
                 config={config}
                 value={kpiValue.value}
-                onEdit={() => handleEditKPI(config.id)}
+                onEdit={() => {}} // Hidden but functionality preserved
                 isEditMode={isEditMode}
               />
             );
@@ -121,7 +122,7 @@ export function DynamicKPISection({
               Add KPI cards to display your campaign metrics
             </p>
             <button
-              onClick={() => setShowKPISettings(true)}
+              onClick={() => {}} // Hidden but functionality preserved
               className="text-primary hover:underline text-sm font-medium"
             >
               Configure KPI Cards
