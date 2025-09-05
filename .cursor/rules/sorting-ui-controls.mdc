@@ -1,0 +1,79 @@
+---
+description: UI controls and indicators for sorting functionality
+---
+
+# Sorting UI Controls
+
+## Dropdown Implementation
+The sorting dropdown provides multiple criteria selection:
+
+```typescript
+<Select value={isCustomSortMode ? 'custom' : sortCriteria} 
+        onValueChange={(value: SortCriteria | 'custom') => {
+  if (value === 'custom') return; // Keep custom sort mode
+  setSortCriteria(value as SortCriteria);
+  setIsCustomSortMode(false);
+  setGroupOrder([]); // Reset custom order
+}}>
+  <SelectTrigger className="w-40">
+    <SelectValue />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="volume">Hacim (Install)</SelectItem>
+    <SelectItem value="roas_d0">D0 ROAS</SelectItem>
+    <SelectItem value="roas_d7">D7 ROAS</SelectItem>
+    <SelectItem value="roas_d30">D30 ROAS</SelectItem>
+    <SelectItem value="cost">Harcama</SelectItem>
+    <SelectItem value="revenue">Gelir</SelectItem>
+    <SelectItem value="alphabetical">Alfabetik</SelectItem>
+    {isCustomSortMode && <SelectItem value="custom">Özel Sıralama</SelectItem>}
+  </SelectContent>
+</Select>
+```
+
+## Reset Button
+When custom sort mode is active, show reset button:
+
+```typescript
+{isCustomSortMode && (
+  <Button
+    variant="outline"
+    size="sm"
+    onClick={() => {
+      setIsCustomSortMode(false);
+      setGroupOrder([]);
+      setSortCriteria('volume');
+    }}
+    className="text-xs"
+  >
+    Sıfırla
+  </Button>
+)}
+```
+
+## Value Display in Headers
+Show calculated values based on current sort criteria:
+
+```typescript
+<p className="text-xs font-semibold text-blue-600">
+  {sortCriteria === 'volume' && `${totalVolume.toLocaleString()} install`}
+  {sortCriteria === 'roas_d0' && `${(totalValue * 100).toFixed(1)}% D0 ROAS`}
+  {sortCriteria === 'roas_d7' && `${(totalValue * 100).toFixed(1)}% D7 ROAS`}
+  {sortCriteria === 'roas_d30' && `${(totalValue * 100).toFixed(1)}% D30 ROAS`}
+  {sortCriteria === 'cost' && `$${totalValue.toLocaleString()} harcama`}
+  {sortCriteria === 'revenue' && `$${totalValue.toLocaleString()} gelir`}
+  {sortCriteria === 'alphabetical' && 'Alfabetik sıralama'}
+  {dateRange ? ' (seçili tarih aralığı)' : ' (son 7 gün)'}
+</p>
+```
+
+## Key Files
+- [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Main UI implementation
+- [src/components/ui/select.tsx](mdc:src/components/ui/select.tsx) - Select component
+
+## Critical Rules
+- ✅ Show current sort criteria clearly
+- ✅ Indicate custom sort mode with special option
+- ✅ Provide easy reset functionality
+- ✅ Display relevant values for each criteria
+- ✅ Show date range context

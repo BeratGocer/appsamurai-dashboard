@@ -1,0 +1,68 @@
+---
+description: Date range filtering for volume calculations in dashboard tables
+---
+
+# Date Range Volume Calculation
+
+## Volume Calculation Logic
+The system calculates volume (installs) based on configurable date ranges:
+
+### Default Behavior
+```typescript
+// Use last 7 days if no date range specified
+const sortedData = [...group.dailyData].sort((a, b) => 
+  new Date(a.date).getTime() - new Date(b.date).getTime()
+);
+const last7Days = sortedData.slice(-7);
+return last7Days.reduce((sum, day) => sum + day.installs, 0);
+```
+
+### Date Range Override
+```typescript
+if (dateRange && dateRange.startDate && dateRange.endDate) {
+  // Use specified date range
+  const startDate = new Date(dateRange.startDate);
+  const endDate = new Date(dateRange.endDate);
+  relevantData = group.dailyData.filter(day => {
+    const dayDate = new Date(day.date);
+    return dayDate >= startDate && dayDate <= endDate;
+  });
+}
+```
+
+## Data Structure Requirements
+The [GameCountryPublisherGroup](mdc:src/types/index.ts) interface must include:
+```typescript
+dailyData: Array<{
+  date: string;
+  installs: number;
+  roas_d0: number;
+  roas_d7: number;
+  roas_d30: number;
+  cost: number;
+  revenue: number;
+}>;
+```
+
+## CSV Parser Integration
+The [csvParser.ts](mdc:src/utils/csvParser.ts) must populate these fields:
+```typescript
+cost: row.cost || 0,
+revenue: row.all_revenue || 0,
+```
+
+## UI Indicators
+- Show "(son 7 gün)" for default calculation
+- Show "(seçili tarih aralığı)" for custom range
+- Display calculated values in group headers
+
+## Key Files
+- [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Calculation logic
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Date range passing
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Data processing
+
+## Critical Rules
+- ✅ Always use last 7 days as default
+- ✅ Respect user-selected date ranges
+- ✅ Show clear indicators of calculation period
+- ✅ Handle edge cases (no data, invalid dates)

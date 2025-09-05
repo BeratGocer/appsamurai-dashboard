@@ -1,0 +1,43 @@
+---
+description: Volume-based sorting implementation patterns for dashboard tables
+---
+
+# Volume-Based Sorting Patterns
+
+## Core Sorting Logic
+The dashboard implements comprehensive sorting functionality with volume-based ordering as the default:
+
+### Sorting Criteria Types
+```typescript
+type SortCriteria = 'volume' | 'roas_d0' | 'roas_d7' | 'roas_d30' | 'cost' | 'revenue' | 'alphabetical';
+```
+
+### Volume Calculation
+- **Default**: Last 7 days of install data
+- **Date Range**: Uses selected date range if specified
+- **Calculation**: Sum of installs within the time period
+
+### Sorting Implementation
+```typescript
+// Always sort by value first (highest first)
+if (valueA !== valueB) {
+  return valueB - valueA; // Highest value first
+}
+
+// If values are equal, fall back to alphabetical
+if (a.game !== b.game) return a.game.localeCompare(b.game);
+if (a.country !== b.country) return a.country.localeCompare(b.country);
+return a.platform.localeCompare(b.platform);
+```
+
+## Key Files
+- [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Main sorting logic
+- [src/types/index.ts](mdc:src/types/index.ts) - Type definitions
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Data processing
+
+## Critical Rules
+- ✅ NO threshold logic for volume sorting
+- ✅ Always sort by value first, then alphabetical
+- ✅ Support multiple sorting criteria
+- ✅ Handle date range filtering
+- ✅ Preserve custom drag & drop order

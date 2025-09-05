@@ -1,0 +1,58 @@
+---
+description: Drag and drop sorting implementation with custom sort mode
+---
+
+# Drag & Drop Sorting Implementation
+
+## Custom Sort Mode Logic
+When users drag & drop table groups, the system switches to "custom sort mode" to preserve user-defined ordering.
+
+### State Management
+```typescript
+// State for custom sort mode (when user drags & drops)
+const [isCustomSortMode, setIsCustomSortMode] = useState(false);
+const [groupOrder, setGroupOrder] = useState<string[]>([]);
+```
+
+### Drag End Handler
+```typescript
+const handleDragEnd = (event: DragEndEvent) => {
+  // ... drag logic ...
+  if (oldIndex !== -1 && newIndex !== -1) {
+    setGroupOrder((items) => {
+      const newOrder = arrayMove(items, oldIndex, newIndex);
+      return newOrder;
+    });
+    // Activate custom sort mode when user drags & drops
+    setIsCustomSortMode(true);
+  }
+};
+```
+
+### Sorting Logic Priority
+1. **Custom Sort Mode Active**: Use drag & drop order
+2. **Default Mode**: Use selected criteria (volume, ROAS, etc.)
+
+```typescript
+// Apply custom order if exists and custom sort mode is active
+if (groupOrder.length > 0 && isCustomSortMode) {
+  // Use custom order
+} else {
+  // Use criteria-based sorting
+}
+```
+
+## UI Controls
+- **Dropdown**: Shows "Özel Sıralama" when custom mode active
+- **Reset Button**: Returns to volume-based sorting
+- **Visual Indicators**: Clear indication of current sort mode
+
+## Key Files
+- [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Main implementation
+- Uses `@dnd-kit` for React 19 compatibility
+
+## Critical Rules
+- ✅ Preserve user drag & drop order
+- ✅ Show clear UI indicators for custom mode
+- ✅ Provide easy reset to default sorting
+- ✅ Maintain drag & drop state across interactions

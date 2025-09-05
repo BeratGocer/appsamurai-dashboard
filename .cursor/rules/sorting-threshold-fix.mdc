@@ -1,0 +1,50 @@
+---
+description: Critical fix for sorting threshold logic that was causing incorrect ordering
+---
+
+# Sorting Threshold Fix
+
+## The Problem
+The original sorting logic had a threshold mechanism that caused incorrect ordering:
+
+```typescript
+// WRONG - This caused the bug
+const threshold = sortCriteria === 'volume' ? 100 : 0.01;
+if (Math.abs(valueA - valueB) > threshold) {
+  return valueB - valueA; // Highest value first
+}
+// If difference < threshold, fall back to alphabetical
+```
+
+### Why This Failed
+- 66 install vs 0 install = difference of 66
+- 66 < 100 threshold → fell back to alphabetical sorting
+- Result: 0 install groups appeared before 66 install group
+
+## The Solution
+Remove threshold logic entirely and always sort by value:
+
+```typescript
+// CORRECT - Always sort by value first
+const valueA = calculateAppCountryPlatformValue(a.groups, sortCriteria);
+const valueB = calculateAppCountryPlatformValue(b.groups, sortCriteria);
+
+// Always sort by value first (highest first)
+if (valueA !== valueB) {
+  return valueB - valueA; // Highest value first
+}
+
+// If values are equal, fall back to alphabetical
+if (a.game !== b.game) return a.game.localeCompare(b.game);
+if (a.country !== b.country) return a.country.localeCompare(b.country);
+return a.platform.localeCompare(b.platform);
+```
+
+## Key Files
+- [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Lines 603-614
+
+## Critical Rules
+- ✅ NEVER use threshold logic for volume sorting
+- ✅ Always sort by value first, then alphabetical
+- ✅ Only use alphabetical as tiebreaker
+- ✅ Test with edge cases (0 values, small differences)
