@@ -7,6 +7,16 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const prisma = new PrismaClient()
+
+// Run migrations on startup
+try {
+  await prisma.$executeRaw`SELECT 1`
+  console.log('Database connection successful')
+} catch (error) {
+  console.error('Database connection failed:', error)
+  process.exit(1)
+}
+
 const app = Fastify({ 
   logger: true,
   bodyLimit: 50 * 1024 * 1024 // 50MB limit
