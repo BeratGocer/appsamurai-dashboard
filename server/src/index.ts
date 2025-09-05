@@ -64,7 +64,8 @@ app.get('/health', async () => ({
   ok: true, 
   timestamp: new Date().toISOString(),
   database: databaseUrl ? 'configured' : 'missing',
-  version: '1.0.0'
+  version: '1.0.1',
+  status: 'Railway restart fix applied'
 }))
 
 // Types
