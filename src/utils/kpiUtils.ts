@@ -91,50 +91,19 @@ export function calculateKPIValue(
   data: CampaignData[], 
   config: KPICardConfig, 
   hiddenTables?: Set<string>,
-  gameGroups?: any[]
+  gameGroups?: any[],
+  selectedGame?: string | null
 ): KPIValue {
-  // For installs column, always use all data regardless of hidden tables
-  // This ensures total install count is always accurate
-  if (config.column === 'installs') {
-    const validData = data.filter(row => {
-      const value = row[config.column as keyof CampaignData];
-      return value !== undefined && value !== null && !isNaN(Number(value));
-    });
-    
-    if (validData.length === 0) {
-      return {
-        raw: 0,
-        formatted: formatKPIValue(0, config.format, config.decimalPlaces),
-        trend: 'neutral'
-      };
-    }
-    
-    const rawValue = validData.reduce((sum, row) => {
-      const value = row[config.column as keyof CampaignData];
-      return sum + Number(value);
-    }, 0);
-    
-    return {
-      raw: rawValue,
-      formatted: formatKPIValue(rawValue, config.format, config.decimalPlaces),
-      trend: 'neutral'
-    };
-  }
   
   // Filter out data from hidden tables if hiddenTables is provided
   let filteredData = data;
   
-  if (hiddenTables && hiddenTables.size > 0 && gameGroups) {
-    // Simple approach: If ALL tables are hidden, return 0
-    if (hiddenTables.size === gameGroups.length) {
+  // If a specific game is selected, filter data to only that game first
+  if (selectedGame) {
+    filteredData = filteredData.filter(row => row.app === selectedGame);
+  }
   
-      return {
-        raw: 0,
-        formatted: config.format === 'percentage' ? '0.0%' : 
-                   config.format === 'currency' ? '$0' : '0'
-      };
-    }
-    
+  if (hiddenTables && hiddenTables.size > 0 && gameGroups) {
     // Use the gameGroups dailyData directly instead of trying to match with raw data
     const visibleData: CampaignData[] = [];
     
@@ -146,8 +115,12 @@ export function calculateKPIValue(
       }
     });
     
-    filteredData = visibleData;
-
+    // If a specific game is selected, filter visible data to only that game
+    if (selectedGame) {
+      filteredData = visibleData.filter(row => row.app === selectedGame);
+    } else {
+      filteredData = visibleData;
+    }
   }
   
   const validData = filteredData.filter(row => {

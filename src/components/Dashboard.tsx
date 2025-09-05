@@ -425,6 +425,7 @@ export function Dashboard({
             activeFileId={activeFileId}
             hiddenTables={hiddenTables}
             gameGroups={gameGroups}
+            selectedGame={selectedGame}
             isEditMode={kpiEditMode}
             onEditModeToggle={() => setKpiEditMode(!kpiEditMode)}
           />

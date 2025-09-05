@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { EditableKPICard } from './EditableKPICard';
 import { KPISettingsPanel } from './KPISettingsPanel';
 import { getAvailableColumns, calculateKPIValue, loadKPISettings, saveKPISettings } from '@/utils/kpiUtils';
-import type { CampaignData, KPICardConfig } from '@/types';
+import type { CampaignData, KPICardConfig, GameCountryPublisherGroup } from '@/types';
 
 interface DynamicKPISectionProps {
   data: CampaignData[];
   activeFileId: string | null;
   hiddenTables?: Set<string>;
-  gameGroups?: any[];
+  gameGroups?: GameCountryPublisherGroup[];
+  selectedGame?: string | null;
   isEditMode?: boolean;
   onEditModeToggle?: () => void;
 }
@@ -18,6 +19,7 @@ export function DynamicKPISection({
   activeFileId, 
   hiddenTables,
   gameGroups,
+  selectedGame,
   isEditMode = false, 
   onEditModeToggle 
 }: DynamicKPISectionProps) {
@@ -52,13 +54,13 @@ export function DynamicKPISection({
     }
   };
 
-  // Calculate KPI values (excluding hidden tables)
+  // Calculate KPI values (excluding hidden tables and filtering by selected game)
   const kpiValues = useMemo(() => {
     return kpiConfigs.map(config => ({
       id: config.id,
-      value: calculateKPIValue(data, config, hiddenTables, gameGroups)
+      value: calculateKPIValue(data, config, hiddenTables, gameGroups, selectedGame)
     }));
-  }, [data, kpiConfigs, hiddenTables, gameGroups]);
+  }, [data, kpiConfigs, hiddenTables, gameGroups, selectedGame]);
 
   // Get visible KPI configs sorted by order
   const visibleKPIConfigs = kpiConfigs
@@ -66,7 +68,7 @@ export function DynamicKPISection({
     .sort((a, b) => a.order - b.order);
 
   // Handle KPI card edit
-  const handleEditKPI = (_configId: string) => {
+  const handleEditKPI = () => {
     // If in edit mode, clicking on a card should open settings focused on that card
     setShowKPISettings(true);
   };
@@ -102,7 +104,7 @@ export function DynamicKPISection({
                 key={config.id}
                 config={config}
                 value={kpiValue.value}
-                onEdit={() => handleEditKPI(config.id)}
+                onEdit={handleEditKPI}
                 isEditMode={isEditMode}
               />
             );
