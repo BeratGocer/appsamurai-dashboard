@@ -150,7 +150,9 @@ export function Dashboard({
   });
 
   // Get grouped data for game tables with filtered data
-  const rawGameGroups = getGameCountryPublisherGroups(filteredData);
+  const rawGameGroups = React.useMemo(() => {
+    return getGameCountryPublisherGroups(filteredData);
+  }, [filteredData]);
 
   // Apply date synchronization if date range is specified in settings
   const gameGroups = React.useMemo<GameCountryPublisherGroup[]>(() => {
