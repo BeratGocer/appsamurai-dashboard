@@ -987,7 +987,7 @@ app.get('/files/:id/groups', async (req: FastifyRequest<{ Params: { id: string }
 
 const port = Number(process.env.PORT || 8787)
 app.listen({ port, host: '0.0.0.0' }).then(() => {
-  app.log.info(`Server listening on ${port}`)
+  app.log.info(`Server listening on ${port} - Railway restart triggered`)
 })
 
 
