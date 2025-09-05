@@ -1,0 +1,140 @@
+---
+description: Component search and discovery patterns for finding related code
+---
+
+# Component Search and Discovery Patterns
+
+## Overview
+This rule documents effective patterns for finding and understanding related components in the AppSamurai Dashboard codebase.
+
+## Search Strategies
+
+### 1. Semantic Search
+Use `codebase_search` for understanding functionality:
+```typescript
+// Find components that render specific UI elements
+codebase_search("Where are game cards with installs and ROAS displayed?")
+
+// Find components that handle specific data
+codebase_search("What components process campaign data and display metrics?")
+```
+
+### 2. Pattern-Based Search
+Use `grep` for finding specific code patterns:
+```bash
+# Find components using specific data properties
+grep -r "totalInstalls\|avgRoasD7" src/
+
+# Find components with specific CSS classes
+grep -r "grid grid-cols-2" src/
+
+# Find hardcoded values (for debugging)
+grep -r "40\.601\|21\.7%" src/
+```
+
+### 3. File Structure Analysis
+Key directories and their purposes:
+- `src/components/` - Main React components
+- `src/components/ui/` - Reusable UI components (shadcn/ui)
+- `src/types/` - TypeScript type definitions
+- `src/utils/` - Utility functions and data processing
+- `src/contexts/` - React contexts for global state
+
+## Component Discovery Workflow
+
+### Step 1: Identify the UI Element
+```typescript
+// Look for specific text or patterns in the UI
+// Example: Game cards showing "40.601" and "21.7%"
+```
+
+### Step 2: Search for Data Sources
+```bash
+# Find where the data comes from
+grep -r "totalInstalls" src/
+grep -r "avgRoasD7" src/
+```
+
+### Step 3: Trace Component Hierarchy
+```typescript
+// Check parent components that might render the target
+// Example: Dashboard -> FileManager -> Game Cards
+```
+
+### Step 4: Verify All Instances
+```bash
+# Ensure all similar components are updated
+grep -r "game\.totalInstalls" src/
+grep -r "game\.avgRoasD7" src/
+```
+
+## Common Component Patterns
+
+### Game Card Components
+Components that typically render game information:
+- **Dashboard.tsx**: Main dashboard with multiple tabs
+- **FileManager.tsx**: File upload and game display
+- **GameTable.tsx**: Detailed game performance tables
+- **AppOverview.tsx**: App performance overview
+
+### Data Flow Patterns
+```typescript
+// CSV Data -> Parser -> Components -> UI
+CSV Files → csvParser.ts → Component State → Rendered UI
+```
+
+## Debugging Multi-Component Issues
+
+### Issue: Changes Don't Appear After Deployment
+**Investigation Steps**:
+1. **Check Multiple Components**: Search for similar patterns across all components
+2. **Verify Build Output**: Check if changes are in the built files
+3. **Test Different URLs**: Use unique deploy URLs vs production URL
+4. **Clear Caches**: Browser cache, service worker, CDN cache
+
+### Issue: Same Data Displayed Differently
+**Investigation Steps**:
+1. **Find All Renderers**: Search for the data property across components
+2. **Check Data Processing**: Verify how data is processed in each component
+3. **Compare Implementations**: Look for differences in rendering logic
+
+## Search Tools and Commands
+
+### Effective Grep Patterns
+```bash
+# Find components using specific props
+grep -r "interface.*Props" src/components/
+
+# Find components with specific imports
+grep -r "import.*Card" src/components/
+
+# Find components with specific CSS classes
+grep -r "className.*grid" src/components/
+```
+
+### Codebase Search Queries
+```typescript
+// Find components that handle specific functionality
+"What components render game performance data?"
+
+// Find components that use specific data structures
+"What components process CampaignData and display it?"
+
+// Find components that handle user interactions
+"What components handle game selection and navigation?"
+```
+
+## Critical Rules
+- ✅ Always search multiple components when making UI changes
+- ✅ Use both semantic search and pattern-based search
+- ✅ Check parent and child components in the hierarchy
+- ✅ Verify changes in all related components
+- ✅ Test with browser automation after changes
+- ✅ Use unique deploy URLs for verification
+- ✅ Clear browser cache when testing changes
+
+## Related Files
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Main dashboard
+- [src/components/FileManager.tsx](mdc:src/components/FileManager.tsx) - File management
+- [src/components/GameTable.tsx](mdc:src/components/GameTable.tsx) - Game tables
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Data processing

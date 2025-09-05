@@ -1,0 +1,197 @@
+---
+description: Browser automation testing patterns for production verification
+---
+
+# Browser Automation Testing Patterns
+
+## Overview
+This rule documents effective patterns for using Playwright browser automation to test and verify changes on the production AppSamurai Dashboard.
+
+## Production Testing Workflow
+
+### 1. Navigate to Production Site
+```typescript
+// Navigate to main production URL
+await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/')
+
+// Navigate to unique deploy URL for fresh deployment testing
+await page.goto('https://[unique-hash]--ubiquitous-sherbet-b4f6bf.netlify.app/')
+```
+
+### 2. Interact with UI Elements
+```typescript
+// Click on uploaded file to expand game cards
+await page.click('[data-testid="uploaded-file"]')
+
+// Click on specific game card
+await page.click('text=Bus Frenzy')
+
+// Navigate between tabs
+await page.click('text=Dashboard')
+await page.click('text=Müşteriler')
+```
+
+### 3. Verify Changes
+```typescript
+// Take screenshots for visual verification
+await page.screenshot({ 
+  path: 'verification.png',
+  fullPage: true 
+})
+
+// Check for specific text content
+const hasKPI = await page.textContent('text=40.601')
+const hasROAS = await page.textContent('text=21.7%')
+```
+
+## Common Testing Scenarios
+
+### Game Card Testing
+```typescript
+// Test game card display
+await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/')
+await page.click('[data-testid="uploaded-file"]')
+
+// Verify KPI metrics are removed
+const installsText = await page.textContent('text=Installs')
+const roasText = await page.textContent('text=ROAS D7')
+
+// Should be null if successfully removed
+console.log('Installs text:', installsText) // Should be null
+console.log('ROAS text:', roasText) // Should be null
+```
+
+### Cache Management Testing
+```typescript
+// Clear browser cache
+await page.evaluate(() => {
+  if ('caches' in window) {
+    return caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => caches.delete(cacheName))
+      );
+    });
+  }
+  return Promise.resolve();
+})
+
+// Hard refresh
+await page.keyboard.press('Control+Shift+R')
+```
+
+### Multi-URL Testing
+```typescript
+// Test both production and unique deploy URLs
+const urls = [
+  'https://ubiquitous-sherbet-b4f6bf.netlify.app/',
+  'https://[unique-hash]--ubiquitous-sherbet-b4f6bf.netlify.app/'
+]
+
+for (const url of urls) {
+  await page.goto(url)
+  await page.screenshot({ path: `test-${url.split('/')[2]}.png` })
+}
+```
+
+## Debugging Production Issues
+
+### Issue: Changes Not Visible
+```typescript
+// Check page source for changes
+const pageContent = await page.content()
+console.log('Page contains changes:', pageContent.includes('expected-change'))
+
+// Check console for errors
+const consoleMessages = await page.evaluate(() => {
+  return window.console.messages || []
+})
+```
+
+### Issue: Caching Problems
+```typescript
+// Force cache bypass
+await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/', {
+  waitUntil: 'networkidle',
+  cache: 'bypass'
+})
+
+// Check if service worker is active
+const hasServiceWorker = await page.evaluate(() => {
+  return 'serviceWorker' in navigator
+})
+```
+
+## Screenshot Documentation
+```typescript
+// Take before/after screenshots
+await page.screenshot({ 
+  path: 'before-changes.png',
+  fullPage: true 
+})
+
+// Make changes...
+
+await page.screenshot({ 
+  path: 'after-changes.png',
+  fullPage: true 
+})
+```
+
+## Element Selection Patterns
+```typescript
+// Select by text content
+await page.click('text=View Game')
+await page.click('text=Bus Frenzy')
+
+// Select by CSS selector
+await page.click('[data-testid="uploaded-file"]')
+await page.click('.game-card')
+
+// Select by role
+await page.click('button:has-text("Upload")')
+```
+
+## Production Verification Checklist
+- ✅ Navigate to production URL
+- ✅ Interact with relevant UI elements
+- ✅ Verify expected changes are visible
+- ✅ Take screenshots for documentation
+- ✅ Test with different browsers/devices if needed
+- ✅ Check for console errors
+- ✅ Verify performance is acceptable
+
+## Common Issues and Solutions
+
+### Issue: Element Not Found
+```typescript
+// Wait for element to appear
+await page.waitForSelector('[data-testid="uploaded-file"]')
+
+// Use more specific selectors
+await page.click('text=Unknown (01.07.2025 to 05.09.2025)')
+```
+
+### Issue: Page Not Loading
+```typescript
+// Wait for network to be idle
+await page.goto(url, { waitUntil: 'networkidle' })
+
+// Check for errors
+const errors = await page.evaluate(() => {
+  return window.performance.getEntriesByType('navigation')[0]
+})
+```
+
+## Critical Rules
+- ✅ Always test on production URL after deployment
+- ✅ Use unique deploy URLs for fresh deployment testing
+- ✅ Take screenshots for visual verification
+- ✅ Clear browser cache when testing changes
+- ✅ Test multiple user interaction flows
+- ✅ Verify changes are visible and functional
+- ✅ Document issues with screenshots and logs
+
+## Related Tools
+- **Playwright**: Browser automation framework
+- **Netlify**: Deployment platform
+- **GitHub**: Version control and deployment trigger

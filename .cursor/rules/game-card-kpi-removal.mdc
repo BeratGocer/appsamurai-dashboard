@@ -1,0 +1,72 @@
+---
+description: Game card KPI removal patterns and implementation
+---
+
+# Game Card KPI Removal Patterns
+
+## Overview
+This rule documents the successful removal of ROAS and Install KPI metrics from game cards across the AppSamurai Dashboard.
+
+## Components Affected
+The following components were modified to remove KPI metrics from game cards:
+
+### 1. Dashboard Component
+- **File**: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+- **Sections**: Customers and Account Managers tabs
+- **Changes**: Removed grid layout showing installs and ROAS D7 metrics
+
+### 2. FileManager Component  
+- **File**: [src/components/FileManager.tsx](mdc:src/components/FileManager.tsx)
+- **Location**: Main page game cards display
+- **Changes**: Removed metrics grid showing totalInstalls and avgRoasD7
+
+## Implementation Pattern
+
+### Before (KPI Metrics Present)
+```typescript
+<div className="grid grid-cols-2 gap-2 items-end">
+  <div className="text-center">
+    <div className="text-xl font-semibold text-primary">
+      {game.totalInstalls.toLocaleString()}
+    </div>
+    <div className="text-xs text-muted-foreground">Installs</div>
+  </div>
+  <div className="text-center">
+    <div className="text-xl font-semibold text-purple-400">
+      {(game.avgRoasD7 * 100).toFixed(1)}%
+    </div>
+    <div className="text-xs text-muted-foreground">ROAS D7</div>
+  </div>
+</div>
+```
+
+### After (KPI Metrics Removed)
+```typescript
+<div className="text-center text-xs text-muted-foreground">
+  {game.dateRange.start} - {game.dateRange.end}
+</div>
+```
+
+## Game Card Structure (Post-Removal)
+Game cards now display only:
+- **Game Name**: Prominent title with platform badges
+- **Date Range**: Centered date range display
+- **View Game Button**: Action button to navigate to detailed view
+
+## Critical Rules
+- ✅ Never display totalInstalls or avgRoasD7 metrics on main page game cards
+- ✅ Keep game cards clean and focused on essential information only
+- ✅ Maintain "View Game" button for detailed performance access
+- ✅ Preserve date range information for context
+- ✅ Test both Dashboard and FileManager components when making changes
+- ✅ Verify changes on production site after deployment
+
+## Deployment Verification
+- **Production URL**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- **Testing**: Use browser automation to verify KPI removal
+- **Components**: Check both main page (FileManager) and Dashboard tabs
+
+## Related Files
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Dashboard tabs
+- [src/components/FileManager.tsx](mdc:src/components/FileManager.tsx) - Main page cards
+- [src/types/index.ts](mdc:src/types/index.ts) - Game data types

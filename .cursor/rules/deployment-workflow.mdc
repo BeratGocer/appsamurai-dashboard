@@ -1,62 +1,115 @@
 ---
-description: Deployment workflow for Railway and Netlify
+description: Deployment workflow and production verification patterns
 ---
 
-# Deployment Workflow
+# Deployment Workflow Patterns
 
-## Backend Deployment (Railway)
+## Overview
+This rule documents the complete deployment workflow for the AppSamurai Dashboard, including Git operations, build process, and production verification.
+
+## Deployment Architecture
+- **Frontend**: Netlify at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
+- **Backend**: Railway at `https://backend-production-80f6.up.railway.app/`
+- **GitHub**: `https://github.com/BeratGocer/appsamurai-dashboard`
+
+## Complete Deployment Workflow
+
+### 1. Code Changes
 ```bash
-# 1. Build and test locally
-cd server
-npm run build
-
-# 2. Commit changes
-cd ..
+# Stage all changes
 git add .
-git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Description"
-git push origin main
 
-# 3. Deploy to Railway
-cd server
-railway up
+# Commit with timestamp
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - [description]"
+
+# Push to GitHub
+git push origin main
 ```
 
-## Frontend Deployment (Netlify)
+### 2. Build Process
 ```bash
-# 1. Build frontend
+# Clean build (recommended for major changes)
+rm -rf dist/
 npm run build
 
-# 2. Deploy to Netlify
+# Standard build
+npm run build
+```
+
+### 3. Netlify Deployment
+```bash
+# Deploy to production
 netlify deploy --prod --dir=dist
 ```
 
-## Database Migrations
-```bash
-# Create migration
-railway run npx prisma migrate dev --name descriptive_name
+## Production Verification
 
-# Deploy migration
-railway run npx prisma migrate deploy
+### Browser Automation Testing
+Use Playwright for production verification:
 
-# Generate client
-railway run npx prisma generate
+```typescript
+// Navigate to production site
+await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/')
+
+// Test specific functionality
+await page.click('[data-testid="uploaded-file"]')
+await page.screenshot({ path: 'verification.png' })
 ```
 
-## Testing After Deployment
-1. **Test Backend**: `curl https://backend-production-80f6.up.railway.app/debug/schema`
-2. **Test Frontend**: Visit `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
-3. **Test File Upload**: Upload CSV file
-4. **Test Dashboard**: Verify data displays correctly
+### Cache Management
+- **Hard Refresh**: `Control+Shift+R` for cache clearing
+- **Unique Deploy URLs**: Use for testing fresh deployments
+- **Service Worker**: Clear browser caches when needed
 
-## Common Issues
-- **Build Failures**: Check TypeScript errors, run `npm run build`
-- **Deployment Failures**: Check Railway logs, verify environment variables
-- **Schema Mismatches**: Run migrations, test with debug endpoint
-- **Frontend Not Updating**: Run `netlify deploy --prod --dir=dist`
+## Common Issues and Solutions
+
+### Issue: Changes Not Visible After Deployment
+**Solutions**:
+1. Check unique deploy URL for fresh deployment
+2. Clear browser cache with hard refresh
+3. Verify build process completed successfully
+4. Check Netlify build logs for errors
+
+### Issue: Multiple Components Rendering Same Content
+**Solution**: Search all components for similar patterns:
+```bash
+grep -r "pattern" src/
+```
+
+### Issue: Deployment Fails
+**Solutions**:
+1. Check Git status for uncommitted changes
+2. Verify build process locally first
+3. Check Netlify configuration
+4. Review build logs for specific errors
 
 ## Critical Rules
-- ✅ Always build locally before deploying
-- ✅ Commit changes before deployment
-- ✅ Test endpoints after deployment
-- ✅ Run migrations when schema changes
-- ✅ Verify both frontend and backend work
+- ✅ Always push to Git before deploying
+- ✅ Use fresh builds for major changes (`rm -rf dist/`)
+- ✅ Test with browser automation after deployment
+- ✅ Use unique deploy URLs for verification
+- ✅ Clear browser cache when testing changes
+- ✅ Check multiple components if changes don't appear
+- ✅ Verify production URL shows expected changes
+
+## File Monitoring
+This workflow applies to all project files except:
+- `node_modules/`
+- `dist/`
+- `.git/`
+- `.DS_Store`
+- `*.log`
+
+## Build Output
+- **Entry Point**: `dist/index.html`
+- **Assets**: `dist/assets/index-[hash].js` and `dist/assets/index-[hash].css`
+- **Size**: ~495KB JS, ~36KB CSS (gzipped)
+
+## Safety Measures
+- Only staged files are committed
+- Commit messages include timestamp
+- Push only to main branch
+- No force push operations
+- Preserves existing Git history
+- Build process creates fresh dist/ directory
+- Deploy only to production environment
