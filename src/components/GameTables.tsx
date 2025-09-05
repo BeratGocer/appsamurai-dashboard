@@ -603,13 +603,12 @@ export function GameTables({
         const valueA = calculateAppCountryPlatformValue(a.groups, sortCriteria);
         const valueB = calculateAppCountryPlatformValue(b.groups, sortCriteria);
         
-        // If values are significantly different, sort by value
-        const threshold = sortCriteria === 'volume' ? 100 : 0.01;
-        if (Math.abs(valueA - valueB) > threshold) {
+        // Always sort by value first (highest first)
+        if (valueA !== valueB) {
           return valueB - valueA; // Highest value first
         }
         
-        // If values are similar, fall back to alphabetical
+        // If values are equal, fall back to alphabetical
         if (a.game !== b.game) return a.game.localeCompare(b.game);
         if (a.country !== b.country) return a.country.localeCompare(b.country);
         return a.platform.localeCompare(b.platform);
