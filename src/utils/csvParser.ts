@@ -1127,8 +1127,8 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
         roas_d60: row.roas_d60 || 0,
         cost: row.cost || 0,
         revenue: row.all_revenue || 0,
-        // Optional fields preserved for downstream formatting
-        ...(row.ecpi !== undefined ? { ecpi: row.ecpi } : {}),
+        // Use eCPI directly from CSV (don't compute)
+        ecpi: row.ecpi || 0,
         ...(row.adjust_cost !== undefined ? { adjust_cost: row.adjust_cost } : {}),
         ...(row.ad_revenue !== undefined ? { ad_revenue: row.ad_revenue } : {}),
         ...(row.retention_rate_d1 !== undefined ? { retention_rate_d1: row.retention_rate_d1 } : {}),
@@ -1221,11 +1221,8 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
         current.ad_revenue = (current.ad_revenue || 0) + (row.ad_revenue || 0);
       }
 
-      // Recompute eCPI if we have cost and installs
-      if ((current.adjust_cost !== undefined) && totalInstalls > 0) {
-        current.ecpi = (current.adjust_cost || 0) / totalInstalls;
-      } else if (current.ecpi !== undefined || row.ecpi !== undefined) {
-        // Fallback: weight existing ecpi by installs
+      // Use weighted average for eCPI (don't recompute from cost/installs)
+      if (current.ecpi !== undefined || row.ecpi !== undefined) {
         current.ecpi = wavg(current.ecpi || 0, row.ecpi || 0);
       }
     }
