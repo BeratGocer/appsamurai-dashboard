@@ -1,0 +1,49 @@
+---
+description: Fluent ad network decoding issue - campaigns not decoded until page refresh
+alwaysApply: false
+---
+
+# Fluent Ad Network Decoding Issue
+
+## Problem Description
+- Fluent campaigns (SFT_ prefixed) show as encrypted codes initially
+- Only decode properly after page refresh
+- Affects publisher identification in dashboard tables
+
+## Root Cause Analysis
+1. **Frontend/Backend mapping mismatch**: Different `decodeAdNetwork` implementations
+2. **Data processing order**: Frontend decoding vs backend decoding inconsistency
+3. **Caching issues**: localStorage vs fresh backend data
+
+## Attempted Solutions
+1. ✅ Synchronized frontend `decodeAdNetwork` with backend mapping
+2. ✅ Added Base64 decoded mappings to frontend
+3. ✅ Ensured consistent SFT_ prefix handling
+4. ✅ Removed localStorage dependency for data consistency
+
+## Current Status
+- **Issue may persist**: Need verification after fixes
+- **Mapping synchronization**: Frontend now matches backend
+
+## Key Mappings Added
+```typescript
+// Frontend decodeAdNetwork now includes:
+'SFT': 'Fluent',
+'SFT_': 'Fluent', 
+'SFT_MTkwMzZ8': 'Fluent',
+'SFT_MTkxNDF8': 'Fluent',
+'Rmx1ZW50': 'Fluent', // Base64 decoded
+```
+
+## Files Modified
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Updated decodeAdNetwork function
+- [server/src/index.ts](mdc:server/src/index.ts) - Backend mapping reference
+
+## Test Cases
+- Upload CSV with SFT_ prefixed campaigns
+- Verify Fluent appears in publisher column immediately
+- Check dashboard tables show "Fluent" not "SFT_34631_5406"
+
+## Related Issues
+- Install count data loss (70K → 45K)
+- Data synchronization between frontend/backend

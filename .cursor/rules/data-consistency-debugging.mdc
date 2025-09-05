@@ -1,0 +1,80 @@
+---
+description: Data consistency debugging patterns for install count and ad network decoding issues
+alwaysApply: false
+---
+
+# Data Consistency Debugging Patterns
+
+## Debugging Checklist for Data Loss Issues
+
+### 1. Verify Source Data Integrity
+```bash
+# Check CSV total installs
+awk -F',' 'NR>1 {sum+=$5} END {print "Total installs:", sum}' filename.csv
+
+# Count total rows
+wc -l filename.csv
+
+# Check for empty or malformed rows
+awk -F',' 'NF != 20 {print "Row", NR, "has", NF, "fields:", $0}' filename.csv
+```
+
+### 2. Backend Data Verification
+- Check Railway logs during CSV upload
+- Verify database insert counts match CSV rows
+- Monitor backend ingest endpoint responses
+- Check for skipped rows in backend logs
+
+### 3. Frontend Data Processing
+- Verify data loading from backend vs localStorage
+- Check data aggregation logic in `getGameCountryPublisherGroups`
+- Monitor console for data processing errors
+- Verify refresh button functionality
+
+### 4. Ad Network Decoding Debugging
+```typescript
+// Test decoding in browser console
+decodeAdNetwork('SFT_34631_5406') // Should return 'Fluent'
+decodeAdNetwork('SFT_MTkwMzZ8')   // Should return 'Fluent'
+```
+
+## Common Data Loss Scenarios
+
+### Scenario 1: Incomplete Backend Processing
+- **Symptom**: Install count drops after refresh
+- **Cause**: Backend skipping rows during ingest
+- **Debug**: Check backend logs for skipped rows
+
+### Scenario 2: Frontend Aggregation Issues
+- **Symptom**: Data shows correctly initially, drops after processing
+- **Cause**: Frontend grouping/aggregation logic
+- **Debug**: Check `getGameCountryPublisherGroups` function
+
+### Scenario 3: localStorage Corruption
+- **Symptom**: Inconsistent data across page loads
+- **Cause**: Corrupted localStorage data
+- **Debug**: Clear localStorage and test
+
+## Debugging Commands
+```bash
+# Check backend health
+curl https://backend-production-80f6.up.railway.app/health
+
+# Verify file groups endpoint
+curl https://backend-production-80f6.up.railway.app/files/{fileId}/groups
+
+# Check database schema
+curl https://backend-production-80f6.up.railway.app/debug/schema
+```
+
+## Files to Monitor
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Data loading
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Data processing
+- [server/src/index.ts](mdc:server/src/index.ts) - Backend processing
+- [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv) - Source data
+
+## Critical Functions to Debug
+- `parseCSV()` - CSV parsing logic
+- `getGameCountryPublisherGroups()` - Data aggregation
+- `decodeAdNetwork()` - Ad network decoding
+- Backend ingest endpoint - Data storage

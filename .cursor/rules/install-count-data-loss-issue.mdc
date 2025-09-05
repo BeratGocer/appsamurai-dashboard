@@ -1,0 +1,54 @@
+---
+description: Install count data loss issue - 70K drops to 45K on page refresh
+alwaysApply: false
+---
+
+# Install Count Data Loss Issue
+
+## Problem Description
+- CSV file contains 70,010 total installs (verified with `awk -F',' 'NR>1 {sum+=$5} END {print "Total installs:", sum}'`)
+- Frontend shows 70K installs initially
+- After page refresh, install count drops to 45K
+- Fluent campaigns not decoded until page refresh
+
+## Root Cause Analysis
+1. **Frontend localStorage dependency**: Dashboard was loading cached data from localStorage instead of fresh backend data
+2. **Ad network decoding inconsistency**: Frontend and backend had different `decodeAdNetwork` mappings
+3. **Data synchronization issues**: localStorage contained incomplete/outdated data
+
+## Attempted Solutions
+1. ✅ Synchronized frontend `decodeAdNetwork` with backend mapping
+2. ✅ Removed localStorage dependency for CSV data loading
+3. ✅ Added refresh button to force backend data reload
+4. ✅ Improved backend logging for debugging
+5. ✅ Always use backend data for consistency
+
+## Current Status
+- **Issue persists**: Despite fixes, install count still drops on refresh
+- **Need investigation**: Backend data integrity or frontend data processing
+
+## Files Modified
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Updated decodeAdNetwork mapping
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Removed localStorage data dependency
+- [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx) - Added refresh button
+- [server/src/index.ts](mdc:server/src/index.ts) - Added logging for debugging
+
+## Next Steps Required
+1. **Verify backend data integrity**: Check if backend is storing complete 70K installs
+2. **Debug data processing**: Investigate frontend data aggregation logic
+3. **Test refresh functionality**: Verify refresh button works correctly
+4. **Check database queries**: Ensure backend returns complete dataset
+
+## Test Commands
+```bash
+# Verify CSV total installs
+awk -F',' 'NR>1 {sum+=$5} END {print "Total installs:", sum}' 2025-9-5_10_50_adjust_report_export.csv
+
+# Check backend logs for data processing
+# Monitor Railway logs during CSV upload
+```
+
+## Critical Files to Monitor
+- [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv) - Source data
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx) - Data loading logic
+- [server/src/index.ts](mdc:server/src/index.ts) - Backend data processing
