@@ -12,6 +12,17 @@ const prisma = new PrismaClient()
 try {
   await prisma.$executeRaw`SELECT 1`
   console.log('Database connection successful')
+  
+  // Check if tables exist, if not run migrations
+  try {
+    await prisma.$executeRaw`SELECT * FROM "CampaignRow" LIMIT 1`
+    console.log('Tables already exist')
+  } catch (error) {
+    console.log('Tables do not exist, running migrations...')
+    const { execSync } = require('child_process')
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' })
+    console.log('Migrations completed')
+  }
 } catch (error) {
   console.error('Database connection failed:', error)
   process.exit(1)
