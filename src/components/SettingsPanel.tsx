@@ -288,10 +288,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     Object.keys(firstRow).forEach(key => {
       // Use the key as is, or create a more readable version
       if (key.startsWith('roas_')) {
-        const day = key.replace('roas_', '');
+        const day = key.replace('roas_d', ''); // Fix: remove 'roas_d' instead of 'roas_'
         columnNames[key] = `ROAS D${day}`;
       } else if (key.startsWith('retention_rate_')) {
-        const day = key.replace('retention_rate_', '');
+        const day = key.replace('retention_rate_d', ''); // Fix: remove 'retention_rate_d' instead of 'retention_rate_'
         columnNames[key] = `Retention D${day}`;
       } else {
         // Use the actual column name from CSV
