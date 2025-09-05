@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -92,22 +92,36 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onTableVisibilityChange,
   availableColumns = [],
 }) => {
-  const [newRule, setNewRule] = useState<Partial<ConditionalFormattingRule>>({
+  // Early return if settings is not properly initialized
+  if (!settings || !settings.dateRange) {
+    return null;
+  }
+
+  // Ensure settings is properly initialized with safe defaults
+  const safeSettings = useMemo(() => ({
+    dateRange: {
+      startDate: settings.dateRange?.startDate || '',
+      endDate: settings.dateRange?.endDate || '',
+    },
+    conditionalRules: settings.conditionalRules || [],
+    visibleColumns: settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7'],
+  }), [settings.dateRange?.startDate, settings.dateRange?.endDate, settings.conditionalRules, settings.visibleColumns]);
+  const [newRule, setNewRule] = useState<Partial<ConditionalFormattingRule>>(() => ({
     column: 'installs',
     operator: '>',
     value: 100,
     color: COLOR_PRESETS[0].color,
     backgroundColor: COLOR_PRESETS[0].backgroundColor,
     isActive: true,
-  });
+  }));
 
   const [editingRule, setEditingRule] = useState<string | null>(null);
 
   const handleDateRangeChange = (field: 'startDate' | 'endDate', value: string) => {
     onSettingsChange({
-      ...settings,
+      ...safeSettings,
       dateRange: {
-        ...settings.dateRange,
+        ...safeSettings.dateRange,
         [field]: value,
       },
     });
@@ -147,7 +161,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
     
     onSettingsChange({
-      ...settings,
+      ...safeSettings,
       dateRange: {
         startDate,
         endDate,
@@ -167,8 +181,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     };
 
     onSettingsChange({
-      ...settings,
-      conditionalRules: [...settings.conditionalRules, rule],
+      ...safeSettings,
+      conditionalRules: [...(safeSettings.conditionalRules || []), rule],
     });
 
     // Reset the form
@@ -184,15 +198,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const removeConditionalRule = (ruleId: string) => {
     onSettingsChange({
-      ...settings,
-      conditionalRules: settings.conditionalRules.filter(rule => rule.id !== ruleId),
+      ...safeSettings,
+      conditionalRules: (safeSettings.conditionalRules || []).filter(rule => rule.id !== ruleId),
     });
   };
 
   const toggleRuleActive = (ruleId: string) => {
     onSettingsChange({
-      ...settings,
-      conditionalRules: settings.conditionalRules.map(rule =>
+      ...safeSettings,
+      conditionalRules: (safeSettings.conditionalRules || []).map(rule =>
         rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
       ),
     });
@@ -224,8 +238,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     };
 
     onSettingsChange({
-      ...settings,
-      conditionalRules: settings.conditionalRules.map(rule =>
+      ...safeSettings,
+      conditionalRules: (safeSettings.conditionalRules || []).map(rule =>
         rule.id === editingRule ? updatedRule : rule
       ),
     });
@@ -264,13 +278,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   // Column visibility management
   const handleColumnToggle = (column: string) => {
-    const currentColumns = settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7'];
+    const currentColumns = safeSettings.visibleColumns || ['installs', 'roas_d0', 'roas_d7'];
     const newColumns = currentColumns.includes(column)
       ? currentColumns.filter(col => col !== column)
       : [...currentColumns, column];
-    
+
     onSettingsChange({
-      ...settings,
+      ...safeSettings,
       visibleColumns: newColumns,
     });
   };
@@ -390,7 +404,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <Input
                 id="startDate"
                 type="date"
-                value={settings.dateRange.startDate}
+                value={safeSettings.dateRange.startDate}
                 onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
                 className="h-8 text-sm"
               />
@@ -400,7 +414,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <Input
                 id="endDate"
                 type="date"
-                value={settings.dateRange.endDate}
+                value={safeSettings.dateRange.endDate}
                 onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
                 className="h-8 text-sm"
               />
@@ -416,11 +430,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
 
           {/* Existing Rules */}
-          {settings.conditionalRules.length > 0 && (
+          {safeSettings.conditionalRules && safeSettings.conditionalRules.length > 0 && (
             <div className="space-y-2">
               <Label className="text-xs font-medium">Mevcut Kurallar</Label>
               <div className="space-y-1">
-                {settings.conditionalRules.map((rule) => (
+                {safeSettings.conditionalRules.map((rule) => (
                   <div
                     key={rule.id}
                     className="flex items-center justify-between p-2 border rounded text-sm"
@@ -496,11 +510,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableColumns.map(column => (
+                    {availableColumns.length > 0 ? availableColumns.map(column => (
                       <SelectItem key={column} value={column}>
                         {getColumnLabel(column)}
                       </SelectItem>
-                    ))}
+                    )) : (
+                      <SelectItem value="installs" disabled>
+                        Veri yüklenmedi
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -595,8 +613,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
-              {availableColumns.map((column) => {
-                const isVisible = (settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']).includes(column);
+              {availableColumns.length > 0 ? availableColumns.map((column) => {
+                const isVisible = (safeSettings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']).includes(column);
                 return (
                   <div
                     key={column}
@@ -613,7 +631,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     )}
                   </div>
                 );
-              })}
+              }) : (
+                <div className="col-span-full p-4 text-center text-sm text-muted-foreground">
+                  Veri yüklenmedi. Lütfen bir CSV dosyası yükleyin.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -623,11 +645,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              <Label className="text-sm font-medium">Gizli Tablolar ({hiddenTables.length})</Label>
+              <Label className="text-sm font-medium">Gizli Tablolar ({hiddenTables?.length || 0})</Label>
             </div>
             
             <div className="space-y-1">
-              {hiddenTables.map((table) => (
+              {hiddenTables && hiddenTables.length > 0 ? hiddenTables.map((table) => (
                 <div
                   key={table.id}
                   className="flex items-center justify-between p-2 border rounded bg-muted/20 text-sm"
@@ -648,7 +670,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     Göster
                   </Button>
                 </div>
-              ))}
+              )) : (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Gizli tablo yok
+                </div>
+              )}
             </div>
           </div>
         )}

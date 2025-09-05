@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { ChevronDown, ChevronRight, Edit3 } from "lucide-react"
@@ -70,15 +70,6 @@ export function Dashboard({
   const [hiddenTables, setHiddenTables] = useState<Set<string>>(new Set());
   const [focusPublisher, setFocusPublisher] = useState<string | null>(null);
 
-  // Get settings key for current file
-  const getSettingsKey = () => {
-    return activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
-  };
-
-  // Get hidden tables key for current file
-  const getHiddenTablesKey = () => {
-    return activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
-  };
 
   // Load settings for current file
   const loadFileSettings = (fileId: string | null) => {
@@ -101,14 +92,14 @@ export function Dashboard({
   };
 
   // Save settings to localStorage for current file
-  const handleSettingsChange = (newSettings: SettingsData) => {
+  const handleSettingsChange = useCallback((newSettings: SettingsData) => {
     setSettings(newSettings);
-    const settingsKey = getSettingsKey();
+    const settingsKey = activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
     localStorage.setItem(settingsKey, JSON.stringify(newSettings));
-  };
+  }, [activeFileId]);
 
   // Hidden tables management
-  const handleTableVisibilityChange = (tableId: string, isHidden: boolean) => {
+  const handleTableVisibilityChange = useCallback((tableId: string, isHidden: boolean) => {
     const newHiddenTables = new Set(hiddenTables);
     if (isHidden) {
       newHiddenTables.add(tableId);
@@ -118,9 +109,9 @@ export function Dashboard({
     setHiddenTables(newHiddenTables);
     
     // Save to localStorage
-    const hiddenTablesKey = getHiddenTablesKey();
+    const hiddenTablesKey = activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
     localStorage.setItem(hiddenTablesKey, JSON.stringify(Array.from(newHiddenTables)));
-  };
+  }, [hiddenTables, activeFileId]);
 
   const handleBulkHide = () => {
     const allTableIds = gameGroups.map(group => 
@@ -130,7 +121,7 @@ export function Dashboard({
     setHiddenTables(newHiddenTables);
     
     // Save to localStorage
-    const hiddenTablesKey = getHiddenTablesKey();
+    const hiddenTablesKey = activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
     localStorage.setItem(hiddenTablesKey, JSON.stringify(Array.from(newHiddenTables)));
   };
 
@@ -138,9 +129,14 @@ export function Dashboard({
     setHiddenTables(new Set());
     
     // Save to localStorage
-    const hiddenTablesKey = getHiddenTablesKey();
+    const hiddenTablesKey = activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
     localStorage.setItem(hiddenTablesKey, JSON.stringify([]));
   };
+
+  // Settings toggle handler
+  const handleSettingsToggle = useCallback(() => {
+    setShowSettings(!showSettings);
+  }, [showSettings]);
 
 
 
@@ -176,6 +172,35 @@ export function Dashboard({
     }
     return synchronizeGroupDates(rawGameGroups); // Synchronize to overall date range
   }, [rawGameGroups, settings.dateRange.startDate, settings.dateRange.endDate]);
+
+  // Memoize hiddenTables array to prevent infinite re-renders
+  const hiddenTablesArray = React.useMemo(() => {
+    return hiddenTables.size > 0 ? Array.from(hiddenTables).map(tableId => {
+      const parts = tableId.split('-');
+      const publisher = parts.slice(3).join('-'); // Handle publishers with hyphens
+      return {
+        id: tableId,
+        game: parts[0],
+        country: parts[1],
+        platform: parts[2],
+        publisher: publisher
+      };
+    }) : [];
+  }, [hiddenTables]);
+
+  // Memoize availableColumns array to prevent infinite re-renders
+  const availableColumnsArray = React.useMemo(() => {
+    return data.length > 0 && data[0] ? Object.keys(data[0]).filter(key => 
+      key.startsWith('roas_') || key.startsWith('retention_rate_') || 
+      key.startsWith('ltv_') || key.startsWith('cost_') || 
+      key.startsWith('revenue_') || key.startsWith('installs') ||
+      key.startsWith('clicks') || key.startsWith('impressions') ||
+      key.startsWith('ctr') || key.startsWith('cvr') ||
+      key.startsWith('cpi') || key.startsWith('cpa') ||
+      key.startsWith('roi') || key.startsWith('profit') ||
+      key.startsWith('arpu') || key.startsWith('arppu')
+    ) : [];
+  }, [data]);
 
   // Toggle functions for accordion
   const toggleFileExpansion = (fileId: string) => {
@@ -338,23 +363,10 @@ export function Dashboard({
           settings={settings}
           onSettingsChange={handleSettingsChange}
           isOpen={showSettings}
-          onToggle={() => setShowSettings(!showSettings)}
-          hiddenTables={Array.from(hiddenTables).map(tableId => {
-            const parts = tableId.split('-');
-            const publisher = parts.slice(3).join('-'); // Handle publishers with hyphens
-            return {
-              id: tableId,
-              game: parts[0],
-              country: parts[1],
-              platform: parts[2],
-              publisher: publisher
-            };
-          })}
+          onToggle={handleSettingsToggle}
+          hiddenTables={hiddenTablesArray}
           onTableVisibilityChange={handleTableVisibilityChange}
-          availableColumns={data.length > 0 ? Object.keys(data[0]).filter(key => 
-            key.startsWith('roas_') || key.startsWith('retention_rate_') || 
-            ['installs', 'ecpi', 'adjust_cost', 'ad_revenue', 'gross_profit'].includes(key)
-          ) : []}
+          availableColumns={availableColumnsArray}
         />
       )}
 
