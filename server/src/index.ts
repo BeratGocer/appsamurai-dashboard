@@ -466,7 +466,7 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
     let firstError: string | null = null
     let columnCountStats = new Map<number, number>()
     
-    for (let li = 0; li < lines.length; li++) {
+    for (let li = 1; li < lines.length; li++) {
       const row = lines[li]
       if (!row.trim()) continue
       const v = parseCsvLine(row)
