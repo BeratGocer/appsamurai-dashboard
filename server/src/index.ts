@@ -1,42 +1,12 @@
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
-import { PrismaClient, Prisma } from '@prisma/client'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
-// Check for required environment variables
-const databaseUrl = process.env.DATABASE_URL
-let prisma: PrismaClient | null = null
-
-if (!databaseUrl) {
-  console.warn('⚠️ DATABASE_URL not set, running in limited mode')
-  console.log('Available env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE')))
-} else {
-  prisma = new PrismaClient()
-  
-  // Run migrations on startup
-  try {
-    await prisma.$executeRaw`SELECT 1`
-    console.log('✅ Database connection successful')
-    
-    // Check if tables exist, if not run migrations
-    try {
-      await prisma.$executeRaw`SELECT * FROM "CampaignRow" LIMIT 1`
-      console.log('✅ Tables already exist')
-    } catch (error) {
-      console.log('🔄 Tables do not exist, running migrations...')
-      const { execSync } = require('child_process')
-      execSync('npx prisma migrate deploy', { stdio: 'inherit' })
-      console.log('✅ Migrations completed')
-    }
-  } catch (error) {
-    console.error('❌ Database connection failed:', error)
-    console.error('Running in limited mode without database')
-    prisma = null
-  }
-}
+console.log('🚀 Starting Railway backend...')
+console.log('Environment variables:', Object.keys(process.env).length)
 
 const app = Fastify({ 
   logger: true,
@@ -63,9 +33,8 @@ app.addContentTypeParser('application/octet-stream', { parseAs: 'string' }, (_re
 app.get('/health', async () => ({ 
   ok: true, 
   timestamp: new Date().toISOString(),
-  database: prisma ? 'connected' : 'disconnected',
-  version: '1.0.2',
-  status: 'Railway 502 fix - database optional'
+  version: '1.0.3',
+  status: 'Railway 502 fix - minimal backend'
 }))
 
 // Types
