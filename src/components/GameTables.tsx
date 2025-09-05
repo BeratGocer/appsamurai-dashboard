@@ -37,9 +37,10 @@ interface SortableHeaderItemProps {
   country: string;
   platform: string;
   campaignCount: number;
+  totalVolume: number;
 }
 
-function SortableHeaderItem({ game, country, platform, campaignCount }: SortableHeaderItemProps) {
+function SortableHeaderItem({ game, country, platform, campaignCount, totalVolume }: SortableHeaderItemProps) {
   const groupKey = `${game}-${country}-${platform}`;
   const {
     attributes,
@@ -75,6 +76,9 @@ function SortableHeaderItem({ game, country, platform, campaignCount }: Sortable
             </p>
             <p className="text-xs text-muted-foreground">
               {campaignCount} farklı adnetwork/publisher
+            </p>
+            <p className="text-xs font-semibold text-blue-600">
+              {totalVolume.toLocaleString()} install
             </p>
           </div>
         </div>
@@ -391,6 +395,16 @@ export function GameTables({
     return sorted;
   });
 
+  // Calculate total volume (installs) for a group
+  const calculateGroupVolume = (group: GameCountryPublisherGroup): number => {
+    return group.dailyData.reduce((sum, day) => sum + day.installs, 0);
+  };
+
+  // Calculate total volume for app+country+platform group
+  const calculateAppCountryPlatformVolume = (groups: GameCountryPublisherGroup[]): number => {
+    return groups.reduce((sum, group) => sum + calculateGroupVolume(group), 0);
+  };
+
   // Group tables by APP + COUNTRY + PLATFORM (same app, same country, same platform, different adnetworks)
   const appCountryPlatformGroups = React.useMemo(() => {
     const grouped = new Map<string, GameCountryPublisherGroup[]>();
@@ -404,10 +418,14 @@ export function GameTables({
       grouped.get(key)!.push(group);
     });
     
-    // Sort each group's publishers/adnetworks alphabetically 
+    // Sort each group's publishers/adnetworks by volume (highest first)
     // (same app+country+platform, different adnetworks side by side)
     grouped.forEach(groupArray => {
-      groupArray.sort((a, b) => a.publisher.localeCompare(b.publisher));
+      groupArray.sort((a, b) => {
+        const volumeA = calculateGroupVolume(a);
+        const volumeB = calculateGroupVolume(b);
+        return volumeB - volumeA; // Highest volume first
+      });
     });
     
     // Convert to array and sort by app -> country -> platform
@@ -435,8 +453,17 @@ export function GameTables({
         return a.platform.localeCompare(b.platform);
       });
     } else {
-      // Default sort by app -> country -> platform
+      // Default sort by volume (highest first), then by app -> country -> platform
       groupEntries.sort((a, b) => {
+        const volumeA = calculateAppCountryPlatformVolume(a.groups);
+        const volumeB = calculateAppCountryPlatformVolume(b.groups);
+        
+        // If volumes are significantly different, sort by volume
+        if (Math.abs(volumeA - volumeB) > 100) {
+          return volumeB - volumeA; // Highest volume first
+        }
+        
+        // If volumes are similar, fall back to alphabetical
         if (a.game !== b.game) return a.game.localeCompare(b.game);
         if (a.country !== b.country) return a.country.localeCompare(b.country);
         return a.platform.localeCompare(b.platform);
@@ -464,7 +491,7 @@ export function GameTables({
     });
   }, [appCountryPlatformGroups]);
 
-  // Update sorted groups when groups change - keep for compatibility
+  // Update sorted groups when groups change - sort by volume
   React.useEffect(() => {
     const sorted = [...groups].sort((a, b) => {
       const aKey = `${a.platform}-${a.country}`;
@@ -474,7 +501,10 @@ export function GameTables({
         return aKey.localeCompare(bKey);
       }
       
-      return a.publisher.localeCompare(b.publisher);
+      // Within same platform+country, sort by volume (highest first)
+      const volumeA = calculateGroupVolume(a);
+      const volumeB = calculateGroupVolume(b);
+      return volumeB - volumeA;
     });
     setSortedGroups(sorted);
   }, [groups]);
@@ -616,6 +646,8 @@ export function GameTables({
 
                   if (visibleGroupTables.length === 0) return null;
 
+                  const totalVolume = calculateAppCountryPlatformVolume(visibleGroupTables);
+                  
                   return (
                     <SortableHeaderItem
                       key={groupKey}
@@ -623,6 +655,7 @@ export function GameTables({
                       country={country}
                       platform={platform}
                       campaignCount={visibleGroupTables.length}
+                      totalVolume={totalVolume}
                     />
                   );
                 })}
@@ -646,6 +679,7 @@ export function GameTables({
 
           // Get all different publishers/adnetworks for this app+country+platform
           const adnetworkPublishers = visibleGroupTables.map(g => g.publisher);
+          const totalVolume = calculateAppCountryPlatformVolume(visibleGroupTables);
 
           return (
             <div key={groupKey} className="space-y-4">
@@ -661,6 +695,9 @@ export function GameTables({
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {visibleGroupTables.length} farklı adnetwork/publisher: {adnetworkPublishers.join(', ')}
+                    </p>
+                    <p className="text-sm font-bold text-blue-600">
+                      Toplam Hacim: {totalVolume.toLocaleString()} install
                     </p>
                   </div>
                   <div className="text-xs text-muted-foreground bg-background/80 px-3 py-2 rounded-full border">
