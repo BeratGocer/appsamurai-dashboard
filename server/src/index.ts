@@ -348,6 +348,11 @@ function normalizePublisherPrefix(adg: string): string {
     if (decodedAdNetworks.includes(decodedPrefix)) {
       return decodedPrefix;
     }
+    // Also check if the full string (with underscore) can be decoded
+    const decodedFullString = decodeAdNetwork(adg);
+    if (decodedAdNetworks.includes(decodedFullString)) {
+      return decodedFullString;
+    }
     return `${prefix}_`;
   }
   
