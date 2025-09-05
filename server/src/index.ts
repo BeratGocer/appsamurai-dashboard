@@ -309,28 +309,36 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
       return out
     }
 
-    // Hardcoded column indices for CSV without headers
-    // CSV format: gönder app,campaign_network,adgroup_network,day,installs,ecpi,cost,all_revenue,roas_d0,roas_d1,roas_d2,roas_d3,roas_d4,roas_d5,roas_d6,roas_d7,roas_d14,roas_d21,roas_d30,roas_d45
-    const iApp = 0      // gönder app
-    const iCN = 1       // campaign_network
-    const iAN = 2       // adgroup_network
-    const iDay = 3      // day
-    const iInst = 4     // installs
-    const iEcpi = 5     // ecpi
-    const iCost = 6     // cost
-    const iRev = 7      // all_revenue
-    const iD0 = 8       // roas_d0
-    const iD1 = 9       // roas_d1
-    const iD2 = 10      // roas_d2
-    const iD3 = 11      // roas_d3
-    const iD4 = 12      // roas_d4
-    const iD5 = 13      // roas_d5
-    const iD6 = 14      // roas_d6
-    const iD7 = 15      // roas_d7
-    const iD14 = 16     // roas_d14
-    const iD21 = 17     // roas_d21
-    const iD30 = 18     // roas_d30
-    const iD45 = 19     // roas_d45
+    // Dynamic column parsing based on CSV header
+    const headerRow = parseCsvLine(lines[0])
+    const columnMap = new Map<string, number>()
+    
+    // Map column names to indices
+    headerRow.forEach((col, index) => {
+      columnMap.set(col.trim(), index)
+    })
+    
+    // Get column indices dynamically
+    const iApp = columnMap.get('gönder app') ?? 0
+    const iCN = columnMap.get('campaign_network') ?? 1
+    const iAN = columnMap.get('adgroup_network') ?? 2
+    const iDay = columnMap.get('day') ?? 3
+    const iInst = columnMap.get('installs') ?? 4
+    const iEcpi = columnMap.get('ecpi') ?? 5
+    const iCost = columnMap.get('cost') ?? 6
+    const iRev = columnMap.get('all_revenue') ?? 7
+    const iD0 = columnMap.get('roas_d0') ?? -1
+    const iD1 = columnMap.get('roas_d1') ?? -1
+    const iD2 = columnMap.get('roas_d2') ?? -1
+    const iD3 = columnMap.get('roas_d3') ?? -1
+    const iD4 = columnMap.get('roas_d4') ?? -1
+    const iD5 = columnMap.get('roas_d5') ?? -1
+    const iD6 = columnMap.get('roas_d6') ?? -1
+    const iD7 = columnMap.get('roas_d7') ?? -1
+    const iD14 = columnMap.get('roas_d14') ?? -1
+    const iD21 = columnMap.get('roas_d21') ?? -1
+    const iD30 = columnMap.get('roas_d30') ?? -1
+    const iD45 = columnMap.get('roas_d45') ?? -1
 
     const rows: CampaignRowInput[] = []
     const toNullIfEmpty = (val: string | undefined) => {
