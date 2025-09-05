@@ -103,6 +103,11 @@ export function calculateKPIValue(
     const visibleData: CampaignData[] = [];
     
     gameGroups.forEach(group => {
+      // If a specific game is selected, only process that game's groups
+      if (selectedGame && group.game !== selectedGame) {
+        return;
+      }
+      
       const tableId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
       if (!hiddenTables.has(tableId)) {
         // This group is visible, add its data
@@ -111,10 +116,8 @@ export function calculateKPIValue(
     });
     
     filteredData = visibleData;
-  }
-  
-  // If a specific game is selected, filter data to only that game
-  if (selectedGame) {
+  } else if (selectedGame) {
+    // If no hidden tables but game is selected, filter raw data
     filteredData = filteredData.filter(row => row.app === selectedGame);
   }
   
