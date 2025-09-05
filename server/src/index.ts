@@ -159,7 +159,7 @@ app.post('/chat', async (req: FastifyRequest<{ Body: ChatBody }>, reply: Fastify
       return reply.code(502).send({ error: 'llm_failed', details: errorText })
     }
     
-    const data = await res.json() as any
+    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
     req.log.info({ choices: data?.choices?.length }, 'OpenAI response parsed')
     
     const content: string = data?.choices?.[0]?.message?.content || 'Bir cevap olusturulamadi.'
@@ -471,15 +471,15 @@ app.get('/files/:id/groups', async (req: FastifyRequest<{ Params: { id: string }
     const total = prevInst + addInst
     const wavg = (a: number, b: number) => total > 0 ? ((a * prevInst) + (b * addInst)) / total : 0
     d.roas_d0 = wavg(Number(d.roas_d0||0), Number(r.roas_d0||0))
-    d.roas_d1 = wavg(Number(d.roas_d1||0), Number(r.roas_d1||0))
-    d.roas_d2 = wavg(Number(d.roas_d2||0), Number(r.roas_d2||0))
-    d.roas_d3 = wavg(Number(d.roas_d3||0), Number(r.roas_d3||0))
-    d.roas_d4 = wavg(Number(d.roas_d4||0), Number(r.roas_d4||0))
-    d.roas_d5 = wavg(Number(d.roas_d5||0), Number(r.roas_d5||0))
-    d.roas_d6 = wavg(Number(d.roas_d6||0), Number(r.roas_d6||0))
-    d.roas_d7 = wavg(Number(d.roas_d7||0), Number(r.roas_d7||0))
-    d.roas_d14 = wavg(Number(d.roas_d14||0), Number(r.roas_d14||0))
-    d.roas_d21 = wavg(Number(d.roas_d21||0), Number(r.roas_d21||0))
+    d.roas_d1 = wavg(Number(d.roas_d1||0), Number((r as unknown as CampaignRowInput).roas_d1||0))
+    d.roas_d2 = wavg(Number(d.roas_d2||0), Number((r as unknown as CampaignRowInput).roas_d2||0))
+    d.roas_d3 = wavg(Number(d.roas_d3||0), Number((r as unknown as CampaignRowInput).roas_d3||0))
+    d.roas_d4 = wavg(Number(d.roas_d4||0), Number((r as unknown as CampaignRowInput).roas_d4||0))
+    d.roas_d5 = wavg(Number(d.roas_d5||0), Number((r as unknown as CampaignRowInput).roas_d5||0))
+    d.roas_d6 = wavg(Number(d.roas_d6||0), Number((r as unknown as CampaignRowInput).roas_d6||0))
+    d.roas_d7 = wavg(Number(d.roas_d7||0), Number((r as unknown as CampaignRowInput).roas_d7||0))
+    d.roas_d14 = wavg(Number(d.roas_d14||0), Number((r as unknown as CampaignRowInput).roas_d14||0))
+    d.roas_d21 = wavg(Number(d.roas_d21||0), Number((r as unknown as CampaignRowInput).roas_d21||0))
     d.roas_d30 = wavg(Number(d.roas_d30||0), Number(r.roas_d30||0))
     d.roas_d45 = wavg(Number(d.roas_d45||0), Number(r.roas_d45||0))
     d.installs = total
