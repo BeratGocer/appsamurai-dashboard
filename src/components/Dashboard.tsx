@@ -494,6 +494,7 @@ export function Dashboard({
             onBulkShow={handleBulkShow}
             visibleColumns={settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']}
             focusPublisher={focusPublisher}
+            dateRange={settings.dateRange.startDate && settings.dateRange.endDate ? settings.dateRange : null}
           />
 
         </div>

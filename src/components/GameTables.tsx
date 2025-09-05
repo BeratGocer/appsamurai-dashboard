@@ -20,6 +20,7 @@ interface GameTablesProps {
   onBulkShow?: () => void;
   visibleColumns?: string[];
   focusPublisher?: string | null;
+  dateRange?: { startDate: string; endDate: string } | null;
 }
 
 interface SortableTableItemProps {
@@ -38,9 +39,10 @@ interface SortableHeaderItemProps {
   platform: string;
   campaignCount: number;
   totalVolume: number;
+  dateRange?: { startDate: string; endDate: string } | null;
 }
 
-function SortableHeaderItem({ game, country, platform, campaignCount, totalVolume }: SortableHeaderItemProps) {
+function SortableHeaderItem({ game, country, platform, campaignCount, totalVolume, dateRange }: SortableHeaderItemProps) {
   const groupKey = `${game}-${country}-${platform}`;
   const {
     attributes,
@@ -79,6 +81,7 @@ function SortableHeaderItem({ game, country, platform, campaignCount, totalVolum
             </p>
             <p className="text-xs font-semibold text-blue-600">
               {totalVolume.toLocaleString()} install
+              {dateRange ? ' (seçili tarih aralığı)' : ' (son 7 gün)'}
             </p>
           </div>
         </div>
@@ -360,6 +363,7 @@ export function GameTables({
   onBulkShow,
   visibleColumns = ['installs', 'roas_d0', 'roas_d7'],
   focusPublisher = null,
+  dateRange = null,
 }: GameTablesProps) {
   // DnD Sensors for React 19 compatibility
   // const sensors = useSensors(
@@ -395,12 +399,28 @@ export function GameTables({
     return sorted;
   });
 
-  // Calculate total volume (installs) for a group
+  // Calculate total volume (installs) for a group - last 7 days or date range
   const calculateGroupVolume = (group: GameCountryPublisherGroup): number => {
-    return group.dailyData.reduce((sum, day) => sum + day.installs, 0);
+    let relevantData = group.dailyData;
+    
+    if (dateRange && dateRange.startDate && dateRange.endDate) {
+      // Use specified date range
+      const startDate = new Date(dateRange.startDate);
+      const endDate = new Date(dateRange.endDate);
+      relevantData = group.dailyData.filter(day => {
+        const dayDate = new Date(day.date);
+        return dayDate >= startDate && dayDate <= endDate;
+      });
+    } else {
+      // Use last 7 days if no date range specified
+      const sortedData = [...group.dailyData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      relevantData = sortedData.slice(-7);
+    }
+    
+    return relevantData.reduce((sum, day) => sum + day.installs, 0);
   };
 
-  // Calculate total volume for app+country+platform group
+  // Calculate total volume for app+country+platform group - last 7 days only
   const calculateAppCountryPlatformVolume = (groups: GameCountryPublisherGroup[]): number => {
     return groups.reduce((sum, group) => sum + calculateGroupVolume(group), 0);
   };
@@ -656,6 +676,7 @@ export function GameTables({
                       platform={platform}
                       campaignCount={visibleGroupTables.length}
                       totalVolume={totalVolume}
+                      dateRange={dateRange}
                     />
                   );
                 })}
@@ -698,6 +719,7 @@ export function GameTables({
                     </p>
                     <p className="text-sm font-bold text-blue-600">
                       Toplam Hacim: {totalVolume.toLocaleString()} install
+                      {dateRange ? ' (seçili tarih aralığı)' : ' (son 7 gün)'}
                     </p>
                   </div>
                   <div className="text-xs text-muted-foreground bg-background/80 px-3 py-2 rounded-full border">
