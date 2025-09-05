@@ -448,17 +448,20 @@ export function GameTables({
 
   // Initialize group order when groups change
   React.useEffect(() => {
-    const currentKeys = new Set(appCountryPlatformGroups.map(g => g.groupKey));
-    const existingOrder = groupOrder.filter(key => currentKeys.has(key));
-    const newKeys = appCountryPlatformGroups
-      .map(g => g.groupKey)
-      .filter(key => !groupOrder.includes(key));
-    
-    if (newKeys.length > 0 || existingOrder.length !== groupOrder.length) {
-      const newOrder = [...existingOrder, ...newKeys];
-      console.log('Initializing group order:', newOrder);
-      setGroupOrder(newOrder);
-    }
+    setGroupOrder(prevOrder => {
+      const currentKeys = new Set(appCountryPlatformGroups.map(g => g.groupKey));
+      const existingOrder = prevOrder.filter(key => currentKeys.has(key));
+      const newKeys = appCountryPlatformGroups
+        .map(g => g.groupKey)
+        .filter(key => !prevOrder.includes(key));
+      
+      if (newKeys.length > 0 || existingOrder.length !== prevOrder.length) {
+        const newOrder = [...existingOrder, ...newKeys];
+        console.log('Initializing group order:', newOrder);
+        return newOrder;
+      }
+      return prevOrder;
+    });
   }, [appCountryPlatformGroups]);
 
   // Update sorted groups when groups change - keep for compatibility
