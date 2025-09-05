@@ -1,74 +1,62 @@
+---
+description: Deployment workflow for Railway and Netlify
+---
+
 # Deployment Workflow
 
-## Current Setup
-- **Frontend**: Netlify deployment at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
-- **Backend**: Local development server on port 8787
-- **Database**: Local SQLite (development)
-
-## Production Deployment
-
-### Frontend (Netlify)
+## Backend Deployment (Railway)
 ```bash
+# 1. Build and test locally
+cd server
 npm run build
+
+# 2. Commit changes
+cd ..
+git add .
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Description"
+git push origin main
+
+# 3. Deploy to Railway
+cd server
+railway up
+```
+
+## Frontend Deployment (Netlify)
+```bash
+# 1. Build frontend
+npm run build
+
+# 2. Deploy to Netlify
 netlify deploy --prod --dir=dist
 ```
 
-### Backend Deployment Options
-1. **Railway**: Easy deployment with database
-2. **Render**: Free tier with PostgreSQL
-3. **Heroku**: Traditional platform
-4. **Vercel**: Serverless functions
-5. **DigitalOcean**: Full control
-
-### Environment Variables
+## Database Migrations
 ```bash
-# Frontend (.env)
-VITE_API_BASE=https://your-backend-url.com
+# Create migration
+railway run npx prisma migrate dev --name descriptive_name
 
-# Backend (.env)
-DATABASE_URL=postgresql://...
-PORT=8787
-NODE_ENV=production
+# Deploy migration
+railway run npx prisma migrate deploy
+
+# Generate client
+railway run npx prisma generate
 ```
 
-## Development Workflow
+## Testing After Deployment
+1. **Test Backend**: `curl https://backend-production-80f6.up.railway.app/debug/schema`
+2. **Test Frontend**: Visit `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
+3. **Test File Upload**: Upload CSV file
+4. **Test Dashboard**: Verify data displays correctly
 
-### Local Development
-```bash
-# Terminal 1: Frontend
-npm run dev
+## Common Issues
+- **Build Failures**: Check TypeScript errors, run `npm run build`
+- **Deployment Failures**: Check Railway logs, verify environment variables
+- **Schema Mismatches**: Run migrations, test with debug endpoint
+- **Frontend Not Updating**: Run `netlify deploy --prod --dir=dist`
 
-# Terminal 2: Backend
-cd server
-pnpm run dev
-```
-
-### Testing
-1. **Local testing**: Both frontend and backend running locally
-2. **Production testing**: Frontend on Netlify, backend deployed
-3. **Data migration**: Export from localStorage, import to backend
-
-## Database Migration
-
-### From SQLite to PostgreSQL
-1. **Update schema**: Modify [server/prisma/schema.prisma](mdc:server/prisma/schema.prisma)
-2. **Generate client**: `pnpm prisma generate`
-3. **Run migrations**: `pnpm prisma migrate deploy`
-4. **Seed data**: Import existing data
-
-### Data Backup Strategy
-- **Export current data**: Use dashboard export feature
-- **Backup database**: Regular database backups
-- **Version control**: Track schema changes
-- **Rollback plan**: Ability to revert changes
-
-## Monitoring and Maintenance
-- **Health checks**: Monitor backend availability
-- **Error tracking**: Log and alert on errors
-- **Performance monitoring**: Track response times
-- **Data validation**: Ensure data integrity
-- **Regular updates**: Keep dependencies current
-description:
-globs:
-alwaysApply: true
----
+## Critical Rules
+- ✅ Always build locally before deploying
+- ✅ Commit changes before deployment
+- ✅ Test endpoints after deployment
+- ✅ Run migrations when schema changes
+- ✅ Verify both frontend and backend work

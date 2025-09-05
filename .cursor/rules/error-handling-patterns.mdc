@@ -1,72 +1,67 @@
+---
+description: Error handling patterns for backend API endpoints
+---
+
 # Error Handling Patterns
 
-## Backend Error Responses
-The chat endpoint returns specific error codes:
-
-```typescript
-// Missing API key
-if (!apiKey) {
-  return reply.code(500).send({ error: 'missing_api_key' })
-}
-
-// Invalid message
-if (!message || typeof message !== 'string') {
-  return reply.code(400).send({ error: 'invalid_message' })
-}
-
-// OpenAI API failure
-if (!res.ok) {
-  return reply.code(502).send({ error: 'llm_failed' })
-}
-
-// General chat failure
-catch (err) {
-  reply.code(500).send({ error: 'chat_failed' })
-}
-```
-
-## Frontend Error Handling
-The ChatAssistant component handles errors gracefully:
-
-```typescript
-try {
-  const reply = await apiChat(userText, context)
-  setHistory(h => [...h, { role: 'assistant', text: reply }])
-} catch (e) {
-  setHistory(h => [...h, { 
-    role: 'assistant', 
-    text: 'Üzgünüm, şu an cevap oluşturulamadı.' 
-  }])
-} finally {
-  setLoading(false)
-}
-```
+## HTTP Status Codes
+- **400 Bad Request**: Client error (invalid data, missing fields)
+- **500 Internal Server Error**: Server error (database issues, schema mismatches)
 
 ## Common Error Scenarios
-1. **`missing_api_key`**: Railway environment variable not set
-2. **`invalid_message`**: Empty or malformed chat message
-3. **`llm_failed`**: OpenAI API connection or rate limit issue
-4. **`chat_failed`**: General backend error
-5. **Network errors**: Frontend can't reach backend
 
-## Troubleshooting Steps
-1. **Check Railway variables**: `railway variables`
-2. **Test backend endpoint**: `curl -X POST https://backend-production-80f6.up.railway.app/chat`
-3. **View Railway logs**: `railway logs`
-4. **Verify API key**: Check OpenAI dashboard
-5. **Check network**: Ensure Railway service is running
+### CSV Upload Errors (400)
+```typescript
+// Missing required data
+if (iApp < 0 || iCN < 0 || iAN < 0 || iDay < 0 || iInst < 0) {
+  return reply.code(400).send({ error: 'Missing required headers' })
+}
 
-## User Experience
-- ✅ Show loading state during API calls
-- ✅ Display user-friendly Turkish error messages
-- ✅ Maintain chat history even on errors
-- ✅ Allow retry without losing context
-- ✅ Graceful fallback for missing data
+// Invalid CSV format
+if (v.length < 5) continue
+```
+
+### Database Errors (500)
+```typescript
+// Schema mismatch - column doesn't exist
+// Error: "The column `CampaignRow.roas_d1` does not exist"
+// Solution: Run migration to add missing columns
+
+// Connection issues
+// Error: Database connection failed
+// Solution: Check Railway deployment status
+```
+
+## Error Response Format
+```typescript
+// Success response
+reply.send({ success: true, data: result })
+
+// Error response
+reply.code(400).send({ 
+  error: 'Descriptive error message',
+  code: 'ERROR_CODE',
+  details: 'Additional context'
+})
+```
+
+## Debugging Workflow
+1. **Check Console**: Browser developer tools for client errors
+2. **Check HTTP Logs**: Railway logs for server errors
+3. **Test Endpoints**: Use curl to test specific endpoints
+4. **Verify Schema**: Use `/debug/schema` endpoint
+5. **Check Migrations**: Ensure database is up to date
+
+## Error Prevention
+- ✅ Always validate input data
+- ✅ Use try-catch blocks for database operations
+- ✅ Test endpoints after schema changes
+- ✅ Provide descriptive error messages
+- ✅ Log errors for debugging
 
 ## Critical Rules
-- ❌ Never expose API keys in error messages
-- ❌ Never crash the UI on chat errors
-- ✅ Always provide user-friendly error messages
-- ✅ Log errors for debugging
-- ✅ Handle network timeouts gracefully
-- ✅ Retry failed requests when appropriate
+- ✅ Handle 400 errors for client-side issues
+- ✅ Handle 500 errors for server-side issues
+- ✅ Always test endpoints after changes
+- ✅ Use debug endpoints for schema validation
+- ✅ Provide clear error messages

@@ -1,0 +1,59 @@
+---
+description: Database migration patterns and deployment workflow
+---
+
+# Database Migration Patterns
+
+## Railway Deployment Workflow
+When making database schema changes:
+
+1. **Update Prisma Schema**: Modify [server/prisma/schema.prisma](mdc:server/prisma/schema.prisma)
+2. **Generate Migration**: `railway run npx prisma migrate dev --name descriptive_name`
+3. **Test Schema**: Use `/debug/schema` endpoint to verify changes
+4. **Commit Changes**: Include migration files in git
+5. **Deploy**: `railway up` to deploy with new schema
+
+## Migration Commands
+```bash
+# Create new migration
+railway run npx prisma migrate dev --name add_missing_columns
+
+# Deploy migrations to production
+railway run npx prisma migrate deploy
+
+# Generate Prisma client
+railway run npx prisma generate
+```
+
+## Debug Endpoint
+Always add debug endpoint for schema validation:
+```typescript
+app.get('/debug/schema', async (req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const testRow = await prisma.campaignRow.findFirst()
+    reply.send({ 
+      success: true, 
+      hasTestRow: !!testRow,
+      columns: testRow ? Object.keys(testRow) : []
+    })
+  } catch (error: any) {
+    reply.send({ 
+      success: false, 
+      error: error.message,
+      code: error.code 
+    })
+  }
+})
+```
+
+## Common Issues
+- **P2022 Error**: Column doesn't exist in database
+- **Solution**: Run migration to add missing columns
+- **Prevention**: Always test schema changes with debug endpoint
+
+## Critical Rules
+- ✅ Always run migrations after schema changes
+- ✅ Test with debug endpoint before deploying
+- ✅ Include migration files in git commits
+- ✅ Use descriptive migration names
+- ✅ Verify all required columns exist in database

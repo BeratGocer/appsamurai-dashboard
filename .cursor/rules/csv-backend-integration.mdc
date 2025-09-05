@@ -1,0 +1,88 @@
+---
+description: CSV backend integration patterns and requirements
+---
+
+# CSV Backend Integration Rules
+
+## CSV File Structure
+CSV files in this project do NOT have column headers. All rows including the first row contain data.
+
+### Required CSV Columns (20 total)
+1. `gönder app` (Column 0)
+2. `campaign_network` (Column 1)
+3. `adgroup_network` (Column 2)
+4. `day` (Column 3)
+5. `installs` (Column 4)
+6. `ecpi` (Column 5)
+7. `cost` (Column 6)
+8. `all_revenue` (Column 7)
+9. `roas_d0` (Column 8)
+10. `roas_d1` (Column 9)
+11. `roas_d2` (Column 10)
+12. `roas_d3` (Column 11)
+13. `roas_d4` (Column 12)
+14. `roas_d5` (Column 13)
+15. `roas_d6` (Column 14)
+16. `roas_d7` (Column 15)
+17. `roas_d14` (Column 16)
+18. `roas_d21` (Column 17)
+19. `roas_d30` (Column 18)
+20. `roas_d45` (Column 19)
+
+## Backend Implementation Patterns
+
+### CSV Parsing
+```typescript
+// Use hardcoded column indices - NO HEADER PARSING
+const iApp = 0      // gönder app
+const iCN = 1       // campaign_network
+const iAN = 2       // adgroup_network
+const iDay = 3      // day
+const iInst = 4     // installs
+const iEcpi = 5     // ecpi
+const iCost = 6     // cost
+const iRev = 7      // all_revenue
+const iD0 = 8       // roas_d0
+// ... etc
+
+// Process ALL rows including first row
+for (let li = 0; li < lines.length; li++) {
+  // Process each row as data
+}
+```
+
+### Database Schema
+All ROAS columns must be present in [server/prisma/schema.prisma](mdc:server/prisma/schema.prisma):
+```prisma
+model CampaignRow {
+  // ... other fields
+  roas_d0         Decimal? @db.Decimal(20,10)
+  roas_d1         Decimal? @db.Decimal(20,10)
+  roas_d2         Decimal? @db.Decimal(20,10)
+  roas_d3         Decimal? @db.Decimal(20,10)
+  roas_d4         Decimal? @db.Decimal(20,10)
+  roas_d5         Decimal? @db.Decimal(20,10)
+  roas_d6         Decimal? @db.Decimal(20,10)
+  roas_d7         Decimal? @db.Decimal(20,10)
+  roas_d14        Decimal? @db.Decimal(20,10)
+  roas_d21        Decimal? @db.Decimal(20,10)
+  roas_d30        Decimal? @db.Decimal(20,10)
+  roas_d45        Decimal? @db.Decimal(20,10)
+}
+```
+
+### Field Mapping
+CSV column names map to backend field names:
+- `gönder app` → `app`
+- `cost` → `adjustCost`
+- `all_revenue` → `adRevenue`
+- `campaign_network` → `campaignNetwork`
+- `adgroup_network` → `adgroupNetwork`
+
+## Critical Rules
+- ✅ Never parse first row as headers
+- ✅ Use hardcoded column indices (0, 1, 2, 3...)
+- ✅ Process all rows as data including first row
+- ✅ Ensure all 20 ROAS columns exist in database
+- ✅ Run migrations when adding new columns
+- ✅ Test with `/debug/schema` endpoint after schema changes

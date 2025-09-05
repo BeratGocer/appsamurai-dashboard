@@ -1,0 +1,76 @@
+---
+description: ROAS aggregation and weighted average calculation patterns
+---
+
+# ROAS Aggregation Patterns
+
+## Weighted Average Calculation
+ROAS values must be calculated using weighted averages based on installs:
+
+```typescript
+const wavg = (a: number, b: number) => total > 0 ? ((a * prevInst) + (b * addInst)) / total : 0
+
+// Apply to all ROAS fields
+d.roas_d0 = wavg(Number(d.roas_d0||0), Number(r.roas_d0||0))
+d.roas_d1 = wavg(Number(d.roas_d1||0), Number(r.roas_d1||0))
+d.roas_d2 = wavg(Number(d.roas_d2||0), Number(r.roas_d2||0))
+// ... continue for all ROAS fields
+```
+
+## Aggregation Logic
+```typescript
+// Initialize aggregated date
+if (!g.byDate.has(date)) g.byDate.set(date, { 
+  date, installs: 0, 
+  roas_d0: 0, roas_d1: 0, roas_d2: 0, roas_d3: 0, roas_d4: 0, roas_d5: 0, roas_d6: 0, roas_d7: 0, 
+  roas_d14: 0, roas_d21: 0, roas_d30: 0, roas_d45: 0, 
+  adjustCost: 0, adRevenue: 0 
+})
+
+// Calculate weighted averages
+const prevInst = d.installs
+const addInst = r.installs || 0
+const total = prevInst + addInst
+d.installs = total
+
+// Sum costs and revenue (not weighted)
+d.adjustCost += Number(r.adjustCost||0)
+d.adRevenue += Number(r.adRevenue||0)
+d.ecpi = d.installs > 0 ? d.adjustCost / d.installs : null
+```
+
+## Required ROAS Fields
+All 12 ROAS fields must be included in aggregation:
+- `roas_d0`, `roas_d1`, `roas_d2`, `roas_d3`, `roas_d4`, `roas_d5`, `roas_d6`, `roas_d7`
+- `roas_d14`, `roas_d21`, `roas_d30`, `roas_d45`
+
+## Interface Definitions
+```typescript
+interface AggregatedDate {
+  date: string
+  installs: number
+  roas_d0: number
+  roas_d1: number
+  roas_d2: number
+  roas_d3: number
+  roas_d4: number
+  roas_d5: number
+  roas_d6: number
+  roas_d7: number
+  roas_d14: number
+  roas_d21: number
+  roas_d30: number
+  roas_d45: number
+  adjustCost: number
+  adRevenue: number
+  ecpi: number | null
+}
+```
+
+## Critical Rules
+- ✅ Use weighted averages for all ROAS fields
+- ✅ Sum installs, costs, and revenue (not weighted)
+- ✅ Include all 12 ROAS fields in aggregation
+- ✅ Handle null/undefined values with `||0`
+- ✅ Calculate ECPI as `adjustCost / installs`
+- ✅ Initialize all fields to 0 in aggregated date
