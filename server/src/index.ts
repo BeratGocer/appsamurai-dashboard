@@ -611,7 +611,7 @@ app.post('/files/:id/ingest', async (req: FastifyRequest<{ Params: IngestParams,
           inserted++
         } catch (insertError) {
           skipped++
-          if (!firstError) firstError = 'DB insert error'
+          if (!firstError) firstError = `DB insert error: ${insertError.message}`
           req.log.warn({ insertError, row: r }, 'Failed to insert individual row');
         }
       }
