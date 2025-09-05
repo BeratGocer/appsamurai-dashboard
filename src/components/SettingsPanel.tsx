@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -91,18 +91,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onTableVisibilityChange,
   availableColumns = [],
 }) => {
-  // Local state for form inputs - completely isolated from props
-  const [localDateRange, setLocalDateRange] = useState<DateRange>({
-    startDate: '',
-    endDate: '',
-  });
-  
-  const [localConditionalRules, setLocalConditionalRules] = useState<ConditionalFormattingRule[]>([]);
-  const [localVisibleColumns, setLocalVisibleColumns] = useState<string[]>(['installs', 'roas_d0', 'roas_d7']);
-  
-  const [newRule, setNewRule] = useState<Partial<ConditionalFormattingRule>>({
+  // Simple local state - no complex dependencies
+  const [newRule, setNewRule] = useState({
     column: 'installs',
-    operator: '>',
+    operator: '>' as const,
     value: 100,
     color: COLOR_PRESETS[0].color,
     backgroundColor: COLOR_PRESETS[0].backgroundColor,
@@ -111,36 +103,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   const [editingRule, setEditingRule] = useState<string | null>(null);
 
-  // Sync local state with props only when props change
-  useEffect(() => {
-    if (settings?.dateRange) {
-      setLocalDateRange(settings.dateRange);
-    }
-    if (settings?.conditionalRules) {
-      setLocalConditionalRules(settings.conditionalRules);
-    }
-    if (settings?.visibleColumns) {
-      setLocalVisibleColumns(settings.visibleColumns);
-    }
-  }, [settings?.dateRange?.startDate, settings?.dateRange?.endDate, settings?.conditionalRules, settings?.visibleColumns]);
+  // Simple handlers without useCallback
+  const handleDateRangeChange = (field: 'startDate' | 'endDate', value: string) => {
+    onSettingsChange({
+      ...settings,
+      dateRange: {
+        ...settings.dateRange,
+        [field]: value,
+      },
+    });
+  };
 
-  // Stable update function that doesn't cause re-renders
-  const updateSettings = useCallback((updates: Partial<SettingsData>) => {
-    const newSettings: SettingsData = {
-      dateRange: updates.dateRange || localDateRange,
-      conditionalRules: updates.conditionalRules || localConditionalRules,
-      visibleColumns: updates.visibleColumns || localVisibleColumns,
-    };
-    onSettingsChange(newSettings);
-  }, [localDateRange, localConditionalRules, localVisibleColumns, onSettingsChange]);
-
-  const handleDateRangeChange = useCallback((field: 'startDate' | 'endDate', value: string) => {
-    const newDateRange = { ...localDateRange, [field]: value };
-    setLocalDateRange(newDateRange);
-    updateSettings({ dateRange: newDateRange });
-  }, [localDateRange, updateSettings]);
-
-  const setDatePreset = useCallback((preset: string) => {
+  const setDatePreset = (preset: string) => {
     const today = new Date();
     const endDate = today.toISOString().split('T')[0];
     let startDate = '';
@@ -173,25 +147,30 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         break;
     }
     
-    const newDateRange = { startDate, endDate };
-    setLocalDateRange(newDateRange);
-    updateSettings({ dateRange: newDateRange });
-  }, [updateSettings]);
+    onSettingsChange({
+      ...settings,
+      dateRange: {
+        startDate,
+        endDate,
+      },
+    });
+  };
 
-  const addConditionalRule = useCallback(() => {
+  const addConditionalRule = () => {
     const rule: ConditionalFormattingRule = {
       id: Date.now().toString(),
-      column: newRule.column as ConditionalFormattingRule['column'],
-      operator: newRule.operator as ConditionalFormattingRule['operator'],
-      value: newRule.value || 0,
-      color: newRule.color || COLOR_PRESETS[0].color,
-      backgroundColor: newRule.backgroundColor || COLOR_PRESETS[0].backgroundColor,
+      column: newRule.column,
+      operator: newRule.operator,
+      value: newRule.value,
+      color: newRule.color,
+      backgroundColor: newRule.backgroundColor,
       isActive: true,
     };
 
-    const newRules = [...localConditionalRules, rule];
-    setLocalConditionalRules(newRules);
-    updateSettings({ conditionalRules: newRules });
+    onSettingsChange({
+      ...settings,
+      conditionalRules: [...(settings.conditionalRules || []), rule],
+    });
 
     // Reset the form
     setNewRule({
@@ -202,23 +181,25 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       backgroundColor: COLOR_PRESETS[0].backgroundColor,
       isActive: true,
     });
-  }, [newRule, localConditionalRules, updateSettings]);
+  };
 
-  const removeConditionalRule = useCallback((ruleId: string) => {
-    const newRules = localConditionalRules.filter(rule => rule.id !== ruleId);
-    setLocalConditionalRules(newRules);
-    updateSettings({ conditionalRules: newRules });
-  }, [localConditionalRules, updateSettings]);
+  const removeConditionalRule = (ruleId: string) => {
+    onSettingsChange({
+      ...settings,
+      conditionalRules: (settings.conditionalRules || []).filter(rule => rule.id !== ruleId),
+    });
+  };
 
-  const toggleRuleActive = useCallback((ruleId: string) => {
-    const newRules = localConditionalRules.map(rule =>
-      rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
-    );
-    setLocalConditionalRules(newRules);
-    updateSettings({ conditionalRules: newRules });
-  }, [localConditionalRules, updateSettings]);
+  const toggleRuleActive = (ruleId: string) => {
+    onSettingsChange({
+      ...settings,
+      conditionalRules: (settings.conditionalRules || []).map(rule =>
+        rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
+      ),
+    });
+  };
 
-  const startEditingRule = useCallback((rule: ConditionalFormattingRule) => {
+  const startEditingRule = (rule: ConditionalFormattingRule) => {
     setEditingRule(rule.id);
     setNewRule({
       column: rule.column,
@@ -228,26 +209,27 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       backgroundColor: rule.backgroundColor,
       isActive: rule.isActive,
     });
-  }, []);
+  };
 
-  const updateExistingRule = useCallback(() => {
+  const updateExistingRule = () => {
     if (!editingRule) return;
     
     const updatedRule: ConditionalFormattingRule = {
       id: editingRule,
-      column: newRule.column as ConditionalFormattingRule['column'],
-      operator: newRule.operator as ConditionalFormattingRule['operator'],
-      value: newRule.value || 0,
-      color: newRule.color || COLOR_PRESETS[0].color,
-      backgroundColor: newRule.backgroundColor || COLOR_PRESETS[0].backgroundColor,
+      column: newRule.column,
+      operator: newRule.operator,
+      value: newRule.value,
+      color: newRule.color,
+      backgroundColor: newRule.backgroundColor,
       isActive: true,
     };
 
-    const newRules = localConditionalRules.map(rule =>
-      rule.id === editingRule ? updatedRule : rule
-    );
-    setLocalConditionalRules(newRules);
-    updateSettings({ conditionalRules: newRules });
+    onSettingsChange({
+      ...settings,
+      conditionalRules: (settings.conditionalRules || []).map(rule =>
+        rule.id === editingRule ? updatedRule : rule
+      ),
+    });
 
     // Reset editing state
     setEditingRule(null);
@@ -259,9 +241,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       backgroundColor: COLOR_PRESETS[0].backgroundColor,
       isActive: true,
     });
-  }, [editingRule, newRule, localConditionalRules, updateSettings]);
+  };
 
-  const cancelEditing = useCallback(() => {
+  const cancelEditing = () => {
     setEditingRule(null);
     setNewRule({
       column: 'installs',
@@ -271,26 +253,29 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       backgroundColor: COLOR_PRESETS[0].backgroundColor,
       isActive: true,
     });
-  }, []);
+  };
 
-  const selectColorPreset = useCallback((preset: typeof COLOR_PRESETS[0]) => {
-    setNewRule(prev => ({
-      ...prev,
+  const selectColorPreset = (preset: typeof COLOR_PRESETS[0]) => {
+    setNewRule({
+      ...newRule,
       color: preset.color,
       backgroundColor: preset.backgroundColor,
-    }));
-  }, []);
+    });
+  };
 
-  const handleColumnToggle = useCallback((column: string) => {
-    const newColumns = localVisibleColumns.includes(column)
-      ? localVisibleColumns.filter(col => col !== column)
-      : [...localVisibleColumns, column];
-    
-    setLocalVisibleColumns(newColumns);
-    updateSettings({ visibleColumns: newColumns });
-  }, [localVisibleColumns, updateSettings]);
+  const handleColumnToggle = (column: string) => {
+    const currentColumns = settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7'];
+    const newColumns = currentColumns.includes(column)
+      ? currentColumns.filter(col => col !== column)
+      : [...currentColumns, column];
 
-  const getColumnLabel = useCallback((column: string): string => {
+    onSettingsChange({
+      ...settings,
+      visibleColumns: newColumns,
+    });
+  };
+
+  const getColumnLabel = (column: string): string => {
     const columnLabels: Record<string, string> = {
       installs: 'Install Sayısı',
       roas_d0: 'ROAS D0',
@@ -316,7 +301,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       gross_profit: 'Brüt Kar',
     };
     return columnLabels[column] || column;
-  }, []);
+  };
 
   if (!isOpen) {
     return (
@@ -404,7 +389,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <Input
                 id="startDate"
                 type="date"
-                value={localDateRange.startDate}
+                value={settings.dateRange.startDate}
                 onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
                 className="h-8 text-sm"
               />
@@ -414,7 +399,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <Input
                 id="endDate"
                 type="date"
-                value={localDateRange.endDate}
+                value={settings.dateRange.endDate}
                 onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
                 className="h-8 text-sm"
               />
@@ -430,11 +415,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
 
           {/* Existing Rules */}
-          {localConditionalRules.length > 0 && (
+          {settings.conditionalRules && settings.conditionalRules.length > 0 && (
             <div className="space-y-2">
               <Label className="text-xs font-medium">Mevcut Kurallar</Label>
               <div className="space-y-1">
-                {localConditionalRules.map((rule) => (
+                {settings.conditionalRules.map((rule) => (
                   <div
                     key={rule.id}
                     className="flex items-center justify-between p-2 border rounded text-sm"
@@ -504,7 +489,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <Label className="text-xs">Sütun</Label>
                 <Select
                   value={newRule.column}
-                  onValueChange={(value) => setNewRule(prev => ({ ...prev, column: value }))}
+                  onValueChange={(value) => setNewRule({ ...newRule, column: value })}
                 >
                   <SelectTrigger className="h-8 text-sm">
                     <SelectValue />
@@ -527,7 +512,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <Label className="text-xs">Operatör</Label>
                 <Select
                   value={newRule.operator}
-                  onValueChange={(value) => setNewRule(prev => ({ ...prev, operator: value as ConditionalFormattingRule['operator'] }))}
+                  onValueChange={(value) => setNewRule({ ...newRule, operator: value as ConditionalFormattingRule['operator'] })}
                 >
                   <SelectTrigger className="h-8 text-sm">
                     <SelectValue />
@@ -548,7 +533,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   type="number"
                   step="0.01"
                   value={newRule.value || ''}
-                  onChange={(e) => setNewRule(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) => setNewRule({ ...newRule, value: parseFloat(e.target.value) || 0 })}
                   placeholder="Değer"
                   className="h-8 text-sm"
                 />
@@ -614,7 +599,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             
             <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
               {availableColumns.map((column) => {
-                const isVisible = localVisibleColumns.includes(column);
+                const isVisible = (settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']).includes(column);
                 return (
                   <div
                     key={column}
