@@ -594,7 +594,16 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
 
         {/* Column Visibility Management */}
-        {availableColumns.length > 0 && (
+        {((csvData && csvData.length > 0) ? Object.keys(csvData[0]).filter(key => 
+          key.startsWith('roas_') || key.startsWith('retention_rate_') || 
+          key.startsWith('ltv_') || key.startsWith('cost_') || 
+          key.startsWith('revenue_') || key.startsWith('installs') ||
+          key.startsWith('clicks') || key.startsWith('impressions') ||
+          key.startsWith('ctr') || key.startsWith('cvr') ||
+          key.startsWith('cpi') || key.startsWith('cpa') ||
+          key.startsWith('roi') || key.startsWith('profit') ||
+          key.startsWith('arpu') || key.startsWith('arppu')
+        ) : availableColumns).length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
@@ -602,7 +611,16 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
-              {availableColumns.map((column) => {
+              {((csvData && csvData.length > 0) ? Object.keys(csvData[0]).filter(key => 
+                key.startsWith('roas_') || key.startsWith('retention_rate_') || 
+                key.startsWith('ltv_') || key.startsWith('cost_') || 
+                key.startsWith('revenue_') || key.startsWith('installs') ||
+                key.startsWith('clicks') || key.startsWith('impressions') ||
+                key.startsWith('ctr') || key.startsWith('cvr') ||
+                key.startsWith('cpi') || key.startsWith('cpa') ||
+                key.startsWith('roi') || key.startsWith('profit') ||
+                key.startsWith('arpu') || key.startsWith('arppu')
+              ) : availableColumns).map((column) => {
                 const isVisible = (settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']).includes(column);
                 return (
                   <div
