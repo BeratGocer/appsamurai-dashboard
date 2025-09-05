@@ -156,6 +156,7 @@ export function Dashboard({
     return getGameCountryPublisherGroups(filteredData);
   }, [filteredData]);
 
+
   // Apply date synchronization if date range is specified in settings
   const gameGroups = React.useMemo<GameCountryPublisherGroup[]>(() => {
     if (settings.dateRange.startDate && settings.dateRange.endDate) {
@@ -432,7 +433,7 @@ export function Dashboard({
           </div>
 
           <DynamicKPISection
-            data={filteredData}
+            data={data}
             activeFileId={activeFileId}
             hiddenTables={hiddenTables}
             gameGroups={gameGroups}

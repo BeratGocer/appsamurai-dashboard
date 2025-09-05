@@ -93,6 +93,34 @@ export function calculateKPIValue(
   hiddenTables?: Set<string>,
   gameGroups?: any[]
 ): KPIValue {
+  // For installs column, always use all data regardless of hidden tables
+  // This ensures total install count is always accurate
+  if (config.column === 'installs') {
+    const validData = data.filter(row => {
+      const value = row[config.column as keyof CampaignData];
+      return value !== undefined && value !== null && !isNaN(Number(value));
+    });
+    
+    if (validData.length === 0) {
+      return {
+        raw: 0,
+        formatted: formatKPIValue(0, config.format, config.decimalPlaces),
+        trend: 'neutral'
+      };
+    }
+    
+    const rawValue = validData.reduce((sum, row) => {
+      const value = row[config.column as keyof CampaignData];
+      return sum + Number(value);
+    }, 0);
+    
+    return {
+      raw: rawValue,
+      formatted: formatKPIValue(rawValue, config.format, config.decimalPlaces),
+      trend: 'neutral'
+    };
+  }
+  
   // Filter out data from hidden tables if hiddenTables is provided
   let filteredData = data;
   
