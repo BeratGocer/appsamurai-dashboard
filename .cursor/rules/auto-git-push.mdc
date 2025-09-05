@@ -1,19 +1,21 @@
 ---
 alwaysApply: true
-description: Automatic Git push functionality - commits and pushes changes automatically when files are modified
+description: Automatic Git push and deployment functionality - commits, pushes changes, and deploys to production automatically when files are modified
 ---
 
-# Auto Git Push Rule
+# Auto Git Push & Deploy Rule
 
 ## Overview
-This rule ensures that any file changes in the AppSamurai Dashboard project are automatically committed and pushed to GitHub.
+This rule ensures that any file changes in the AppSamurai Dashboard project are automatically committed, pushed to GitHub, and deployed to production.
 
-## Automatic Git Workflow
-When files are modified, the following Git commands will be executed automatically:
+## Automatic Workflow
+When files are modified, the following commands will be executed automatically:
 
 1. **Stage Changes**: `git add .`
 2. **Commit Changes**: `git commit -m "Auto-commit: [description of changes]"`
 3. **Push to GitHub**: `git push origin main`
+4. **Build Frontend**: `npm run build`
+5. **Deploy to Netlify**: `netlify deploy --prod --dir=dist`
 
 ## Implementation Pattern
 ```bash
@@ -25,6 +27,12 @@ git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - $(git status --porcelai
 
 # Push to remote
 git push origin main
+
+# Build frontend
+npm run build
+
+# Deploy to production
+netlify deploy --prod --dir=dist
 ```
 
 ## File Monitoring
@@ -57,6 +65,8 @@ If push fails due to conflicts:
 3. Rule automatically detects changes
 4. Git commands execute automatically
 5. Changes are pushed to GitHub
+6. Frontend is built automatically
+7. Changes are deployed to production Netlify site
 
 ## Safety Measures
 - Only staged files are committed
@@ -64,3 +74,12 @@ If push fails due to conflicts:
 - Push only to main branch
 - No force push operations
 - Preserves existing Git history
+- Build process creates fresh dist/ directory
+- Deploy only to production environment
+- No rollback operations without explicit request
+
+## Deployment Information
+- **Production URL**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- **Build Command**: `npm run build`
+- **Deploy Directory**: `dist/`
+- **Deploy Command**: `netlify deploy --prod --dir=dist`
