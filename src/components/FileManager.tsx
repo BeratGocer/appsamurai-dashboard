@@ -276,21 +276,6 @@ export function FileManager({
                               <h4 className="font-semibold text-base">{game.name}</h4>
                             </div>
 
-                            {/* Metrikler */}
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                  {game.totalInstalls.toLocaleString()}
-                                </div>
-                                <div className="text-xs text-muted-foreground">Installs</div>
-                              </div>
-                              <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                  {(game.avgRoasD7 * 100).toFixed(1)}%
-                                </div>
-                                <div className="text-xs text-muted-foreground">ROAS D7</div>
-                              </div>
-                            </div>
 
                             {/* Tarih aralığı */}
                             <div className="text-xs text-muted-foreground text-center">
