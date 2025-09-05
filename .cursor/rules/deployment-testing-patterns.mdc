@@ -1,0 +1,114 @@
+---
+description: Deployment and testing patterns for production verification
+---
+
+# Deployment and Testing Patterns
+
+## Deployment Workflow
+Follow this systematic approach when deploying changes to production.
+
+### Step 1: Local Development
+```bash
+# Make changes locally
+# Test with npm run dev
+# Verify functionality works as expected
+```
+
+### Step 2: Build and Deploy
+```bash
+# Build frontend
+npm run build
+
+# Deploy to Netlify
+netlify deploy --prod --dir=dist
+
+# Commit and push changes
+git add .
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Description of changes"
+git push origin main
+```
+
+### Step 3: Production Testing
+Use browser automation to test deployed features systematically.
+
+## Production Testing with Playwright
+```typescript
+// Navigate to production site
+await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/');
+
+// Test core functionality
+await page.click('text=Dashboard');
+await page.waitForSelector('[data-testid="total-installs"]');
+
+// Verify install count
+const installCount = await page.textContent('[data-testid="total-installs"]');
+console.log('Production install count:', installCount);
+
+// Test page refresh persistence
+await page.keyboard.press('F5');
+await page.waitForSelector('[data-testid="total-installs"]');
+const refreshedCount = await page.textContent('[data-testid="total-installs"]');
+console.log('After refresh:', refreshedCount);
+
+// Verify counts match
+assert(installCount === refreshedCount, 'Install count should persist after refresh');
+```
+
+## Critical Testing Scenarios
+
+### Scenario 1: Data Persistence
+**Test**: Load data → Refresh page → Verify counts match
+**Expected**: Install counts remain consistent
+**Failure**: Data loss indicates localStorage or backend issues
+
+### Scenario 2: Ad Network Decoding
+**Test**: Check publisher names in tables
+**Expected**: Codes like "SFT_34631_5406" decoded to "Fluent"
+**Failure**: Raw codes visible indicates decoding issues
+
+### Scenario 3: CSV Header Handling
+**Test**: Upload CSV with corrupted headers
+**Expected**: Data parses correctly despite header issues
+**Failure**: Parsing errors or missing data
+
+### Scenario 4: File Upload Flow
+**Test**: Upload → Navigate to Dashboard → Verify data
+**Expected**: Smooth transition with correct data display
+**Failure**: Navigation or data loading issues
+
+## Production URLs
+- **Frontend**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- **Backend**: https://backend-production-80f6.up.railway.app/
+- **GitHub**: https://github.com/BeratGocer/appsamurai-dashboard
+
+## Testing Checklist
+- ✅ **Initial Load**: Verify data loads correctly
+- ✅ **Page Refresh**: Test F5 persistence
+- ✅ **Ad Network Decoding**: Check publisher names
+- ✅ **Install Counts**: Verify totals match CSV
+- ✅ **Navigation**: Test all tab transitions
+- ✅ **File Upload**: Test new file uploads
+- ✅ **Error Handling**: Test with invalid data
+
+## Common Deployment Issues
+
+### Issue: Changes not visible in production
+**Cause**: Build not deployed or cached
+**Solution**: 
+```bash
+npm run build
+netlify deploy --prod --dir=dist
+```
+
+### Issue: Z-index or CSS problems
+**Cause**: Tailwind classes not compiled or conflicts
+**Solution**: Check build output and verify CSS compilation
+
+### Issue: Backend API errors
+**Cause**: Server not updated or environment issues
+**Solution**: Check Railway deployment logs
+
+## File Locations
+- Frontend Build: `dist/` directory
+- Deployment Config: [netlify.toml](mdc:netlify.toml)
+- Package Config: [package.json](mdc:package.json)

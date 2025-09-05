@@ -1,0 +1,56 @@
+---
+description: Data persistence patterns for localStorage and backend synchronization
+---
+
+# Data Persistence Patterns
+
+## localStorage Priority Strategy
+When implementing data loading in Dashboard components, always prioritize localStorage data over backend data to prevent data loss on page refresh.
+
+### Implementation Pattern
+```typescript
+useEffect(() => {
+  const activeFile = uploadedFiles.find(f => f.id === activeFileId);
+  if (activeFile) {
+    // CRITICAL: Check localStorage first
+    const localStorageFiles = localStorage.getItem('appsamurai-uploaded-files');
+    if (localStorageFiles) {
+      try {
+        const files = JSON.parse(localStorageFiles);
+        // Try to find by ID first, then by name (not filename)
+        let localStorageFile = files.find((f: any) => f.id === activeFileId);
+        if (!localStorageFile) {
+          localStorageFile = files.find((f: any) => f.name === activeFile.name);
+        }
+        if (localStorageFile && localStorageFile.data) {
+          setData(localStorageFile.data);
+          return; // Use localStorage data
+        }
+      } catch (error) {
+        console.warn('Failed to parse localStorage files:', error);
+      }
+    }
+    // Fallback to backend data only if localStorage fails
+    setData(activeFile.data);
+  }
+}, [activeFileId, uploadedFiles]);
+```
+
+## Key Points
+- ✅ Always check localStorage first before using backend data
+- ✅ Use `f.name` field, not `f.filename` when matching files
+- ✅ Handle ID mismatches by falling back to name matching
+- ✅ Provide proper error handling for localStorage parsing
+- ✅ Only use backend data as fallback when localStorage is unavailable
+
+## Common Issues
+- **Data Loss on Refresh**: Caused by not prioritizing localStorage data
+- **ID Mismatch**: Backend generates new IDs on refresh, localStorage keeps original IDs
+- **Field Name Confusion**: localStorage uses `name`, backend uses `filename`
+
+## Testing Strategy
+Always test data persistence by:
+1. Loading data initially
+2. Refreshing the page (F5)
+3. Verifying install counts remain consistent
+4. Checking that decoded ad networks persist

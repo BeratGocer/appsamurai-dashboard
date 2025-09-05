@@ -1,0 +1,102 @@
+---
+description: Ad network decoding implementation patterns and troubleshooting
+---
+
+# Ad Network Decoding Patterns
+
+## Core Implementation Strategy
+Implement ad network decoding in both frontend and backend to ensure consistency across the application.
+
+### Frontend Implementation ([src/utils/csvParser.ts](mdc:src/utils/csvParser.ts))
+```typescript
+// Create comprehensive ad network mapping
+const adNetworkMap: Record<string, string> = {
+  'SCR': 'Copper',
+  'ScR': 'Copper', 
+  'ScR_': 'Copper',
+  'SFT_MTkwMzZ8': 'Fluent',
+  'SFT_MTkxNDF8': 'Fluent',
+  'SFT_34631_5406': 'Fluent',
+  'SFT_45209_5406': 'Fluent',
+  // Add more mappings as needed
+};
+
+function decodeAdNetwork(network: string): string {
+  // CRITICAL: Don't use toUpperCase() - preserve case sensitivity
+  return adNetworkMap[network] || network;
+}
+
+// Apply decoding in parseCSV function
+function parseCSV(content: string): CampaignData[] {
+  // ... parsing logic ...
+  
+  // Apply decoding to campaign_network and adgroup_network
+  const decodedCampaignNetwork = decodeAdNetwork(campaign_network);
+  const decodedAdgroupNetwork = decodeAdNetwork(adgroup_network);
+  
+  return {
+    // ... other fields ...
+    campaign_network: decodedCampaignNetwork,
+    adgroup_network: decodedAdgroupNetwork,
+  };
+}
+```
+
+### Backend Implementation ([server/src/index.ts](mdc:server/src/index.ts))
+```typescript
+// Mirror the same mapping in backend
+const adNetworkMappings: Record<string, string> = {
+  'SCR': 'Copper',
+  'ScR': 'Copper',
+  'ScR_': 'Copper', 
+  'SFT_MTkwMzZ8': 'Fluent',
+  'SFT_MTkxNDF8': 'Fluent',
+  // ... same mappings as frontend
+};
+
+function decodeAdNetwork(network: string): string {
+  return adNetworkMappings[network] || network;
+}
+
+// Apply during data ingestion
+async function ingest(fileId: string, data: any[]) {
+  const processedData = data.map(row => ({
+    ...row,
+    campaignNetwork: decodeAdNetwork(row.campaignNetwork),
+    adgroupNetwork: decodeAdNetwork(row.adgroupNetwork),
+  }));
+  // Store processed data
+}
+```
+
+## Critical Rules
+- ✅ **Case Sensitivity**: Never use `toUpperCase()` - preserve original case
+- ✅ **Dual Implementation**: Implement in both frontend and backend
+- ✅ **Consistent Mappings**: Keep mappings identical between frontend and backend
+- ✅ **Specific Codes**: Add specific SFT codes like `SFT_34631_5406`
+- ✅ **Fallback Strategy**: Return original value if no mapping found
+
+## Common Issues and Solutions
+
+### Issue: "ScR_" not decoding to "Copper"
+**Root Cause**: Case sensitivity or missing specific mappings
+**Solution**: Add both `'ScR': 'Copper'` and `'ScR_': 'Copper'` mappings
+
+### Issue: SFT codes disappearing after refresh
+**Root Cause**: Backend double-decoding or data loss
+**Solution**: Ensure backend doesn't re-decode already decoded data
+
+### Issue: Install count drops after refresh
+**Root Cause**: Data persistence issues, not decoding problems
+**Solution**: Fix localStorage priority in Dashboard component
+
+## Testing Strategy
+1. **Initial Load**: Verify codes are decoded correctly
+2. **Page Refresh**: Ensure decoded values persist
+3. **Install Count**: Verify total installs remain consistent
+4. **Specific Codes**: Test problematic codes like `SFT_34631_5406`
+
+## File Locations
+- Frontend: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- Backend: [server/src/index.ts](mdc:server/src/index.ts)
+- Mapping Reference: [Adnetworks.csv](mdc:Adnetworks.csv)

@@ -1,0 +1,59 @@
+---
+description: CSV header parsing patterns and corrupted header handling
+---
+
+# CSV Header Parsing Patterns
+
+## Corrupted Header Detection and Fixing
+CSV files may have corrupted headers that need special handling during parsing.
+
+### Implementation Pattern ([src/utils/csvParser.ts](mdc:src/utils/csvParser.ts))
+```typescript
+function parseCSV(content: string): CampaignData[] {
+  const lines = content.split('\n').filter(line => line.trim());
+  
+  // CRITICAL: Clean up corrupted headers
+  let firstLine = lines[0];
+  if (firstLine.startsWith('m app,')) {
+    firstLine = firstLine.substring(2); // Remove 'm ' prefix
+    lines[0] = firstLine;
+  } else if (firstLine.startsWith('gönder app,')) {
+    firstLine = firstLine.replace('gönder app,', 'app,'); // Fix corrupted header
+    lines[0] = firstLine;
+  } else if (firstLine.startsWith('gönderapp,')) {
+    firstLine = firstLine.replace('gönderapp,', 'app,'); // Fix corrupted header without space
+    lines[0] = firstLine;
+  }
+  
+  // Continue with normal parsing...
+}
+```
+
+### Backend Implementation ([server/src/index.ts](mdc:server/src/index.ts))
+```typescript
+// Handle corrupted headers during ingestion
+const iApp = columnMap.get('gönder app') ?? columnMap.get('gönderapp') ?? 0;
+```
+
+## Common Corrupted Headers
+- `m app,` → `app,` (remove 'm ' prefix)
+- `gönder app,` → `app,` (fix corrupted header with space)
+- `gönderapp,` → `app,` (fix corrupted header without space)
+
+## Critical Rules
+- ✅ **Always check first line**: Inspect and clean headers before parsing
+- ✅ **Multiple patterns**: Handle various corruption patterns
+- ✅ **Both frontend and backend**: Apply fixes in both locations
+- ✅ **Column mapping**: Use fallback column detection in backend
+- ✅ **Preserve data**: Don't lose data due to header issues
+
+## Testing Strategy
+1. **Test with corrupted CSV**: Use files with known header issues
+2. **Verify column mapping**: Ensure 'app' column is correctly identified
+3. **Check data integrity**: Verify no data loss during parsing
+4. **Install count validation**: Ensure total installs match CSV content
+
+## File Locations
+- Frontend: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- Backend: [server/src/index.ts](mdc:server/src/index.ts)
+- Test File: [2025-9-5_10_50_adjust_report_export.csv](mdc:2025-9-5_10_50_adjust_report_export.csv)

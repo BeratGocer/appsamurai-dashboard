@@ -1,0 +1,74 @@
+---
+alwaysApply: true
+description: AppSamurai Dashboard project architecture and key components
+---
+
+# AppSamurai Dashboard Architecture
+
+## Project Overview
+React + TypeScript + Vite dashboard application for analyzing mobile app campaign data from CSV files.
+
+## Core Architecture
+- **Entry Point**: [src/main.tsx](mdc:src/main.tsx) → [src/App.tsx](mdc:src/App.tsx)
+- **Main Component**: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+- **Navigation**: [src/components/Navbar.tsx](mdc:src/components/Navbar.tsx)
+- **Data Processing**: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- **Types**: [src/types/index.ts](mdc:src/types/index.ts)
+
+## Key Features
+1. **File Upload System**: Users upload CSV campaign data files
+2. **Multi-Tab Navigation**: Anasayfa, Müşteriler, Account Managers, Dashboard
+3. **Data Visualization**: KPI cards, metrics, filtered views
+4. **Accordion Layouts**: Row-by-row expandable listings instead of grid cards
+5. **Search & Filtering**: Applied to campaign data across all views
+
+## Data Flow
+CSV Files → [csvParser.ts](mdc:src/utils/csvParser.ts) → State Management → Dashboard Views
+
+## UI Standards
+- Uses shadcn/ui component library
+- Tailwind CSS for styling
+- Turkish language UI labels
+- Dark/Light theme support via [ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
+
+## Key Directories
+- `src/components/` - React components including UI components
+- `src/components/ui/` - Reusable UI components (shadcn/ui based)
+- `src/types/` - TypeScript type definitions in [src/types/index.ts](mdc:src/types/index.ts)
+- `src/utils/` - Utility functions, primarily CSV parsing in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- `src/contexts/` - React contexts for global state
+- `src/lib/` - Library utilities
+
+## Configuration Files
+- Tailwind config: [tailwind.config.js](mdc:tailwind.config.js)
+- Components config: [components.json](mdc:components.json) - shadcn/ui configuration
+- TypeScript config: [tsconfig.json](mdc:tsconfig.json) with path aliases
+- Package config: [package.json](mdc:package.json)
+
+## Deployment
+- **Frontend**: Netlify at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
+- **Backend**: Railway at `https://backend-production-80f6.up.railway.app/`
+- **GitHub**: `https://github.com/BeratGocer/appsamurai-dashboard`
+
+## Critical Components
+- **Dashboard.tsx**: Main dashboard with KPI cards and performance tables
+- **GameTables.tsx**: Expandable accordion tables for campaign data
+- **DynamicKPISection.tsx**: Configurable KPI cards
+- **FileUpload.tsx**: CSV file upload and processing
+- **csvParser.ts**: Core CSV parsing and ad network decoding logic
+
+## Data Types
+```typescript
+interface CampaignData {
+  app: string;
+  installs: number;
+  campaign_network: string;
+  adgroup_network: string;
+  country: string;
+  platform: string;
+  date: string;
+  roas_d0: number;
+  roas_d7: number;
+  roas_d30: number;
+}
+```
