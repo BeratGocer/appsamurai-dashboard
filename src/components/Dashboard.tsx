@@ -128,26 +128,28 @@ export function Dashboard({
 
 
   // Filter data based on date range and selected game
-  const filteredData = data.filter((row) => {
-    // Date filtering
-    if (settings.dateRange.startDate && settings.dateRange.endDate) {
-      const rowDate = new Date(row.day);
-      const startDate = new Date(settings.dateRange.startDate);
-      const endDate = new Date(settings.dateRange.endDate);
-      
-      if (!(rowDate >= startDate && rowDate <= endDate)) {
-        return false;
+  const filteredData = React.useMemo(() => {
+    return data.filter((row) => {
+      // Date filtering
+      if (settings.dateRange.startDate && settings.dateRange.endDate) {
+        const rowDate = new Date(row.day);
+        const startDate = new Date(settings.dateRange.startDate);
+        const endDate = new Date(settings.dateRange.endDate);
+        
+        if (!(rowDate >= startDate && rowDate <= endDate)) {
+          return false;
+        }
       }
-    }
-    
-    // Game filtering - if a specific game is selected, only show that game's data
-    if (selectedGame) {
-      const gameNameFromRow = row.app.replace(' Android', '').replace(' iOS', '').trim();
-      return gameNameFromRow === selectedGame;
-    }
-    
-    return true;
-  });
+      
+      // Game filtering - if a specific game is selected, only show that game's data
+      if (selectedGame) {
+        const gameNameFromRow = row.app.replace(' Android', '').replace(' iOS', '').trim();
+        return gameNameFromRow === selectedGame;
+      }
+      
+      return true;
+    });
+  }, [data, settings.dateRange.startDate, settings.dateRange.endDate, selectedGame]);
 
   // Get grouped data for game tables with filtered data
   const rawGameGroups = React.useMemo(() => {
