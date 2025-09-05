@@ -109,20 +109,19 @@ export function KPISettingsPanel({
       {/* Compact Settings Panel */}
       <Card className={`transition-all duration-300 ${isOpen ? 'shadow-lg' : ''}`}>
         <CardHeader 
-          className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors"
+          className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors flex items-center justify-between min-h-[60px]"
           onClick={onToggle}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-base">KPI Settings</CardTitle>
-              <Badge variant="outline" className="text-xs">
-                {visibleConfigs}/{totalConfigs}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+          </div>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">KPI Settings</CardTitle>
+            <Badge variant="outline" className="text-xs">
+              {visibleConfigs}/{totalConfigs}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
