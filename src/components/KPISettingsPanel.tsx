@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Plus, Eye, EyeOff, Edit3, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Eye, EyeOff, Edit3, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import type { KPICardConfig, AvailableColumn, KPICalculationType, KPIFormatType } from '@/types';
 
 interface KPISettingsPanelProps {
@@ -106,7 +106,6 @@ export function KPISettingsPanel({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
             <h3 className="text-lg font-semibold">KPI Settings</h3>
             <Badge variant="outline" className="text-xs">
               {visibleConfigs}/{totalConfigs}

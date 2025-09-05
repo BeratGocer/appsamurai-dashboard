@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { EditableKPICard } from './EditableKPICard';
-import { KPISettingsPanel } from './KPISettingsPanel';
-import { getAvailableColumns, calculateKPIValue, loadKPISettings, saveKPISettings } from '@/utils/kpiUtils';
+import { calculateKPIValue, loadKPISettings } from '@/utils/kpiUtils';
 import type { CampaignData, KPICardConfig } from '@/types';
 
 interface DynamicKPISectionProps {
@@ -23,10 +22,6 @@ export function DynamicKPISection({
 }: DynamicKPISectionProps) {
   const [kpiConfigs, setKpiConfigs] = useState<KPICardConfig[]>([]);
 
-  // Get available columns from data
-  const availableColumns = useMemo(() => {
-    return getAvailableColumns(data);
-  }, [data]);
 
   // Load KPI settings when activeFileId changes
   useEffect(() => {
@@ -36,13 +31,6 @@ export function DynamicKPISection({
     }
   }, [activeFileId]);
 
-  // Save KPI settings when configs change
-  const handleConfigsChange = (newConfigs: KPICardConfig[]) => {
-    setKpiConfigs(newConfigs);
-    if (activeFileId) {
-      saveKPISettings(activeFileId, newConfigs);
-    }
-  };
 
   // Calculate KPI values (excluding hidden tables)
   const kpiValues = useMemo(() => {
@@ -73,14 +61,6 @@ export function DynamicKPISection({
 
   return (
     <div className="space-y-6">
-      {/* KPI Settings Panel - Only show when in edit mode */}
-      {isEditMode && (
-        <KPISettingsPanel
-          configs={kpiConfigs}
-          availableColumns={availableColumns}
-          onConfigsChange={handleConfigsChange}
-        />
-      )}
 
       {/* KPI Cards Grid */}
       {visibleKPIConfigs.length > 0 && (
