@@ -1,0 +1,99 @@
+---
+globs: *.tsx,*.ts
+description: File upload UI patterns and user experience for campaign data updates
+---
+
+# File Upload UI Patterns
+
+## Update Options Dialog
+When similar campaigns are detected, show a clear dialog with three options:
+
+### Dialog Structure
+```typescript
+{showUpdateOptions && matchingFile && (
+  <Alert className="mt-4">
+    <AlertCircle className="h-4 w-4" />
+    <AlertDescription>
+      <div className="space-y-3">
+        <div>
+          <strong>Benzer Kampanya Bulundu!</strong>
+          <p className="text-sm text-muted-foreground mt-1">
+            Yüklediğiniz dosya "{matchingFile.name}" dosyasıyla aynı kampanyaya ait görünüyor.
+          </p>
+        </div>
+        
+        <div className="flex flex-col gap-2">
+          <Button onClick={handleUpdateFile} variant="default">
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Mevcut Dosyayı Güncelle (Ayarları Korur)
+          </Button>
+          
+          <Button onClick={handleCreateNewFile} variant="outline">
+            <FileText className="h-4 w-4 mr-2" />
+            Yeni Dosya Olarak Ekle
+          </Button>
+          
+          <Button onClick={handleCancelUpdate} variant="ghost">
+            <X className="h-4 w-4 mr-2" />
+            İptal Et
+          </Button>
+        </div>
+        
+        <div className="text-xs text-muted-foreground">
+          <strong>Güncelle:</strong> Yeni verileri mevcut dosyaya ekler, KPI ayarları ve gizli tablolar korunur.<br/>
+          <strong>Yeni Dosya:</strong> Tamamen yeni bir dosya oluşturur.
+        </div>
+      </div>
+    </AlertDescription>
+  </Alert>
+)}
+```
+
+## State Management
+```typescript
+const [matchingFile, setMatchingFile] = useState<UploadedFile | null>(null);
+const [showUpdateOptions, setShowUpdateOptions] = useState(false);
+const [newFileData, setNewFileData] = useState<UploadedFile['data'] | null>(null);
+const [newFileName, setNewFileName] = useState('');
+const [newFileSize, setNewFileSize] = useState(0);
+```
+
+## User Flow
+1. **File Selection**: User selects CSV file
+2. **Processing**: System parses CSV and checks for matches
+3. **Detection**: If match found, show update options
+4. **Decision**: User chooses update, new file, or cancel
+5. **Action**: Execute chosen action and reset state
+
+## Button Styling
+- **Primary Action**: `variant="default"` for update (most common)
+- **Secondary Action**: `variant="outline"` for new file
+- **Cancel Action**: `variant="ghost"` for cancel
+- **Icons**: Use appropriate Lucide icons for each action
+
+## Critical Rules
+- ✅ Always show clear explanation of what each option does
+- ✅ Use Turkish language for all UI text
+- ✅ Provide visual hierarchy with button variants
+- ✅ Include explanatory text below buttons
+- ✅ Reset all state after action completion
+- ✅ Handle loading states during file processing
+- ✅ Show progress indicators for large files
+
+## Error Handling
+- Clear error messages for parsing failures
+- Graceful fallback if matching algorithm fails
+- Validation of file format before processing
+- User-friendly error descriptions
+
+## Accessibility
+- Proper ARIA labels for screen readers
+- Keyboard navigation support
+- Focus management during dialog interactions
+- High contrast button styling
+
+## Responsive Design
+- Stack buttons vertically on mobile
+- Appropriate spacing for touch targets
+- Readable text sizes on all devices
+- Proper dialog sizing for different screens

@@ -1,0 +1,96 @@
+---
+description: Settings preservation patterns for file updates and dashboard configurations
+---
+
+# Settings Preservation Patterns
+
+## Core Principle
+**NEVER lose user settings during file updates**. All dashboard configurations must be preserved when updating campaign data.
+
+## Settings Storage Architecture
+
+### Per-File Settings Keys
+- **KPI Settings**: `dashboard-settings-${fileId}`
+- **Hidden Tables**: `dashboard-hidden-tables-${fileId}`
+- **Conditional Rules**: Included in dashboard-settings
+- **Visible Columns**: Included in dashboard-settings
+
+### File ID Preservation
+- **Critical**: File ID must remain constant during updates
+- **Implementation**: Use existing file ID when updating data
+- **Storage**: localStorage keys depend on file ID for persistence
+
+## Implementation Patterns
+
+### Settings Loading
+```typescript
+const loadFileSettingsInline = (fileId: string | null) => {
+  const settingsKey = fileId ? `dashboard-settings-${fileId}` : 'dashboard-settings-default';
+  const saved = localStorage.getItem(settingsKey);
+  // ... load and parse settings
+};
+```
+
+### Settings Saving
+```typescript
+const handleSettingsChange = useCallback((newSettings: SettingsData) => {
+  setSettings(newSettings);
+  const settingsKey = activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
+  localStorage.setItem(settingsKey, JSON.stringify(newSettings));
+}, [activeFileId]);
+```
+
+### Hidden Tables Management
+```typescript
+const handleTableVisibilityChange = useCallback((tableId: string, isHidden: boolean) => {
+  // ... update hidden tables state
+  const hiddenTablesKey = activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
+  localStorage.setItem(hiddenTablesKey, JSON.stringify(Array.from(newHiddenTables)));
+}, [hiddenTables, activeFileId]);
+```
+
+## Settings Types Preserved
+
+### KPI Configuration
+- Custom KPI cards and their settings
+- Metric calculations and formulas
+- Display preferences and formatting
+- Edit mode states
+
+### Table Visibility
+- Hidden/shown table states
+- Bulk hide/show operations
+- Publisher-specific filtering
+- Column visibility settings
+
+### Conditional Formatting
+- Color coding rules
+- Threshold-based formatting
+- Active/inactive rule states
+- Custom condition definitions
+
+### Date Range Filters
+- Start and end date selections
+- Custom date range configurations
+- Filter application states
+
+## Critical Rules
+- ✅ Always preserve file ID during data updates
+- ✅ Use consistent localStorage key patterns
+- ✅ Load settings immediately when file changes
+- ✅ Save settings on every change
+- ✅ Handle missing settings gracefully with defaults
+- ✅ Clean up orphaned settings when files are deleted
+- ✅ Test settings persistence across browser sessions
+
+## Error Handling
+- Graceful fallback to default settings if loading fails
+- Validation of settings data before applying
+- Recovery mechanisms for corrupted settings
+- Clear error messages for settings-related issues
+
+## Testing Requirements
+- Verify settings persist after file updates
+- Test settings across different files
+- Validate settings after browser refresh
+- Check settings cleanup on file deletion

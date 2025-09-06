@@ -1,0 +1,52 @@
+---
+globs: *.ts,*.tsx
+description: Campaign data merging patterns and data integrity rules
+---
+
+# Campaign Data Merging Patterns
+
+## Data Merging Strategy
+When updating existing campaign data with new CSV files, follow these patterns:
+
+### Merge Key Generation
+```typescript
+const key = `${row.app}-${row.campaign_network}-${row.adgroup_network}-${row.day}`;
+```
+
+### Data Replacement Logic
+- **Same Key**: Replace existing entry with new data
+- **New Key**: Add as new entry
+- **Preserve Structure**: Maintain all existing data fields
+
+### Weighted Average Calculations
+For ROAS and retention metrics, use install-weighted averages:
+```typescript
+const wavg = (prevVal: number, newVal: number) => {
+  const a = isFinite(prevVal) ? prevVal : 0;
+  const b = isFinite(newVal) ? newVal : 0;
+  return totalInstalls > 0 ? ((a * prevInstalls) + (b * newInstalls)) / totalInstalls : 0;
+};
+```
+
+## Critical Rules
+- ✅ Always use CSV values directly when available (never recompute)
+- ✅ Apply weighted averages for ROAS metrics (roas_d0, roas_d7, etc.)
+- ✅ Sum install counts and cost/revenue values
+- ✅ Preserve undefined fields as undefined (don't default to 0)
+- ✅ Sort merged data by date within each group
+- ✅ Validate data integrity after merge operations
+
+## Field Handling
+- **Installs**: Sum values
+- **ROAS**: Weighted average by installs
+- **Cost/Revenue**: Sum values
+- **Retention Rates**: Weighted average by installs
+- **Game Completion Events**: Sum values
+- **eCPI**: Weighted average (don't recompute from cost/installs)
+
+## Error Prevention
+- Check for NaN and Infinity values
+- Validate date formats before merging
+- Ensure consistent data types
+- Handle missing fields gracefully
+- Log merge operations for debugging

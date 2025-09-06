@@ -1,0 +1,111 @@
+---
+globs: *.ts,*.tsx
+description: Campaign matching algorithm for identifying similar campaigns across CSV files
+---
+
+# Campaign Matching Algorithm
+
+## Overview
+The campaign matching algorithm identifies when new CSV data represents the same campaign as existing data, enabling smart file updates.
+
+## Core Functions
+
+### Campaign ID Generation
+```typescript
+export function generateCampaignId(data: CampaignData[]): string {
+  if (data.length === 0) return '';
+  
+  const games = [...new Set(data.map(row => extractGameName(row.app)))];
+  const customers = [...new Set(data.map(row => {
+    const parsed = parseCampaignNetwork(row.campaign_network);
+    return parsed.country || 'Global';
+  }))];
+  
+  games.sort();
+  customers.sort();
+  
+  return `${games.join('|')}-${customers.join('|')}`;
+}
+```
+
+### Campaign Comparison
+```typescript
+export function isSameCampaign(existingData: CampaignData[], newData: CampaignData[]): boolean {
+  const existingId = generateCampaignId(existingData);
+  const newId = generateCampaignId(newData);
+  
+  if (existingId === newId && existingId !== '') {
+    return true;
+  }
+  
+  // Additional check: game overlap threshold
+  const existingGames = new Set(existingData.map(row => extractGameName(row.app)));
+  const newGames = new Set(newData.map(row => extractGameName(row.app)));
+  
+  const overlap = [...existingGames].filter(game => newGames.has(game)).length;
+  const totalGames = new Set([...existingGames, ...newGames]).size;
+  
+  return overlap / totalGames > 0.5;
+}
+```
+
+## Matching Criteria
+
+### Primary Matching
+- **Game Names**: Exact match of game names (after cleaning)
+- **Country**: Same target countries/regions
+- **Campaign ID**: Generated from games + countries
+
+### Secondary Matching
+- **Game Overlap**: 50% threshold for game name overlap
+- **Structure Similarity**: Similar data structure and fields
+- **Date Patterns**: Overlapping date ranges
+
+## Game Name Extraction
+```typescript
+export function extractGameName(app: string): string {
+  return app.replace(/ Android$/, '').replace(/ iOS$/, '').trim();
+}
+```
+
+## Country Extraction
+```typescript
+export function extractCountryFromCampaign(campaignNetwork: string): string {
+  const parsed = parseCampaignNetwork(campaignNetwork);
+  // Convert country codes to full names
+  switch (parsed.country.toUpperCase()) {
+    case 'US': return 'United States (US)';
+    case 'UK': return 'United Kingdom (UK)';
+    // ... other mappings
+    default: return parsed.country === 'Unknown' ? 'Global' : parsed.country;
+  }
+}
+```
+
+## Critical Rules
+- ✅ Always clean game names before comparison
+- ✅ Use consistent country mapping
+- ✅ Sort arrays for deterministic ID generation
+- ✅ Handle edge cases (empty data, unknown countries)
+- ✅ Test with real CSV data to verify accuracy
+- ✅ Log matching decisions for debugging
+
+## Edge Cases
+- **Empty Data**: Return empty string for campaign ID
+- **Unknown Countries**: Map to 'Global'
+- **Platform Suffixes**: Remove 'Android'/'iOS' from game names
+- **Special Characters**: Handle encoding issues in game names
+- **Date Ranges**: Consider overlapping vs. sequential data
+
+## Performance Considerations
+- Cache campaign IDs for existing files
+- Use Set operations for efficient game comparison
+- Minimize string operations in hot paths
+- Consider data size limits for large datasets
+
+## Testing Strategy
+- Test with identical files (should match)
+- Test with different games (should not match)
+- Test with partial game overlap (threshold testing)
+- Test with different countries (should not match)
+- Test with same games, different countries (should not match)

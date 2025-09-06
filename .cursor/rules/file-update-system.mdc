@@ -1,0 +1,77 @@
+---
+description: Smart file update system for daily CSV data with campaign matching and settings preservation
+---
+
+# Smart File Update System
+
+## Overview
+The AppSamurai Dashboard implements an intelligent file update system that allows users to update existing campaign data with new daily CSV files while preserving all dashboard settings and configurations.
+
+## Core Components
+
+### Campaign Matching Algorithm
+- **Location**: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- **Functions**: `generateCampaignId()`, `isSameCampaign()`, `mergeCampaignData()`
+- **Logic**: Matches campaigns based on game names and country information
+- **Threshold**: 50% game overlap triggers same campaign detection
+
+### File Upload Integration
+- **Location**: [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx)
+- **Props**: `onFileUpdate` function for updating existing files
+- **UI**: Shows update options when similar campaign detected
+- **States**: `matchingFile`, `showUpdateOptions`, `newFileData`
+
+### Settings Preservation
+- **Mechanism**: File ID remains constant during updates
+- **Storage**: localStorage keys like `dashboard-settings-${fileId}` and `dashboard-hidden-tables-${fileId}`
+- **Scope**: KPI configurations, hidden tables, conditional formatting rules
+
+## Implementation Patterns
+
+### Campaign ID Generation
+```typescript
+export function generateCampaignId(data: CampaignData[]): string {
+  const games = [...new Set(data.map(row => extractGameName(row.app)))];
+  const customers = [...new Set(data.map(row => {
+    const parsed = parseCampaignNetwork(row.campaign_network);
+    return parsed.country || 'Global';
+  }))];
+  
+  games.sort();
+  customers.sort();
+  
+  return `${games.join('|')}-${customers.join('|')}`;
+}
+```
+
+### Data Merging Strategy
+- **Same Day**: New data replaces existing data for identical date entries
+- **New Days**: Additional data appended to existing dataset
+- **Key Format**: `${app}-${campaign_network}-${adgroup_network}-${day}`
+
+### User Experience Flow
+1. User uploads CSV file
+2. System checks for existing similar campaigns
+3. If match found: Show update options dialog
+4. User chooses: Update existing file OR Create new file OR Cancel
+5. If update: Merge data while preserving file ID and settings
+
+## Critical Rules
+- ✅ Always preserve file ID during updates to maintain settings
+- ✅ Use weighted averages for ROAS metrics when merging data
+- ✅ Show clear user options with explanatory text
+- ✅ Handle edge cases gracefully (empty data, parsing errors)
+- ✅ Maintain data integrity during merge operations
+- ✅ Test with actual CSV files to verify campaign matching accuracy
+
+## UI Components
+- **Update Dialog**: Alert component with three action buttons
+- **Button Labels**: Turkish language ("Mevcut Dosyayı Güncelle", "Yeni Dosya Olarak Ekle", "İptal Et")
+- **Explanatory Text**: Clear descriptions of what each option does
+- **Visual Indicators**: Icons and styling to distinguish options
+
+## Error Handling
+- Graceful fallback to new file creation if update fails
+- Clear error messages for parsing failures
+- Validation of data integrity before merging
+- Rollback capability if merge operation fails
