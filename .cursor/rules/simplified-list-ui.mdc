@@ -1,0 +1,114 @@
+---
+description: Simplified list UI patterns for Customers and Account Managers pages
+---
+
+# Simplified List UI Patterns
+
+## Overview
+This rule defines the simplified UI patterns for Customers and Account Managers pages without accordion systems or KPI cards.
+
+## UI Structure Pattern
+
+### 1. Page Header Structure
+Simple header without KPI cards:
+
+```typescript
+<div className="bg-card p-6 rounded-lg border">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-lg font-semibold">Customers</h3>
+    {selectedCustomer && (
+      <Button variant="outline" onClick={() => setSelectedCustomer(null)}>
+        Back to All Customers
+      </Button>
+    )}
+  </div>
+</div>
+```
+
+### 2. List Item Structure
+Clean, simple cards without accordion functionality:
+
+```typescript
+<div className="space-y-2">
+  {customers.map((customer) => (
+    <div key={customer.id} className="border rounded-lg bg-card p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <h4 className="font-semibold">{customer.name}</h4>
+          <span className="text-sm text-muted-foreground">
+            ({customer.games.length} games, {customer.totalInstalls.toLocaleString()} installs)
+          </span>
+        </div>
+        <Button
+          variant="default"
+          size="default"
+          onClick={() => setSelectedCustomer(customer.id)}
+          className="font-semibold"
+        >
+          View Files
+        </Button>
+      </div>
+    </div>
+  ))}
+</div>
+```
+
+## Button Styling Standards
+
+### Primary Action Button
+Use consistent styling for main action buttons:
+
+```typescript
+<Button
+  variant="default"        // Blue background
+  size="default"          // Standard size
+  className="font-semibold" // Bold text for emphasis
+  onClick={handleAction}
+>
+  View Files
+</Button>
+```
+
+### Secondary Action Button
+Use outline variant for secondary actions:
+
+```typescript
+<Button 
+  variant="outline" 
+  onClick={handleBackAction}
+>
+  Back to All Customers
+</Button>
+```
+
+## Layout Standards
+
+### Card Spacing
+- Use `space-y-2` for vertical spacing between cards
+- Use `p-4` for card padding
+- Use `border rounded-lg bg-card` for card styling
+
+### Content Alignment
+- Use `flex items-center justify-between` for horizontal layout
+- Use `space-x-3` for spacing between elements
+- Use `text-sm text-muted-foreground` for secondary information
+
+## Information Display Pattern
+
+### Primary Information
+- Customer/Manager name: `font-semibold`
+- Always display in the main text area
+
+### Secondary Information
+- Games count, installs count: `text-sm text-muted-foreground`
+- Display in parentheses format: `(2 games, 45.716 installs)`
+
+## Critical Rules
+- ✅ No accordion functionality - simple cards only
+- ✅ No KPI cards in page headers
+- ✅ Consistent button styling with `variant="default"` and `font-semibold`
+- ✅ Clean spacing with `space-y-2` and `p-4`
+- ✅ Secondary information in muted text
+- ✅ Horizontal layout with `flex items-center justify-between`
+- ✅ Remove all ChevronDown/ChevronRight icons
+- ✅ Remove all accordion state management

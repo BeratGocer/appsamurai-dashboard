@@ -1,0 +1,123 @@
+---
+description: Deployment verification patterns using browser automation
+---
+
+# Deployment Verification Patterns
+
+## Overview
+This rule documents how to verify deployments using browser automation with Playwright to ensure changes are properly deployed to production.
+
+## Browser Automation Workflow
+
+### 1. Navigate to Production Site
+Always test the live production site:
+
+```typescript
+// Navigate to production URL
+await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/');
+```
+
+### 2. Test Navigation Flow
+Verify all navigation works correctly:
+
+```typescript
+// Test Müşteriler page
+await page.getByRole('button', { name: 'Müşteriler' }).click();
+
+// Test Account Managers page  
+await page.getByRole('button', { name: 'Account Managers' }).click();
+
+// Test Dashboard page
+await page.getByRole('button', { name: 'Dashboard' }).click();
+```
+
+### 3. Verify UI Changes
+Check that KPI cards are removed and buttons are enhanced:
+
+```typescript
+// Verify no KPI cards exist
+const kpiCards = await page.locator('.bg-muted.p-4.rounded').count();
+expect(kpiCards).toBe(0);
+
+// Verify View Files buttons are prominent
+const viewFilesButtons = await page.getByRole('button', { name: 'View Files' });
+await expect(viewFilesButtons).toHaveClass(/font-semibold/);
+```
+
+## Deployment Process
+
+### 1. Git Operations
+```bash
+# Stage changes
+git add .
+
+# Commit with timestamp
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - [description]"
+
+# Push to GitHub
+git push origin main
+```
+
+### 2. Build Process
+```bash
+# Build frontend
+npm run build
+
+# Verify dist/ directory is created
+ls -la dist/
+```
+
+### 3. Deploy to Netlify
+```bash
+# Deploy to production
+netlify deploy --prod --dir=dist
+```
+
+## Verification Checklist
+
+### Before Deployment
+- ✅ Code changes are complete
+- ✅ Linter errors are fixed
+- ✅ No unused variables or functions
+- ✅ All imports are clean
+
+### After Deployment
+- ✅ Git push successful
+- ✅ Build process completed without errors
+- ✅ Netlify deploy successful
+- ✅ Production URL accessible
+- ✅ UI changes visible on live site
+- ✅ Navigation works correctly
+- ✅ No console errors in browser
+
+## Common Issues and Solutions
+
+### Issue: "Changes not visible on live site"
+**Solution**: 
+1. Check if deployment completed successfully
+2. Clear browser cache
+3. Verify correct production URL
+4. Check Netlify build logs
+
+### Issue: "Build errors"
+**Solution**:
+1. Fix linter errors first
+2. Check TypeScript compilation
+3. Verify all imports are correct
+4. Remove unused code
+
+### Issue: "Git push fails"
+**Solution**:
+1. Check for merge conflicts
+2. Pull latest changes: `git pull origin main`
+3. Resolve conflicts if any
+4. Re-push: `git push origin main`
+
+## Critical Rules
+- ✅ Always test live site after deployment
+- ✅ Use browser automation to verify changes
+- ✅ Check all navigation flows
+- ✅ Verify UI changes are visible
+- ✅ Monitor deployment logs for errors
+- ✅ Test on different screen sizes if responsive changes
+- ✅ Clear browser cache if changes not visible

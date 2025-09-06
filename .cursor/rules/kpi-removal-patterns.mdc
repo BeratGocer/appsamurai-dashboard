@@ -1,0 +1,116 @@
+---
+description: KPI removal patterns for Customers and Account Managers pages
+---
+
+# KPI Removal Patterns
+
+## Overview
+This rule documents the patterns for removing KPI cards and accordion systems from Customers and Account Managers pages in the AppSamurai Dashboard.
+
+## Implementation Pattern
+
+### 1. Remove Overview KPI Cards
+When removing KPI cards from page headers:
+
+```typescript
+// BEFORE - KPI cards in header
+<div className="bg-card p-6 rounded-lg border">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-lg font-semibold">Customer Overview</h3>
+  </div>
+  <div className="grid gap-4 md:grid-cols-3">
+    <div className="bg-muted p-4 rounded">
+      <div className="text-2xl font-bold">{customers.length}</div>
+      <div className="text-sm text-muted-foreground">Total Customers</div>
+    </div>
+    // ... more KPI cards
+  </div>
+</div>
+
+// AFTER - Simple header without KPI cards
+<div className="bg-card p-6 rounded-lg border">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-lg font-semibold">Customers</h3>
+  </div>
+</div>
+```
+
+### 2. Remove Accordion System
+Replace accordion functionality with simple cards:
+
+```typescript
+// BEFORE - Accordion system
+<div className="border rounded-lg bg-card">
+  <div className="p-4 cursor-pointer hover:bg-muted/50 transition-colors flex items-center justify-between"
+       onClick={() => toggleCustomerExpansion(customer.id)}>
+    <div className="flex items-center space-x-3">
+      {expandedCustomers.has(customer.id) ? (
+        <ChevronDown className="h-4 w-4" />
+      ) : (
+        <ChevronRight className="h-4 w-4" />
+      )}
+      <h4 className="font-semibold">{customer.name}</h4>
+    </div>
+    <Button variant="default" size="default" onClick={...}>
+      View Files
+    </Button>
+  </div>
+  {expandedCustomers.has(customer.id) && (
+    <div className="px-4 pb-4 border-t bg-muted/20">
+      {/* Accordion content */}
+    </div>
+  )}
+</div>
+
+// AFTER - Simple card without accordion
+<div className="border rounded-lg bg-card p-4">
+  <div className="flex items-center justify-between">
+    <div className="flex items-center space-x-3">
+      <h4 className="font-semibold">{customer.name}</h4>
+      <span className="text-sm text-muted-foreground">
+        ({customer.games.length} games, {customer.totalInstalls.toLocaleString()} installs)
+      </span>
+    </div>
+    <Button variant="default" size="default" onClick={...} className="font-semibold">
+      View Files
+    </Button>
+  </div>
+</div>
+```
+
+### 3. Clean Up Unused State and Functions
+Remove accordion-related state and functions:
+
+```typescript
+// Remove these state variables
+const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
+const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
+
+// Remove these functions
+const toggleCustomerExpansion = (customerId: string) => { ... };
+const toggleManagerExpansion = (managerId: string) => { ... };
+```
+
+## Button Enhancement Pattern
+Make "View Files" buttons more prominent:
+
+```typescript
+// Enhanced button styling
+<Button
+  variant="default"        // Blue background instead of ghost
+  size="default"          // Larger size instead of sm
+  className="font-semibold" // Bold text
+  onClick={...}
+>
+  View Files
+</Button>
+```
+
+## Critical Rules
+- ✅ Always remove overview KPI cards from page headers
+- ✅ Replace accordion systems with simple cards
+- ✅ Clean up unused state variables and functions
+- ✅ Enhance button visibility with default variant and font-semibold
+- ✅ Remove ChevronDown/ChevronRight icons
+- ✅ Remove onClick handlers for accordion toggling
+- ✅ Test linter errors and fix unused variable warnings

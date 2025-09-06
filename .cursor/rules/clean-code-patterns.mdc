@@ -1,0 +1,153 @@
+---
+description: Clean code patterns for removing unused functionality
+---
+
+# Clean Code Patterns
+
+## Overview
+This rule documents patterns for cleaning up code when removing features, ensuring no unused variables, functions, or imports remain.
+
+## State Cleanup Pattern
+
+### 1. Remove Unused State Variables
+When removing accordion functionality:
+
+```typescript
+// REMOVE - Unused accordion state
+const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
+const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
+
+// KEEP - Still needed for other functionality
+const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+const [selectedManager, setSelectedManager] = useState<string | null>(null);
+```
+
+### 2. Remove Unused Functions
+Clean up functions that are no longer called:
+
+```typescript
+// REMOVE - Unused accordion toggle functions
+const toggleCustomerExpansion = (customerId: string) => {
+  const newExpanded = new Set(expandedCustomers);
+  if (newExpanded.has(customerId)) {
+    newExpanded.delete(customerId);
+  } else {
+    newExpanded.add(customerId);
+  }
+  setExpandedCustomers(newExpanded);
+};
+
+const toggleManagerExpansion = (managerId: string) => {
+  const newExpanded = new Set(expandedManagers);
+  if (newExpanded.has(managerId)) {
+    newExpanded.delete(managerId);
+  } else {
+    newExpanded.add(managerId);
+  }
+  setExpandedManagers(newExpanded);
+};
+
+// KEEP - Still used for file expansion
+const toggleFileExpansion = (fileId: string) => {
+  const newExpanded = new Set(expandedFiles);
+  if (newExpanded.has(fileId)) {
+    newExpanded.delete(fileId);
+  } else {
+    newExpanded.add(fileId);
+  }
+  setExpandedFiles(newExpanded);
+};
+```
+
+## Import Cleanup Pattern
+
+### 1. Remove Unused Icon Imports
+When removing accordion icons:
+
+```typescript
+// REMOVE - Unused accordion icons
+import { ChevronDown, ChevronRight } from 'lucide-react';
+
+// KEEP - Still used elsewhere
+import { Settings, Upload, Download } from 'lucide-react';
+```
+
+### 2. Check All Imports
+Always verify imports are actually used:
+
+```typescript
+// Use grep to find unused imports
+grep -r "ChevronDown\|ChevronRight" src/components/Dashboard.tsx
+// If no results, remove the import
+```
+
+## Linter Error Resolution
+
+### 1. Unused Variable Warnings
+Fix TypeScript/ESLint warnings:
+
+```bash
+# Check for linter errors
+npm run lint
+# or
+npx eslint src/components/Dashboard.tsx
+```
+
+### 2. Common Warning Patterns
+```typescript
+// Warning: 'expandedCustomers' is declared but its value is never read
+// Solution: Remove the variable declaration
+
+// Warning: 'toggleCustomerExpansion' is declared but its value is never read  
+// Solution: Remove the function declaration
+```
+
+## Code Reduction Metrics
+
+### Before Cleanup
+- Complex accordion system with state management
+- Multiple toggle functions
+- Icon imports for chevrons
+- Conditional rendering for accordion content
+
+### After Cleanup
+- Simple card-based layout
+- Direct button actions
+- Minimal state management
+- Cleaner component structure
+
+## Refactoring Checklist
+
+### Remove Functionality
+- ✅ Remove accordion state variables
+- ✅ Remove accordion toggle functions
+- ✅ Remove accordion UI elements (ChevronDown, ChevronRight)
+- ✅ Remove accordion onClick handlers
+- ✅ Remove conditional accordion content rendering
+
+### Simplify UI
+- ✅ Replace accordion with simple cards
+- ✅ Use direct button actions instead of toggles
+- ✅ Remove unnecessary hover states for accordion
+- ✅ Simplify layout structure
+
+### Clean Imports
+- ✅ Remove unused icon imports
+- ✅ Remove unused utility imports
+- ✅ Verify all remaining imports are used
+
+### Test and Verify
+- ✅ Run linter to check for warnings
+- ✅ Fix all unused variable warnings
+- ✅ Test functionality still works
+- ✅ Verify UI looks correct
+
+## Critical Rules
+- ✅ Always remove unused state variables
+- ✅ Always remove unused functions
+- ✅ Always remove unused imports
+- ✅ Run linter after cleanup
+- ✅ Fix all TypeScript/ESLint warnings
+- ✅ Test functionality after cleanup
+- ✅ Verify UI still works correctly
+- ✅ Document what was removed and why
