@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Upload, FileText, X, CheckCircle, AlertCircle, User, Building } from "lucide-react"
-import { parseCSV } from '@/utils/csvParser'
+import { parseCSV, isSameCampaign, mergeCampaignData } from '@/utils/csvParser'
 import type { UploadedFile } from '@/types'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -18,6 +18,7 @@ interface FileUploadProps {
   onFileDelete: (fileId: string) => void;
   activeFileId: string | null;
   onFileReplace?: (fileId: string, updated: { name: string; size: number; data: UploadedFile['data'] }) => void;
+  onFileUpdate?: (fileId: string, updated: { name: string; size: number; data: UploadedFile['data'] }) => void;
   availableCustomers?: string[];
   availableManagers?: string[];
 }
@@ -29,6 +30,7 @@ export function FileUpload({
   onFileDelete, 
   activeFileId,
   onFileReplace,
+  onFileUpdate,
   availableCustomers,
   availableManagers,
 }: FileUploadProps) {
@@ -38,6 +40,11 @@ export function FileUpload({
   const [error, setError] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState('');
   const [accountManager, setAccountManager] = useState('');
+  const [matchingFile, setMatchingFile] = useState<UploadedFile | null>(null);
+  const [showUpdateOptions, setShowUpdateOptions] = useState(false);
+  const [newFileData, setNewFileData] = useState<UploadedFile['data'] | null>(null);
+  const [newFileName, setNewFileName] = useState('');
+  const [newFileSize, setNewFileSize] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const replaceTargetIdRef = useRef<string | null>(null);
@@ -62,6 +69,8 @@ export function FileUpload({
     setUploading(true);
     setUploadProgress(0);
     setError(null);
+    setMatchingFile(null);
+    setShowUpdateOptions(false);
 
     try {
       const text = await file.text();
@@ -81,35 +90,52 @@ export function FileUpload({
       const data = parseCSV(text);
       if (data.length === 0) throw new Error('CSV file appears to be empty or invalid');
 
-      // Generate unique file ID
-      const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      const uploadedFile: UploadedFile = {
-        id: fileId,
-        name: file.name,
-        size: file.size,
-        uploadDate: new Date().toISOString(),
-        data: data,
-        isActive: true,
-        customerName: customerName.trim() || undefined,
-        accountManager: accountManager.trim() || undefined
-      };
+      // Check if this matches an existing campaign
+      const matchingExistingFile = uploadedFiles.find(existingFile => 
+        isSameCampaign(existingFile.data, data)
+      );
 
       setUploadProgress(100);
-      setTimeout(() => {
-        onFileUpload(uploadedFile);
+      
+      if (matchingExistingFile && onFileUpdate) {
+        // Show update options
+        setMatchingFile(matchingExistingFile);
+        setNewFileData(data);
+        setNewFileName(file.name);
+        setNewFileSize(file.size);
+        setShowUpdateOptions(true);
         setUploading(false);
         setUploadProgress(0);
-        setCustomerName('');
-        setAccountManager('');
-      }, 500);
+      } else {
+        // Create new file
+        const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        const uploadedFile: UploadedFile = {
+          id: fileId,
+          name: file.name,
+          size: file.size,
+          uploadDate: new Date().toISOString(),
+          data: data,
+          isActive: true,
+          customerName: customerName.trim() || undefined,
+          accountManager: accountManager.trim() || undefined
+        };
+
+        setTimeout(() => {
+          onFileUpload(uploadedFile);
+          setUploading(false);
+          setUploadProgress(0);
+          setCustomerName('');
+          setAccountManager('');
+        }, 500);
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to parse CSV file');
       setUploading(false);
       setUploadProgress(0);
     }
-  }, [onFileUpload, customerName, accountManager]);
+  }, [onFileUpload, onFileUpdate, customerName, accountManager, uploadedFiles]);
 
   // Replace flow
   const handleReplaceChoose = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,6 +157,64 @@ export function FileUpload({
       }
     })();
   }, [onFileReplace]);
+
+  // Handle update options
+  const handleUpdateFile = useCallback(() => {
+    if (!matchingFile || !newFileData || !onFileUpdate) return;
+    
+    const mergedData = mergeCampaignData(matchingFile.data, newFileData);
+    
+    onFileUpdate(matchingFile.id, {
+      name: newFileName,
+      size: newFileSize,
+      data: mergedData
+    });
+    
+    // Reset state
+    setMatchingFile(null);
+    setShowUpdateOptions(false);
+    setNewFileData(null);
+    setNewFileName('');
+    setNewFileSize(0);
+    setCustomerName('');
+    setAccountManager('');
+  }, [matchingFile, newFileData, newFileName, newFileSize, onFileUpdate]);
+
+  const handleCreateNewFile = useCallback(() => {
+    if (!newFileData) return;
+    
+    const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    const uploadedFile: UploadedFile = {
+      id: fileId,
+      name: newFileName,
+      size: newFileSize,
+      uploadDate: new Date().toISOString(),
+      data: newFileData,
+      isActive: true,
+      customerName: customerName.trim() || undefined,
+      accountManager: accountManager.trim() || undefined
+    };
+
+    onFileUpload(uploadedFile);
+    
+    // Reset state
+    setMatchingFile(null);
+    setShowUpdateOptions(false);
+    setNewFileData(null);
+    setNewFileName('');
+    setNewFileSize(0);
+    setCustomerName('');
+    setAccountManager('');
+  }, [newFileData, newFileName, newFileSize, customerName, accountManager, onFileUpload]);
+
+  const handleCancelUpdate = useCallback(() => {
+    setMatchingFile(null);
+    setShowUpdateOptions(false);
+    setNewFileData(null);
+    setNewFileName('');
+    setNewFileSize(0);
+  }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -305,6 +389,57 @@ export function FileUpload({
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Update Options */}
+          {showUpdateOptions && matchingFile && (
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-3">
+                  <div>
+                    <strong>Benzer Kampanya Bulundu!</strong>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Yüklediğiniz dosya "{matchingFile.name}" dosyasıyla aynı kampanyaya ait görünüyor.
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={handleUpdateFile}
+                      className="w-full"
+                      variant="default"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Mevcut Dosyayı Güncelle (Ayarları Korur)
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleCreateNewFile}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Yeni Dosya Olarak Ekle
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleCancelUpdate}
+                      className="w-full"
+                      variant="ghost"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      İptal Et
+                    </Button>
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground">
+                    <strong>Güncelle:</strong> Yeni verileri mevcut dosyaya ekler, KPI ayarları ve gizli tablolar korunur.<br/>
+                    <strong>Yeni Dosya:</strong> Tamamen yeni bir dosya oluşturur.
+                  </div>
+                </div>
+              </AlertDescription>
             </Alert>
           )}
         </CardContent>

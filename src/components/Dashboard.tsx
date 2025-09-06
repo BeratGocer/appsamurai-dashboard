@@ -24,6 +24,7 @@ interface DashboardProps {
   onFileUpload: (file: UploadedFile) => void;
   onFileSelect: (fileId: string) => void;
   onFileDelete: (fileId: string) => void;
+  onFileUpdate?: (fileId: string, updated: { name: string; size: number; data: UploadedFile['data'] }) => void;
   onShowUpload: () => void;
   onExportFiles: () => void;
   onImportFiles: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -35,6 +36,7 @@ export function Dashboard({
   onFileUpload, 
   onFileSelect, 
   onFileDelete, 
+  onFileUpdate,
   onShowUpload,
   onExportFiles,
   onImportFiles
@@ -346,6 +348,7 @@ export function Dashboard({
             onFileDelete={onFileDelete}
             activeFileId={activeFileId}
             onFileReplace={undefined}
+            onFileUpdate={onFileUpdate}
             availableCustomers={Array.from(new Set(uploadedFiles.map(f => f.customerName).filter(Boolean))) as string[]}
             availableManagers={Array.from(new Set(uploadedFiles.map(f => f.accountManager).filter(Boolean))) as string[]}
           />

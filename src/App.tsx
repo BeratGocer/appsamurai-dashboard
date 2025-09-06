@@ -112,6 +112,23 @@ function App() {
     localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
   }
 
+  // Update existing file's data while preserving settings and merging new data
+  const handleFileUpdate = async (fileId: string, updated: { name: string; size: number; data: UploadedFile['data'] }) => {
+    const updatedFiles = uploadedFiles.map(f => {
+      if (f.id !== fileId) return f
+      return {
+        ...f,
+        name: updated.name,
+        size: updated.size,
+        uploadDate: new Date().toISOString(),
+        data: updated.data,
+      }
+    })
+    setUploadedFiles(updatedFiles)
+    // keep active selection as is
+    localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
+  }
+
   const handleShowUpload = () => {
     setShowUploadPage(true)
   }
@@ -192,6 +209,7 @@ function App() {
             onFileDelete={handleFileDelete}
             activeFileId={activeFileId}
             onFileReplace={handleFileReplace}
+            onFileUpdate={handleFileUpdate}
             availableCustomers={Array.from(new Set(uploadedFiles.map(f => f.customerName).filter(Boolean))) as string[]}
             availableManagers={Array.from(new Set(uploadedFiles.map(f => f.accountManager).filter(Boolean))) as string[]}
           />
@@ -214,6 +232,7 @@ function App() {
           // This will be handled inside Dashboard component
         }}
         onFileDelete={handleFileDelete}
+        onFileUpdate={handleFileUpdate}
         onShowUpload={handleShowUpload}
         onExportFiles={handleExportFiles}
         onImportFiles={handleImportFiles}

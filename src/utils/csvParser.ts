@@ -1325,6 +1325,90 @@ export function getGamesFromData(data: CampaignData[]): Array<{
   }).sort((a, b) => a.name.localeCompare(b.name));
 }
 
+// Generate unique campaign identifier for matching
+export function generateCampaignId(data: CampaignData[]): string {
+  if (data.length === 0) return '';
+  
+  // Get unique values from the data
+  const games = [...new Set(data.map(row => extractGameName(row.app)))];
+  const customers = [...new Set(data.map(row => {
+    // Try to extract customer from campaign network or use a default
+    const parsed = parseCampaignNetwork(row.campaign_network);
+    return parsed.country || 'Global';
+  }))];
+  
+  // Sort for consistent ID generation
+  games.sort();
+  customers.sort();
+  
+  // Create a unique identifier based on games and customers
+  return `${games.join('|')}-${customers.join('|')}`;
+}
+
+// Check if two datasets represent the same campaign
+export function isSameCampaign(existingData: CampaignData[], newData: CampaignData[]): boolean {
+  const existingId = generateCampaignId(existingData);
+  const newId = generateCampaignId(newData);
+  
+  // If IDs match, they're the same campaign
+  if (existingId === newId && existingId !== '') {
+    return true;
+  }
+  
+  // Additional check: if they have overlapping games and similar structure
+  const existingGames = new Set(existingData.map(row => extractGameName(row.app)));
+  const newGames = new Set(newData.map(row => extractGameName(row.app)));
+  
+  // If more than 50% of games overlap, consider it the same campaign
+  const overlap = [...existingGames].filter(game => newGames.has(game)).length;
+  const totalGames = new Set([...existingGames, ...newGames]).size;
+  
+  return overlap / totalGames > 0.5;
+}
+
+// Merge campaign data while preserving date-based updates
+export function mergeCampaignData(existingData: CampaignData[], newData: CampaignData[]): CampaignData[] {
+  const existingMap = new Map<string, CampaignData>();
+  
+  // Create a map of existing data by unique key (app + campaign_network + adgroup_network + day)
+  existingData.forEach(row => {
+    const key = `${row.app}-${row.campaign_network}-${row.adgroup_network}-${row.day}`;
+    existingMap.set(key, row);
+  });
+  
+  // Process new data
+  const mergedData: CampaignData[] = [];
+  const processedKeys = new Set<string>();
+  
+  // Add all existing data first
+  existingData.forEach(row => {
+    const key = `${row.app}-${row.campaign_network}-${row.adgroup_network}-${row.day}`;
+    mergedData.push(row);
+    processedKeys.add(key);
+  });
+  
+  // Add new data, replacing existing entries for the same day
+  newData.forEach(row => {
+    const key = `${row.app}-${row.campaign_network}-${row.adgroup_network}-${row.day}`;
+    
+    if (existingMap.has(key)) {
+      // Replace existing entry with new data
+      const index = mergedData.findIndex(item => 
+        `${item.app}-${item.campaign_network}-${item.adgroup_network}-${item.day}` === key
+      );
+      if (index !== -1) {
+        mergedData[index] = row;
+      }
+    } else {
+      // Add new entry
+      mergedData.push(row);
+    }
+    processedKeys.add(key);
+  });
+  
+  return mergedData;
+}
+
 // Synchronize dates across all groups - ensures all tables have same date range
 export function synchronizeGroupDates(groups: GameCountryPublisherGroup[], startDate?: string, endDate?: string): GameCountryPublisherGroup[] {
   if (groups.length === 0) return groups;
