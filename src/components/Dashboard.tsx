@@ -47,8 +47,6 @@ export function Dashboard({
   const [selectedManager, setSelectedManager] = useState<string | null>(null);
   // Removed search and filtering state - not needed for dashboard
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
-  const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
-  const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   
   // KPI edit mode state
@@ -205,25 +203,6 @@ export function Dashboard({
     setExpandedFiles(newExpanded);
   };
 
-  const toggleCustomerExpansion = (customerId: string) => {
-    const newExpanded = new Set(expandedCustomers);
-    if (newExpanded.has(customerId)) {
-      newExpanded.delete(customerId);
-    } else {
-      newExpanded.add(customerId);
-    }
-    setExpandedCustomers(newExpanded);
-  };
-
-  const toggleManagerExpansion = (managerId: string) => {
-    const newExpanded = new Set(expandedManagers);
-    if (newExpanded.has(managerId)) {
-      newExpanded.delete(managerId);
-    } else {
-      newExpanded.add(managerId);
-    }
-    setExpandedManagers(newExpanded);
-  };
 
 
 
@@ -525,44 +504,21 @@ export function Dashboard({
           <div className="grid gap-6">
             <div className="bg-card p-6 rounded-lg border">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Customer Overview</h3>
+                <h3 className="text-lg font-semibold">Customers</h3>
                 {selectedCustomer && (
                   <Button variant="outline" onClick={() => setSelectedCustomer(null)}>
                     Back to All Customers
                   </Button>
                 )}
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="bg-muted p-4 rounded">
-                  <div className="text-2xl font-bold">{customers.length}</div>
-                  <div className="text-sm text-muted-foreground">Total Customers</div>
-                </div>
-                <div className="bg-muted p-4 rounded">
-                  <div className="text-2xl font-bold">{customers.reduce((sum, c) => sum + c.totalInstalls, 0).toLocaleString()}</div>
-                  <div className="text-sm text-muted-foreground">Total Installs</div>
-                </div>
-                <div className="bg-muted p-4 rounded">
-                  <div className="text-2xl font-bold">{((customers.reduce((sum, c) => sum + c.avgRoasD7, 0) / Math.max(customers.length, 1)) * 100).toFixed(1)}%</div>
-                  <div className="text-sm text-muted-foreground">Avg ROAS D7</div>
-                </div>
-              </div>
             </div>
             
             {!selectedCustomer ? (
               <div className="space-y-2">
                 {customers.map((customer) => (
-                  <div key={customer.id} className="border rounded-lg bg-card">
-                    {/* Accordion Header */}
-                    <div 
-                      className="p-4 cursor-pointer hover:bg-muted/50 transition-colors flex items-center justify-between"
-                      onClick={() => toggleCustomerExpansion(customer.id)}
-                    >
+                  <div key={customer.id} className="border rounded-lg bg-card p-4">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        {expandedCustomers.has(customer.id) ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
                         <h4 className="font-semibold">{customer.name}</h4>
                         <span className="text-sm text-muted-foreground">
                           ({customer.games.length} games, {customer.totalInstalls.toLocaleString()} installs)
@@ -571,26 +527,12 @@ export function Dashboard({
                       <Button
                         variant="default"
                         size="default"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedCustomer(customer.id);
-                        }}
+                        onClick={() => setSelectedCustomer(customer.id)}
                         className="font-semibold"
                       >
                         View Files
                       </Button>
                     </div>
-                    
-                    {/* Accordion Content */}
-                    {expandedCustomers.has(customer.id) && (
-                      <div className="px-4 pb-4 border-t bg-muted/20">
-                        <div className="pt-3">
-                          <div className="text-sm text-muted-foreground">
-                            Click "View Files" to see detailed file information for this customer.
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -706,44 +648,21 @@ export function Dashboard({
           <div className="grid gap-6">
             <div className="bg-card p-6 rounded-lg border">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Account Manager Overview</h3>
+                <h3 className="text-lg font-semibold">Account Managers</h3>
                 {selectedManager && (
                   <Button variant="outline" onClick={() => setSelectedManager(null)}>
                     Back to All Managers
                   </Button>
                 )}
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="bg-muted p-4 rounded">
-                  <div className="text-2xl font-bold">{accountManagers.length}</div>
-                  <div className="text-sm text-muted-foreground">Total Account Managers</div>
-                </div>
-                <div className="bg-muted p-4 rounded">
-                  <div className="text-2xl font-bold">{accountManagers.reduce((sum, am) => sum + am.totalInstalls, 0).toLocaleString()}</div>
-                  <div className="text-sm text-muted-foreground">Total Installs</div>
-                </div>
-                <div className="bg-muted p-4 rounded">
-                  <div className="text-2xl font-bold">{((accountManagers.reduce((sum, am) => sum + am.avgRoasD7, 0) / Math.max(accountManagers.length, 1)) * 100).toFixed(1)}%</div>
-                  <div className="text-sm text-muted-foreground">Avg ROAS D7</div>
-                </div>
-              </div>
             </div>
             
             {!selectedManager ? (
               <div className="space-y-2">
                 {accountManagers.map((manager) => (
-                  <div key={manager.id} className="border rounded-lg bg-card">
-                    {/* Accordion Header */}
-                    <div 
-                      className="p-4 cursor-pointer hover:bg-muted/50 transition-colors flex items-center justify-between"
-                      onClick={() => toggleManagerExpansion(manager.id)}
-                    >
+                  <div key={manager.id} className="border rounded-lg bg-card p-4">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        {expandedManagers.has(manager.id) ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
                         <h4 className="font-semibold">{manager.name}</h4>
                         <span className="text-sm text-muted-foreground">
                           ({manager.customers.length} customers, {manager.totalInstalls.toLocaleString()} installs)
@@ -752,26 +671,12 @@ export function Dashboard({
                       <Button
                         variant="default"
                         size="default"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedManager(manager.id);
-                        }}
+                        onClick={() => setSelectedManager(manager.id)}
                         className="font-semibold"
                       >
                         View Files
                       </Button>
                     </div>
-                    
-                    {/* Accordion Content */}
-                    {expandedManagers.has(manager.id) && (
-                      <div className="px-4 pb-4 border-t bg-muted/20">
-                        <div className="pt-3">
-                          <div className="text-sm text-muted-foreground">
-                            Click "View Files" to see detailed file information for this account manager.
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
