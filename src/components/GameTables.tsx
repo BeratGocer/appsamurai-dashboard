@@ -144,6 +144,8 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
       retention_rate_d14: 'Ret D14',
       retention_rate_d30: 'Ret D30',
       ecpi: 'eCPI',
+      cost: 'Maliyet',
+      all_revenue: 'Gelir',
       adjust_cost: 'Cost',
       ad_revenue: 'Revenue',
       gross_profit: 'Profit',
@@ -307,7 +309,8 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
         {isExpanded && (
           <CardContent className="pt-0 flex-1 flex flex-col">
             <div className="rounded-md border flex-1">
-              <Table>
+              <div className="overflow-x-auto">
+                <Table style={{ minWidth: `${400 + (visibleColumns.length * 95)}px` }}>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center table-header-fixed px-3 whitespace-nowrap min-w-[80px]">Tarih</TableHead>
@@ -333,10 +336,23 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                         </TableCell>
                         {visibleColumns.map(column => {
                           const value = (dayData as any)[column];
-                          const isROAS = column.startsWith('roas_') || column.startsWith('retention_rate_');
-                          const formattedValue = isROAS ? formatROAS(value || 0) : 
-                                               typeof value === 'number' ? value.toLocaleString() : 
-                                               value || '0';
+                          let formattedValue = '';
+                          
+                          // Sütun tipine göre formatla
+                          if (column.startsWith('roas_') || column.startsWith('retention_rate_')) {
+                            // ROAS ve retention değerleri için yüzde formatı
+                            formattedValue = formatROAS(value || 0);
+                          } else if (column === 'ecpi' || column === 'cost' || column === 'all_revenue' || 
+                                     column === 'adjust_cost' || column === 'ad_revenue' || column === 'gross_profit') {
+                            // Para birimi ve eCPI için sayı formatı
+                            formattedValue = typeof value === 'number' ? value.toFixed(2) : '0.00';
+                          } else if (column === 'installs') {
+                            // Install sayısı için binlik ayırıcı
+                            formattedValue = typeof value === 'number' ? value.toLocaleString() : '0';
+                          } else {
+                            // Diğer sayısal değerler için genel format
+                            formattedValue = typeof value === 'number' ? value.toLocaleString() : value || '0';
+                          }
                           
                           return (
                             <TableCell key={column} className="font-mono table-cell-fixed text-center py-2 px-3 whitespace-nowrap min-w-[85px]">
@@ -353,7 +369,8 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                     ))
                   )}
                 </TableBody>
-              </Table>
+                </Table>
+              </div>
             </div>
           </CardContent>
         )}

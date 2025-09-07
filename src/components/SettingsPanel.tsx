@@ -59,28 +59,30 @@ const COLOR_PRESETS = [
 ];
 
 const COLUMN_LABELS: Record<string, string> = {
-  installs: 'Install',
-  roas_d0: 'D0',
-  roas_d1: 'D1',
-  roas_d2: 'D2',
-  roas_d3: 'D3',
-  roas_d4: 'D4',
-  roas_d5: 'D5',
-  roas_d6: 'D6',
-  roas_d7: 'D7',
-  roas_d14: 'D14',
-  roas_d21: 'D21',
-  roas_d30: 'D30',
-  roas_d45: 'D45',
-  roas_d60: 'D60',
-  retention_rate_d1: 'Ret D1',
-  retention_rate_d7: 'Ret D7',
-  retention_rate_d14: 'Ret D14',
-  retention_rate_d30: 'Ret D30',
+  installs: 'Install Sayısı',
+  roas_d0: 'ROAS D0',
+  roas_d1: 'ROAS D1',
+  roas_d2: 'ROAS D2',
+  roas_d3: 'ROAS D3',
+  roas_d4: 'ROAS D4',
+  roas_d5: 'ROAS D5',
+  roas_d6: 'ROAS D6',
+  roas_d7: 'ROAS D7',
+  roas_d14: 'ROAS D14',
+  roas_d21: 'ROAS D21',
+  roas_d30: 'ROAS D30',
+  roas_d45: 'ROAS D45',
+  roas_d60: 'ROAS D60',
+  retention_rate_d1: 'Retention D1',
+  retention_rate_d7: 'Retention D7',
+  retention_rate_d14: 'Retention D14',
+  retention_rate_d30: 'Retention D30',
   ecpi: 'eCPI',
-  adjust_cost: 'Cost',
-  ad_revenue: 'Revenue',
-  gross_profit: 'Profit',
+  cost: 'Maliyet',
+  all_revenue: 'Toplam Gelir',
+  adjust_cost: 'Maliyet',
+  ad_revenue: 'Reklam Geliri',
+  gross_profit: 'Brüt Kar',
 };
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -265,46 +267,116 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     });
   };
 
+  // Otomatik sütun sıralama fonksiyonu
+  const sortColumnsByPriority = (columns: string[]): string[] => {
+    const priorityOrder = [
+      'installs',           // 1. Install Sayısı
+      'ecpi',              // 2. eCPI  
+      'cost',              // 3. Maliyet
+      'all_revenue',       // 4. Toplam Gelir
+      'roas_d0',          // 5. ROAS D0
+      'roas_d1',          // 6. ROAS D1
+      'roas_d2',          // 7. ROAS D2
+      'roas_d3',          // 8. ROAS D3
+      'roas_d4',          // 9. ROAS D4
+      'roas_d5',          // 10. ROAS D5
+      'roas_d6',          // 11. ROAS D6
+      'roas_d7',          // 12. ROAS D7
+      'roas_d14',         // 13. ROAS D14
+      'roas_d21',         // 14. ROAS D21
+      'roas_d30',         // 15. ROAS D30
+      'roas_d45',         // 16. ROAS D45
+      'roas_d60',         // 17. ROAS D60
+      'retention_rate_d1', // 18. Retention D1
+      'retention_rate_d7', // 19. Retention D7
+      'retention_rate_d14', // 20. Retention D14
+      'retention_rate_d30', // 21. Retention D30
+      'adjust_cost',      // 22. Maliyet (alternatif)
+      'ad_revenue',       // 23. Reklam Geliri
+      'gross_profit',     // 24. Brüt Kar
+    ];
+
+    return columns.sort((a, b) => {
+      const aIndex = priorityOrder.indexOf(a);
+      const bIndex = priorityOrder.indexOf(b);
+      
+      // Eğer her ikisi de priority listesinde varsa, priority sırasına göre sırala
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      
+      // Eğer sadece biri varsa, o önce gelsin
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      
+      // İkisi de yoksa alfabetik sırala
+      return a.localeCompare(b);
+    });
+  };
+
   const handleColumnToggle = (column: string) => {
     const currentColumns = settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7'];
     const newColumns = currentColumns.includes(column)
       ? currentColumns.filter(col => col !== column)
       : [...currentColumns, column];
 
+    // Yeni sütunları otomatik sırala
+    const sortedColumns = sortColumnsByPriority(newColumns);
+
     onSettingsChange({
       ...settings,
-      visibleColumns: newColumns,
+      visibleColumns: sortedColumns,
     });
   };
 
-  // Get actual column names from CSV data
-  const getActualColumnNames = () => {
-    if (csvData.length === 0) return {};
+  // CSV'den dinamik sütun algılama
+  const getAvailableColumnsFromCSV = (): string[] => {
+    if (csvData.length === 0) return [];
     
     const firstRow = csvData[0];
-    const columnNames: Record<string, string> = {};
+    const availableColumns: string[] = [];
     
-    // Extract actual column names from the first row of data
+    // CSV'deki tüm sütunları tarayın
     Object.keys(firstRow).forEach(key => {
-      // Use the key as is, or create a more readable version
-      if (key.startsWith('roas_')) {
-        const day = key.replace('roas_d', ''); // Fix: remove 'roas_d' instead of 'roas_'
-        columnNames[key] = `ROAS D${day}`;
-      } else if (key.startsWith('retention_rate_')) {
-        const day = key.replace('retention_rate_d', ''); // Fix: remove 'retention_rate_d' instead of 'retention_rate_'
-        columnNames[key] = `Retention D${day}`;
-      } else {
-        // Use the actual column name from CSV
-        columnNames[key] = key;
+      // Temel bilgileri hariç tut (bunlar sabit kalacak)
+      if (key === 'app' || key === 'campaign_network' || key === 'adgroup_network' || key === 'day') {
+        return;
+      }
+      
+      // Performans metrikleri ve ROAS verilerini dahil et
+      if (
+        key.startsWith('roas_') || 
+        key.startsWith('retention_rate_') || 
+        key.startsWith('ltv_') || 
+        key.startsWith('cost_') || 
+        key.startsWith('revenue_') || 
+        key === 'installs' ||
+        key === 'ecpi' ||
+        key === 'cost' ||
+        key === 'all_revenue' ||
+        key.startsWith('clicks') || 
+        key.startsWith('impressions') ||
+        key.startsWith('ctr') || 
+        key.startsWith('cvr') ||
+        key.startsWith('cpi') || 
+        key.startsWith('cpa') ||
+        key.startsWith('roi') || 
+        key.startsWith('profit') ||
+        key.startsWith('arpu') || 
+        key.startsWith('arppu') ||
+        key === 'adjust_cost' ||
+        key === 'ad_revenue' ||
+        key === 'gross_profit'
+      ) {
+        availableColumns.push(key);
       }
     });
     
-    return columnNames;
+    return availableColumns;
   };
 
   const getColumnLabel = (column: string): string => {
-    const actualNames = getActualColumnNames();
-    return actualNames[column] || column;
+    return COLUMN_LABELS[column] || column;
   };
 
   if (!isOpen) {
@@ -497,15 +569,20 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableColumns.length > 0 ? availableColumns.map(column => (
-                      <SelectItem key={column} value={column}>
-                        {getColumnLabel(column)}
-                      </SelectItem>
-                    )) : (
-                      <SelectItem value="installs" disabled>
-                        Veri yüklenmedi
-                      </SelectItem>
-                    )}
+                    {(() => {
+                      const csvColumns = getAvailableColumnsFromCSV();
+                      const columnsToShow = csvColumns.length > 0 ? csvColumns : availableColumns;
+                      
+                      return columnsToShow.length > 0 ? columnsToShow.map(column => (
+                        <SelectItem key={column} value={column}>
+                          {getColumnLabel(column)}
+                        </SelectItem>
+                      )) : (
+                        <SelectItem value="installs" disabled>
+                          Veri yüklenmedi
+                        </SelectItem>
+                      );
+                    })()}
                   </SelectContent>
                 </Select>
               </div>
@@ -592,54 +669,58 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
 
         {/* Column Visibility Management */}
-        {((csvData && csvData.length > 0) ? Object.keys(csvData[0]).filter(key => 
-          key.startsWith('roas_') || key.startsWith('retention_rate_') || 
-          key.startsWith('ltv_') || key.startsWith('cost_') || 
-          key.startsWith('revenue_') || key.startsWith('installs') ||
-          key.startsWith('clicks') || key.startsWith('impressions') ||
-          key.startsWith('ctr') || key.startsWith('cvr') ||
-          key.startsWith('cpi') || key.startsWith('cpa') ||
-          key.startsWith('roi') || key.startsWith('profit') ||
-          key.startsWith('arpu') || key.startsWith('arppu')
-        ) : availableColumns).length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              <Label className="text-sm font-medium">Tablo Sütunları</Label>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
-              {((csvData && csvData.length > 0) ? Object.keys(csvData[0]).filter(key => 
-                key.startsWith('roas_') || key.startsWith('retention_rate_') || 
-                key.startsWith('ltv_') || key.startsWith('cost_') || 
-                key.startsWith('revenue_') || key.startsWith('installs') ||
-                key.startsWith('clicks') || key.startsWith('impressions') ||
-                key.startsWith('ctr') || key.startsWith('cvr') ||
-                key.startsWith('cpi') || key.startsWith('cpa') ||
-                key.startsWith('roi') || key.startsWith('profit') ||
-                key.startsWith('arpu') || key.startsWith('arppu')
-              ) : availableColumns).map((column) => {
-                const isVisible = (settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']).includes(column);
-                return (
-                  <div
-                    key={column}
-                    className={`flex items-center justify-between p-2 border rounded cursor-pointer transition-colors text-sm ${
-                      isVisible ? 'bg-primary/10 border-primary' : 'bg-muted/20 hover:bg-muted/30'
-                    }`}
-                    onClick={() => handleColumnToggle(column)}
-                  >
-                    <span className="text-xs font-medium">{getColumnLabel(column)}</span>
-                    {isVisible ? (
-                      <Eye className="h-3 w-3 text-primary" />
-                    ) : (
-                      <EyeOff className="h-3 w-3 text-muted-foreground" />
-                    )}
+        {(() => {
+          const csvColumns = getAvailableColumnsFromCSV();
+          const columnsToShow = csvColumns.length > 0 ? csvColumns : availableColumns;
+          
+          return columnsToShow.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <Label className="text-sm font-medium">Tablo Sütunları</Label>
+                <Badge variant="secondary" className="text-xs">
+                  {columnsToShow.length} sütun mevcut
+                </Badge>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {columnsToShow.map((column) => {
+                  const isVisible = (settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7']).includes(column);
+                  return (
+                    <div
+                      key={column}
+                      className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors text-sm ${
+                        isVisible ? 'bg-primary/10 border-primary' : 'bg-muted/20 hover:bg-muted/30'
+                      }`}
+                      onClick={() => handleColumnToggle(column)}
+                    >
+                      <span className="text-xs font-medium">{getColumnLabel(column)}</span>
+                      {isVisible ? (
+                        <Eye className="h-3 w-3 text-primary" />
+                      ) : (
+                        <EyeOff className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Mevcut sütun sırasını göster */}
+              {settings.visibleColumns && settings.visibleColumns.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Mevcut Sütun Sırası:</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {settings.visibleColumns.map((column, index) => (
+                      <Badge key={column} variant="outline" className="text-xs">
+                        {index + 1}. {getColumnLabel(column)}
+                      </Badge>
+                    ))}
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Hidden Tables Management */}
         {hiddenTables && hiddenTables.length > 0 && (
