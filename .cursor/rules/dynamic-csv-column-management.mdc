@@ -1,0 +1,147 @@
+---
+description: Dynamic CSV column management and automatic sorting for table settings
+globs: src/components/SettingsPanel.tsx,src/components/GameTables.tsx
+---
+
+# Dynamic CSV Column Management
+
+## Overview
+This rule covers the implementation of dynamic CSV column detection, automatic sorting, and responsive table layout for the AppSamurai Dashboard.
+
+## Key Components
+
+### SettingsPanel.tsx
+- **Dynamic Column Detection**: Automatically detects available columns from CSV data
+- **Automatic Sorting**: Sorts columns by priority order when adding/removing
+- **Turkish Labels**: Provides Turkish column labels for all CSV columns
+
+### GameTables.tsx
+- **Responsive Layout**: Tables adapt to column count without horizontal scrolling
+- **Dynamic Width**: Table width adjusts based on visible columns
+- **Smart Formatting**: Different data types formatted appropriately
+
+## Column Priority Order
+```typescript
+const priorityOrder = [
+  'installs',           // 1. Install Sayısı
+  'ecpi',              // 2. eCPI  
+  'cost',              // 3. Maliyet
+  'all_revenue',       // 4. Toplam Gelir
+  'roas_d0',          // 5. ROAS D0
+  'roas_d1',          // 6. ROAS D1
+  // ... other ROAS days
+  'roas_d7',          // 12. ROAS D7
+  'roas_d14',         // 13. ROAS D14
+  'roas_d21',         // 14. ROAS D21
+  'roas_d30',         // 15. ROAS D30
+  'roas_d45',         // 16. ROAS D45
+];
+```
+
+## Critical Implementation Rules
+
+### 1. Immutable Sorting
+```typescript
+// ✅ CORRECT - Use spread operator to avoid mutation
+return [...columns].sort((a, b) => {
+  const aIndex = priorityOrder.indexOf(a);
+  const bIndex = priorityOrder.indexOf(b);
+  return aIndex - bIndex;
+});
+
+// ❌ WRONG - Mutates original array
+return columns.sort((a, b) => {
+  const aIndex = priorityOrder.indexOf(a);
+  const bIndex = priorityOrder.indexOf(b);
+  return aIndex - bIndex;
+});
+```
+
+### 2. Dynamic Table Width
+```typescript
+// Responsive table width calculation
+<Table style={{ minWidth: `${Math.max(400, (visibleColumns.length + 1) * 90)}px` }}>
+```
+
+### 3. Column Detection from CSV
+```typescript
+const getAvailableColumnsFromCSV = (): string[] => {
+  if (csvData.length === 0) return [];
+  
+  const firstRow = csvData[0];
+  const availableColumns: string[] = [];
+  
+  Object.keys(firstRow).forEach(key => {
+    // Exclude fixed columns (app, campaign_network, adgroup_network, day)
+    if (key === 'app' || key === 'campaign_network' || key === 'adgroup_network' || key === 'day') {
+      return;
+    }
+    
+    // Include performance metrics and ROAS data
+    if (
+      key.startsWith('roas_') || 
+      key.startsWith('retention_rate_') || 
+      key === 'installs' ||
+      key === 'ecpi' ||
+      key === 'cost' ||
+      key === 'all_revenue'
+    ) {
+      availableColumns.push(key);
+    }
+  });
+  
+  return availableColumns;
+};
+```
+
+### 4. Smart Data Formatting
+```typescript
+// Format data based on column type
+if (column.startsWith('roas_') || column.startsWith('retention_rate_')) {
+  formattedValue = formatROAS(value || 0); // Percentage format
+} else if (column === 'ecpi' || column === 'cost' || column === 'all_revenue') {
+  formattedValue = typeof value === 'number' ? value.toFixed(2) : '0.00'; // Decimal format
+} else if (column === 'installs') {
+  formattedValue = typeof value === 'number' ? value.toLocaleString() : '0'; // Comma separator
+}
+```
+
+## Default Settings
+- **Default Visible Columns**: `['installs', 'roas_d0', 'roas_d7']`
+- **Fixed Columns**: `app`, `campaign_network`, `adgroup_network`, `day` (never changeable)
+- **Minimum Table Width**: `400px`
+- **Column Width**: `90px` per column
+
+## Turkish Column Labels
+```typescript
+const COLUMN_LABELS: Record<string, string> = {
+  installs: 'Install Sayısı',
+  ecpi: 'eCPI',
+  cost: 'Maliyet',
+  all_revenue: 'Toplam Gelir',
+  roas_d0: 'ROAS D0',
+  roas_d7: 'ROAS D7',
+  roas_d30: 'ROAS D30',
+  // ... other labels
+};
+```
+
+## Common Issues and Solutions
+
+### Issue: Columns not sorting correctly
+**Root Cause**: Array mutation in sort function
+**Solution**: Use `[...columns].sort()` instead of `columns.sort()`
+
+### Issue: Table requires horizontal scrolling
+**Root Cause**: Fixed table width
+**Solution**: Use dynamic width calculation based on column count
+
+### Issue: Default columns not visible without scrolling
+**Root Cause**: Minimum width too high
+**Solution**: Set minimum width to `400px` for default 3 columns
+
+## File References
+- Settings Panel: [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx)
+- Game Tables: [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx)
+- CSV Parser: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- Type Definitions: [src/types/index.ts](mdc:src/types/index.ts)

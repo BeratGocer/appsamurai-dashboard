@@ -1,0 +1,160 @@
+---
+description: Automatic column sorting algorithms and priority management
+globs: src/components/SettingsPanel.tsx
+---
+
+# Automatic Column Sorting
+
+## Overview
+This rule covers the implementation of automatic column sorting based on priority order when users add or remove columns from table settings.
+
+## Sorting Algorithm
+
+### Priority Order Definition
+```typescript
+const priorityOrder = [
+  'installs',           // 1. Install Sayısı
+  'ecpi',              // 2. eCPI  
+  'cost',              // 3. Maliyet
+  'all_revenue',       // 4. Toplam Gelir
+  'roas_d0',          // 5. ROAS D0
+  'roas_d1',          // 6. ROAS D1
+  'roas_d2',          // 7. ROAS D2
+  'roas_d3',          // 8. ROAS D3
+  'roas_d4',          // 9. ROAS D4
+  'roas_d5',          // 10. ROAS D5
+  'roas_d6',          // 11. ROAS D6
+  'roas_d7',          // 12. ROAS D7
+  'roas_d14',         // 13. ROAS D14
+  'roas_d21',         // 14. ROAS D21
+  'roas_d30',         // 15. ROAS D30
+  'roas_d45',         // 16. ROAS D45
+  'roas_d60',         // 17. ROAS D60
+  'retention_rate_d1', // 18. Retention D1
+  'retention_rate_d7', // 19. Retention D7
+  'retention_rate_d14', // 20. Retention D14
+  'retention_rate_d30', // 21. Retention D30
+  'adjust_cost',      // 22. Maliyet (alternatif)
+  'ad_revenue',       // 23. Reklam Geliri
+  'gross_profit',     // 24. Brüt Kar
+];
+```
+
+### Sorting Function
+```typescript
+const sortColumnsByPriority = (columns: string[]): string[] => {
+  return [...columns].sort((a, b) => {
+    const aIndex = priorityOrder.indexOf(a);
+    const bIndex = priorityOrder.indexOf(b);
+    
+    // If both columns are in priority list, sort by priority order
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+    
+    // If only one is in priority list, prioritize it
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    
+    // If neither is in priority list, sort alphabetically
+    return a.localeCompare(b);
+  });
+};
+```
+
+## Critical Implementation Rules
+
+### 1. Immutable Sorting
+```typescript
+// ✅ CORRECT - Use spread operator to avoid mutation
+return [...columns].sort((a, b) => {
+  const aIndex = priorityOrder.indexOf(a);
+  const bIndex = priorityOrder.indexOf(b);
+  return aIndex - bIndex;
+});
+
+// ❌ WRONG - Mutates original array
+return columns.sort((a, b) => {
+  const aIndex = priorityOrder.indexOf(a);
+  const bIndex = priorityOrder.indexOf(b);
+  return aIndex - bIndex;
+});
+```
+
+### 2. Column Toggle Handler
+```typescript
+const handleColumnToggle = (column: string) => {
+  const currentColumns = settings.visibleColumns || ['installs', 'roas_d0', 'roas_d7'];
+  const newColumns = currentColumns.includes(column)
+    ? currentColumns.filter(col => col !== column)
+    : [...currentColumns, column];
+
+  // Re-sort all columns after adding/removing
+  const sortedColumns = sortColumnsByPriority(newColumns);
+
+  onSettingsChange({
+    ...settings,
+    visibleColumns: sortedColumns,
+  });
+};
+```
+
+## Sorting Logic
+
+### Priority-Based Sorting
+1. **Performance Metrics First**: `installs`, `ecpi`, `cost`, `all_revenue`
+2. **ROAS Series**: Chronological order from `roas_d0` to `roas_d60`
+3. **Retention Data**: `retention_rate_d1` to `retention_rate_d30`
+4. **Alternative Metrics**: `adjust_cost`, `ad_revenue`, `gross_profit`
+
+### Fallback Sorting
+- **Unknown Columns**: Sorted alphabetically
+- **Mixed Priority**: Priority columns come first, then alphabetical
+
+## Default Behavior
+
+### Initial State
+- **Default Columns**: `['installs', 'roas_d0', 'roas_d7']`
+- **Sorting**: Applied immediately when columns are added/removed
+- **Persistence**: Sorted order saved in settings
+
+### User Experience
+- **Automatic**: No manual sorting required
+- **Predictable**: Always follows same priority order
+- **Consistent**: Same result regardless of add/remove order
+
+## Common Issues and Solutions
+
+### Issue: Columns not sorting correctly
+**Root Cause**: Array mutation in sort function
+**Solution**: Use `[...columns].sort()` instead of `columns.sort()`
+
+### Issue: New columns appear at end
+**Root Cause**: Not calling sort function after toggle
+**Solution**: Always call `sortColumnsByPriority()` after column changes
+
+### Issue: Unknown columns not handled
+**Root Cause**: Missing fallback logic
+**Solution**: Add alphabetical sorting for unknown columns
+
+### Issue: Priority order not respected
+**Root Cause**: Incorrect indexOf usage
+**Solution**: Check for -1 values and handle appropriately
+
+## Testing Scenarios
+
+### Scenario 1: Add Cost Column
+**Input**: `['installs', 'roas_d0', 'roas_d7']` + `cost`
+**Expected**: `['installs', 'ecpi', 'cost', 'roas_d0', 'roas_d7']`
+
+### Scenario 2: Add Multiple Columns
+**Input**: `['installs', 'roas_d0', 'roas_d7']` + `cost`, `all_revenue`
+**Expected**: `['installs', 'ecpi', 'cost', 'all_revenue', 'roas_d0', 'roas_d7']`
+
+### Scenario 3: Remove Column
+**Input**: `['installs', 'ecpi', 'cost', 'roas_d0', 'roas_d7']` - `cost`
+**Expected**: `['installs', 'ecpi', 'roas_d0', 'roas_d7']`
+
+## File References
+- Settings Panel: [src/components/SettingsPanel.tsx](mdc:src/components/SettingsPanel.tsx)
+- Type Definitions: [src/types/index.ts](mdc:src/types/index.ts)

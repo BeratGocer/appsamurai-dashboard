@@ -1,0 +1,122 @@
+---
+description: Table layout and responsive design patterns for dashboard tables
+globs: src/components/GameTables.tsx,src/components/ui/table.tsx
+---
+
+# Table Layout and Responsive Design
+
+## Overview
+This rule covers responsive table design patterns that ensure tables display all columns without horizontal scrolling while maintaining readability.
+
+## Responsive Table Implementation
+
+### Dynamic Width Calculation
+```typescript
+// Calculate table width based on column count
+const tableWidth = Math.max(400, (visibleColumns.length + 1) * 90);
+
+<Table style={{ minWidth: `${tableWidth}px` }}>
+```
+
+### Column Width Standards
+- **Date Column**: Fixed width `w-20` (80px)
+- **Data Columns**: Minimum width `min-w-[70px]`
+- **Padding**: Reduced to `px-2` for compact display
+- **Font Size**: Fixed font classes for consistency
+
+### Table Structure
+```typescript
+<div className="rounded-md border flex-1 overflow-x-auto">
+  <Table className="w-full" style={{ minWidth: `${Math.max(400, (visibleColumns.length + 1) * 90)}px` }}>
+    <TableHeader>
+      <TableRow>
+        <TableHead className="text-center table-header-fixed px-2 whitespace-nowrap w-20">Tarih</TableHead>
+        {visibleColumns.map(column => (
+          <TableHead key={column} className="text-center table-header-fixed px-2 whitespace-nowrap min-w-[70px]">
+            {getColumnLabel(column)}
+          </TableHead>
+        ))}
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      {/* Dynamic row rendering */}
+    </TableBody>
+  </Table>
+</div>
+```
+
+## Critical CSS Classes
+
+### Fixed Font Sizes
+```css
+/* Table data - equivalent to 11pt */
+.table-cell-fixed {
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+}
+
+/* Table headers - equivalent to 11pt */
+.table-header-fixed {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+```
+
+### Responsive Breakpoints
+- **Minimum Width**: 400px (for default 3 columns)
+- **Column Width**: 90px per column
+- **Padding**: 8px (px-2) for compact display
+- **Whitespace**: `whitespace-nowrap` to prevent text wrapping
+
+## Layout Rules
+
+### 1. No Internal Scrolling
+- Tables must expand to fit all columns
+- Use `overflow-x-auto` on container, not table
+- Calculate minimum width based on column count
+
+### 2. Consistent Spacing
+- Use `px-2` for all table cells
+- Maintain `py-2` for vertical padding
+- Apply `min-w-[70px]` to all data columns
+
+### 3. Font Consistency
+- Use `table-cell-fixed` and `table-header-fixed` classes
+- Never change font sizes based on column count
+- Maintain `font-mono` for numeric data
+
+## Common Issues and Solutions
+
+### Issue: Table requires horizontal scrolling
+**Root Cause**: Fixed table width or insufficient minimum width
+**Solution**: Use dynamic width calculation with proper minimum
+
+### Issue: Columns too narrow to read
+**Root Cause**: Insufficient minimum column width
+**Solution**: Set `min-w-[70px]` for all data columns
+
+### Issue: Inconsistent font sizes
+**Root Cause**: Missing fixed font classes
+**Solution**: Always use `table-cell-fixed` and `table-header-fixed`
+
+### Issue: Text wrapping in cells
+**Root Cause**: Missing `whitespace-nowrap`
+**Solution**: Add `whitespace-nowrap` to all table cells
+
+## Performance Considerations
+
+### Efficient Rendering
+- Use `key` props for dynamic column mapping
+- Implement `useMemo` for expensive calculations
+- Avoid inline style calculations in render
+
+### Memory Management
+- Use `[...columns].sort()` for immutable operations
+- Avoid creating new objects in render loops
+- Cache column labels and formatting functions
+
+## File References
+- Game Tables: [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx)
+- Table UI Component: [src/components/ui/table.tsx](mdc:src/components/ui/table.tsx)
+- CSS Classes: [src/index.css](mdc:src/index.css)
