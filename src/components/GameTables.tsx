@@ -308,14 +308,13 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
         
         {isExpanded && (
           <CardContent className="pt-0 flex-1 flex flex-col">
-            <div className="rounded-md border flex-1">
-              <div className="overflow-x-auto">
-                <Table style={{ minWidth: `${400 + (visibleColumns.length * 95)}px` }}>
+            <div className="rounded-md border flex-1 overflow-x-auto">
+              <Table className="w-full" style={{ minWidth: `${Math.max(600, (visibleColumns.length + 1) * 80)}px` }}>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center table-header-fixed px-3 whitespace-nowrap min-w-[80px]">Tarih</TableHead>
+                    <TableHead className="text-center table-header-fixed px-2 whitespace-nowrap w-20">Tarih</TableHead>
                     {visibleColumns.map(column => (
-                      <TableHead key={column} className="text-center table-header-fixed px-3 whitespace-nowrap min-w-[85px]">
+                      <TableHead key={column} className="text-center table-header-fixed px-2 whitespace-nowrap min-w-[70px]">
                         {getColumnLabel(column)}
                       </TableHead>
                     ))}
@@ -331,7 +330,7 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                   ) : (
                     group.dailyData.map((dayData, dayIndex) => (
                       <TableRow key={`${group.game}-${group.country}-${group.publisher}-${dayIndex}`} className="hover:bg-muted/30">
-                        <TableCell className="font-medium table-cell-fixed text-center py-2 px-3 whitespace-nowrap min-w-[80px]">
+                        <TableCell className="font-medium table-cell-fixed text-center py-2 px-2 whitespace-nowrap w-20">
                           {formatDate(dayData.date)}
                         </TableCell>
                         {visibleColumns.map(column => {
@@ -355,7 +354,7 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                           }
                           
                           return (
-                            <TableCell key={column} className="font-mono table-cell-fixed text-center py-2 px-3 whitespace-nowrap min-w-[85px]">
+                            <TableCell key={column} className="font-mono table-cell-fixed text-center py-2 px-2 whitespace-nowrap min-w-[70px]">
                               <span 
                                 className="transition-all duration-200"
                                 style={getCellStyle(value || 0, column)}
@@ -370,7 +369,6 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                   )}
                 </TableBody>
                 </Table>
-              </div>
             </div>
           </CardContent>
         )}

@@ -320,7 +320,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       ? currentColumns.filter(col => col !== column)
       : [...currentColumns, column];
 
-    // Yeni sütunları otomatik sırala
+    // Tüm sütunları yeniden sırala (mevcut sırayı koruma, tam sıralama)
     const sortedColumns = sortColumnsByPriority(newColumns);
 
     onSettingsChange({
