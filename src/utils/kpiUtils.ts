@@ -110,8 +110,33 @@ export function calculateKPIValue(
       
       const tableId = `${group.game}-${group.country}-${group.platform}-${group.publisher}`;
       if (!hiddenTables.has(tableId)) {
-        // This group is visible, add its data
-        visibleData.push(...group.dailyData);
+        // This group is visible, convert dailyData to CampaignData format
+        group.dailyData.forEach(dailyRow => {
+          const campaignData: CampaignData = {
+            app: group.game,
+            campaign_network: `${group.game}_${group.platform}_${group.country}`,
+            adgroup_network: group.publisher,
+            day: dailyRow.date,
+            installs: dailyRow.installs,
+            roas_d0: dailyRow.roas_d0,
+            roas_d7: dailyRow.roas_d7,
+            roas_d30: dailyRow.roas_d30,
+            adjust_cost: dailyRow.cost,
+            ad_revenue: dailyRow.revenue,
+            // Set other required fields to default values
+            roas: dailyRow.roas_d7, // Use roas_d7 as roas
+            roas_d1: 0,
+            roas_d2: 0,
+            roas_d3: 0,
+            roas_d4: 0,
+            roas_d5: 0,
+            roas_d6: 0,
+            roas_d14: 0,
+            roas_d21: 0,
+            roas_d45: 0
+          };
+          visibleData.push(campaignData);
+        });
       }
     });
     
