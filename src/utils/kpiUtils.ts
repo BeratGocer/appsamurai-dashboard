@@ -1,4 +1,4 @@
-import type { CampaignData, KPICardConfig, KPIValue, AvailableColumn } from '@/types';
+import type { CampaignData, KPICardConfig, KPIValue, AvailableColumn, GameCountryPublisherGroup } from '@/types';
 // import { parseCampaignNetwork } from './csvParser';
 
 // Get available columns from campaign data
@@ -91,7 +91,7 @@ export function calculateKPIValue(
   data: CampaignData[], 
   config: KPICardConfig, 
   hiddenTables?: Set<string>,
-  gameGroups?: any[],
+  gameGroups?: GameCountryPublisherGroup[],
   selectedGame?: string | null
 ): KPIValue {
   
