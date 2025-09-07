@@ -1,6 +1,6 @@
 ---
-alwaysApply: true
-description: CSV data handling patterns and rules for AppSamurai Dashboard
+description: CSV data handling and parsing patterns for campaign data
+globs: src/utils/csvParser.ts,src/types/index.ts
 ---
 
 # CSV Data Handling Rules
@@ -38,6 +38,17 @@ roas: parseFloat(values[15]) || 0, // Use roas_d7 as roas
 ecpi: (cost / installs), // Don't compute if CSV has ecpi column
 ```
 
+## Ad Network Decoding Rules
+- Use [Adnetworks.csv](mdc:Adnetworks.csv) for publisher code mapping
+- Handle special prefixes: SFT_, SDA_, TBSDK, etc.
+- Keep unrecognized codes as-is (don't force decode)
+- Use base64 decoding only for clear base64 patterns
+
+## Date Synchronization
+- Always treat first row as header (CSV files never include headers)
+- Use `synchronizeGroupDates()` to fill missing dates with 0 values
+- Sort dates chronologically for proper time series analysis
+
 ## Critical Rules
 - ✅ Always check CSV headers first
 - ✅ Use CSV values directly when available
@@ -45,3 +56,9 @@ ecpi: (cost / installs), // Don't compute if CSV has ecpi column
 - ✅ Never recompute values that exist in CSV
 - ✅ Document mapping logic with comments
 - ✅ Test with actual CSV files to verify column availability
+- ✅ Handle undefined/null values gracefully
+
+## File References
+- CSV parsing: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- Type definitions: [src/types/index.ts](mdc:src/types/index.ts)
+- Ad network mapping: [Adnetworks.csv](mdc:Adnetworks.csv)

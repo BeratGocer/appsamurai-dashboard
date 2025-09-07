@@ -1,0 +1,76 @@
+---
+description: KPI dynamic behavior and filtering patterns for dashboard calculations
+globs: src/utils/kpiUtils.ts,src/components/DynamicKPISection.tsx,src/components/Dashboard.tsx
+---
+
+# KPI Dynamic Behavior Rules
+
+## Core Principle
+KPI cards must dynamically update when tables are hidden/shown or games are selected. Never use static calculations.
+
+## Type Safety Requirements
+```typescript
+// ✅ CORRECT: Proper typing for gameGroups parameter
+export function calculateKPIValue(
+  data: CampaignData[], 
+  config: KPICardConfig, 
+  hiddenTables?: Set<string>,
+  gameGroups?: GameCountryPublisherGroup[], // NOT any[]
+  selectedGame?: string | null
+): KPIValue
+
+// ❌ WRONG: Loose typing breaks filtering
+gameGroups?: any[]
+```
+
+## Data Conversion Pattern
+When using `gameGroups.dailyData`, convert to `CampaignData` format:
+
+```typescript
+group.dailyData.forEach(dailyRow => {
+  const campaignData: CampaignData = {
+    app: group.game,
+    campaign_network: `${group.game}_${group.platform}_${group.country}`,
+    adgroup_network: group.publisher,
+    day: dailyRow.date,
+    installs: dailyRow.installs,
+    roas_d0: dailyRow.roas_d0,
+    roas_d7: dailyRow.roas_d7,
+    roas_d30: dailyRow.roas_d30,
+    adjust_cost: dailyRow.cost,
+    ad_revenue: dailyRow.revenue,
+    // Map missing fields with defaults
+    roas: dailyRow.roas_d7,
+    roas_d1: 0, roas_d2: 0, roas_d3: 0, roas_d4: 0, roas_d5: 0, roas_d6: 0,
+    roas_d14: 0, roas_d21: 0, roas_d45: 0
+  };
+  visibleData.push(campaignData);
+});
+```
+
+## Filtering Logic Order
+1. **Check gameGroups first** - if present, use group-level filtering
+2. **Filter by selectedGame** - `group.game !== selectedGame`
+3. **Filter by hiddenTables** - `!hiddenTables.has(tableId)`
+4. **Fallback to raw data** - only when no gameGroups
+
+## Critical Rules
+- ✅ Always use proper TypeScript types for gameGroups
+- ✅ Convert dailyData to CampaignData format when needed
+- ✅ Test KPI updates when hiding/showing tables
+- ✅ Test KPI updates when selecting different games
+- ✅ Ensure KPI calculations respect date range filtering
+- ✅ Use `useMemo` for KPI value calculations to prevent unnecessary recalculations
+
+## Testing Scenarios
+- ✅ Hide a table → KPI values should decrease
+- ✅ Show hidden table → KPI values should increase
+- ✅ Select specific game → KPI should show only that game's data
+- ✅ Clear game selection → KPI should show all games' data
+- ✅ Change date range → KPI should recalculate for new range
+
+## File References
+- Main KPI logic: [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts)
+- KPI component: [src/components/DynamicKPISection.tsx](mdc:src/components/DynamicKPISection.tsx)
+- Dashboard integration: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+- Type definitions: [src/types/index.ts](mdc:src/types/index.ts)

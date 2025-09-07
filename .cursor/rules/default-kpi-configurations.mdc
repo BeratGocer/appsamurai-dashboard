@@ -1,0 +1,66 @@
+---
+description: Default KPI configurations and Turkish localization patterns
+globs: src/utils/kpiUtils.ts,src/components/DynamicKPISection.tsx
+---
+
+# Default KPI Configuration Rules
+
+## Current Default KPIs
+The system uses these 4 default KPIs for new files:
+
+1. **Average Daily Install** - Günlük ortalama install sayısı
+2. **Average Daily D0 ROAS** - Günlük ortalama D0 ROAS  
+3. **Last 7 Days Total Cost** - Son yedi günün harcama toplamı
+4. **Average Daily Cost** - Günlük ortalama harcama
+
+## Implementation Pattern
+```typescript
+export function getDefaultKPIConfigs(): KPICardConfig[] {
+  return [
+    {
+      id: 'kpi-1',
+      title: 'Average Daily Install',
+      column: 'installs',
+      calculationType: 'average',
+      format: 'number',
+      decimalPlaces: 0,
+      isVisible: true,
+      order: 1,
+      description: 'Günlük ortalama install sayısı',
+      badge: 'Daily Avg'
+    },
+    // ... other KPIs
+  ];
+}
+```
+
+## Turkish Localization Rules
+- ✅ Use Turkish descriptions for user-facing text
+- ✅ Keep technical field names in English (installs, roas_d0, etc.)
+- ✅ Use descriptive badges (Daily Avg, D0 ROAS, 7 Days)
+- ✅ Provide clear Turkish explanations in descriptions
+
+## KPI Calculation Types
+- **sum**: Total values (cost, installs)
+- **average**: Daily averages (daily install, daily ROAS, daily cost)
+- **count**: Number of records
+- **min/max**: Range values
+
+## Format Types
+- **number**: Integer values (installs)
+- **currency**: Money values (cost, revenue)
+- **percentage**: Ratio values (ROAS)
+- **decimal**: Precise decimal values
+
+## Critical Rules
+- ✅ Always provide Turkish descriptions for new KPIs
+- ✅ Use appropriate calculation types (average for daily metrics)
+- ✅ Set proper decimal places for each format
+- ✅ Include descriptive badges for quick identification
+- ✅ Maintain consistent ordering (1, 2, 3, 4)
+- ✅ Test with actual CSV data to ensure calculations work
+
+## File References
+- Default KPI configs: [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts)
+- KPI display: [src/components/DynamicKPISection.tsx](mdc:src/components/DynamicKPISection.tsx)
+- KPI settings: [src/components/KPISettingsPanel.tsx](mdc:src/components/KPISettingsPanel.tsx)

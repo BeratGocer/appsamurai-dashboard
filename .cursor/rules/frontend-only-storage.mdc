@@ -1,6 +1,6 @@
 ---
-alwaysApply: true
-description: Frontend-only storage policy - no backend dependencies
+description: Frontend-only architecture and localStorage patterns
+globs: src/App.tsx,src/components/FileUpload.tsx,src/utils/api.ts
 ---
 
 # Frontend-Only Storage Policy

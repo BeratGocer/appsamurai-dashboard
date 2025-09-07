@@ -1,78 +1,105 @@
 ---
-description: UI standards and component patterns for the AppSamurai Dashboard
-globs: src/components/*.tsx
+description: Dashboard UI standards and component patterns
+globs: src/components/Dashboard.tsx,src/components/Navbar.tsx,src/components/ui/*
 ---
 
 # Dashboard UI Standards
 
-## Architecture
-- Main entry: [src/App.tsx](mdc:src/App.tsx) → [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
-- Navigation: [src/components/Navbar.tsx](mdc:src/components/Navbar.tsx) with Turkish labels
-- Theme support: [src/contexts/ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
-
-## Component Library
-Use shadcn/ui components from [src/components/ui/](mdc:src/components/ui/):
-- `Card` for data containers
-- `Table` for tabular data
-- `Button` for actions
-- `Input` and `Select` for forms
+## Design System
+- **Component Library**: shadcn/ui components
+- **Styling**: Tailwind CSS
+- **Language**: Turkish UI labels
+- **Theme**: Dark/Light mode support via [ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
 
 ## Layout Patterns
 
-### KPI Cards
-Display summary metrics in a responsive grid:
-```tsx
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-  <MetricsCard title="Total Installs" value={totalInstalls} />
+### Main Dashboard Structure
+```typescript
+// Dashboard.tsx - Main layout
+<div className="min-h-screen bg-background">
+  <Navbar />
+  <div className="container mx-auto px-4 py-6">
+    {/* Tab content */}
+  </div>
 </div>
 ```
 
-### Data Tables (NOT Accordions)
-Use independent tables in grid layout, never accordion systems:
-```tsx
-<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-  {groups.map(group => (
-    <Card key={`${group.game}-${group.country}-${group.publisher}`}>
-      <Table>/* daily data */</Table>
-    </Card>
+### KPI Cards Grid
+```typescript
+// Responsive grid layout
+<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  {kpiCards.map(card => <EditableKPICard />)}
+</div>
+```
+
+### Accordion Tables
+```typescript
+// Expandable table sections
+<div className="space-y-4">
+  {gameGroups.map(group => (
+    <AccordionItem key={group.id}>
+      <AccordionTrigger>{group.title}</AccordionTrigger>
+      <AccordionContent>
+        <GameTables data={group.dailyData} />
+      </AccordionContent>
+    </AccordionItem>
   ))}
 </div>
 ```
 
-### Navigation Tabs
-Four main sections:
-- **Anasayfa**: Overview/landing
-- **Müşteriler**: Customer management  
-- **Account Managers**: Manager data
-- **Dashboard**: Main analytics view
+## Component Standards
 
-## Data Formatting Standards
+### Button Variants
+- `default`: Primary actions
+- `outline`: Secondary actions  
+- `ghost`: Subtle actions
+- `destructive`: Delete/danger actions
 
-### ROAS Display
-Always format as percentages: `(roas * 100).toFixed(2)}%`
+### Card Components
+- Use `Card`, `CardHeader`, `CardTitle`, `CardContent`, `CardFooter`
+- Consistent padding and spacing
+- Proper semantic structure
 
-### Dates
-Use Turkish locale format: `DD.MM.YYYY`
-```tsx
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('tr-TR', {
-    day: '2-digit', month: '2-digit', year: 'numeric'
-  });
-};
-```
+### Form Elements
+- Use `Input`, `Label`, `Select` from shadcn/ui
+- Consistent validation states
+- Turkish placeholder text
 
-### Numbers
-- Install counts: No decimal places
-- ROAS: 2 decimal places as percentage
-- Financial: 2 decimal places with currency if applicable
+## Responsive Design
+- **Mobile**: Single column layout, stacked components
+- **Tablet**: 2-column grid for KPI cards
+- **Desktop**: 4-column grid for KPI cards, side-by-side tables
 
-## Language Standards
-- UI labels in Turkish
-- Error messages in Turkish
-- Data labels in Turkish: "Tarih", "Install", "ROAS D7", "ROAS D30"
-- Table headers: "Toplam Install", "Gün Sayısı", "Ort. ROAS D7"
+## Color Scheme
+- **Primary**: Blue tones for interactive elements
+- **Success**: Green for positive metrics
+- **Warning**: Orange for caution states
+- **Error**: Red for negative metrics
+- **Muted**: Gray for secondary information
 
-## Component Naming
-- Use PascalCase for components
-- Prefix with domain: `GameTables`, `MetricsCard`, `FileUpload`
-- Group related components in same file when small
+## Typography
+- **Headings**: Font-semibold for section titles
+- **Body**: Default font weight for content
+- **Captions**: Text-sm for metadata
+- **Numbers**: Monospace for KPI values
+
+## Accessibility
+- Proper ARIA labels for interactive elements
+- Keyboard navigation support
+- Screen reader friendly
+- High contrast ratios
+
+## Critical Rules
+- ✅ Always use shadcn/ui components
+- ✅ Follow Tailwind CSS patterns
+- ✅ Use Turkish labels for user-facing text
+- ✅ Maintain consistent spacing (gap-4, py-6, etc.)
+- ✅ Test responsive behavior on all screen sizes
+- ✅ Ensure proper semantic HTML structure
+- ✅ Use proper color contrast ratios
+
+## File References
+- Main dashboard: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+- Navigation: [src/components/Navbar.tsx](mdc:src/components/Navbar.tsx)
+- UI components: [src/components/ui/](mdc:src/components/ui/)
+- Theme context: [src/contexts/ThemeContext.tsx](mdc:src/contexts/ThemeContext.tsx)
