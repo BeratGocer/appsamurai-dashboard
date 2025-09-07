@@ -296,9 +296,14 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       'gross_profit',     // 24. Brüt Kar
     ];
 
-    return columns.sort((a, b) => {
+    console.log('Sorting columns:', columns);
+    console.log('Priority order:', priorityOrder);
+
+    const sorted = columns.sort((a, b) => {
       const aIndex = priorityOrder.indexOf(a);
       const bIndex = priorityOrder.indexOf(b);
+      
+      console.log(`Comparing ${a} (index: ${aIndex}) vs ${b} (index: ${bIndex})`);
       
       // Eğer her ikisi de priority listesinde varsa, priority sırasına göre sırala
       if (aIndex !== -1 && bIndex !== -1) {
@@ -312,6 +317,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       // İkisi de yoksa alfabetik sırala
       return a.localeCompare(b);
     });
+    
+    console.log('Final sorted result:', sorted);
+    return sorted;
   };
 
   const handleColumnToggle = (column: string) => {
@@ -320,8 +328,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       ? currentColumns.filter(col => col !== column)
       : [...currentColumns, column];
 
+    console.log('Before sorting:', newColumns);
+    
     // Tüm sütunları yeniden sırala (mevcut sırayı koruma, tam sıralama)
     const sortedColumns = sortColumnsByPriority(newColumns);
+    
+    console.log('After sorting:', sortedColumns);
 
     onSettingsChange({
       ...settings,

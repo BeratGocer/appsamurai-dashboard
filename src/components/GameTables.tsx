@@ -309,7 +309,7 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
         {isExpanded && (
           <CardContent className="pt-0 flex-1 flex flex-col">
             <div className="rounded-md border flex-1 overflow-x-auto">
-              <Table className="w-full" style={{ minWidth: `${Math.max(600, (visibleColumns.length + 1) * 80)}px` }}>
+              <Table className="w-full" style={{ minWidth: `${Math.max(400, (visibleColumns.length + 1) * 90)}px` }}>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center table-header-fixed px-2 whitespace-nowrap w-20">Tarih</TableHead>
