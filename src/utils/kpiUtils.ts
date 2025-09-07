@@ -231,49 +231,51 @@ export function getDefaultKPIConfigs(): KPICardConfig[] {
   return [
     {
       id: 'kpi-1',
-      title: 'Total Installs',
+      title: 'Average Daily Install',
       column: 'installs',
-      calculationType: 'sum',
+      calculationType: 'average',
       format: 'number',
       decimalPlaces: 0,
       isVisible: true,
       order: 1,
-      description: 'Total app installations',
-      badge: 'Total'
+      description: 'Günlük ortalama install sayısı',
+      badge: 'Daily Avg'
     },
     {
       id: 'kpi-2',
-      title: 'Average ROAS D7',
-      column: 'roas_d7',
+      title: 'Average Daily D0 ROAS',
+      column: 'roas_d0',
       calculationType: 'average',
       format: 'percentage',
       decimalPlaces: 1,
       isVisible: true,
       order: 2,
-      description: '7-day return on ad spend'
+      description: 'Günlük ortalama D0 ROAS',
+      badge: 'D0 ROAS'
     },
     {
       id: 'kpi-3',
-      title: 'Average ROAS D30',
-      column: 'roas_d30',
-      calculationType: 'average',
-      format: 'percentage',
-      decimalPlaces: 1,
-      isVisible: true,
-      order: 3,
-      description: '30-day return on ad spend'
-    },
-    {
-      id: 'kpi-4',
-      title: 'Total Cost',
+      title: 'Last 7 Days Total Cost',
       column: 'adjust_cost',
       calculationType: 'sum',
       format: 'currency',
       decimalPlaces: 0,
       isVisible: true,
+      order: 3,
+      description: 'Son yedi günün harcama toplamı',
+      badge: '7 Days'
+    },
+    {
+      id: 'kpi-4',
+      title: 'Average Daily Cost',
+      column: 'adjust_cost',
+      calculationType: 'average',
+      format: 'currency',
+      decimalPlaces: 0,
+      isVisible: true,
       order: 4,
-      description: 'Total advertising spend',
-      badge: 'Cost'
+      description: 'Günlük ortalama harcama',
+      badge: 'Daily Avg'
     }
   ];
 }
