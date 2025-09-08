@@ -1019,7 +1019,7 @@ export function GameTables({
                           const isExpanded = expandedTables.has(groupId);
                           
                           return (
-                            <div id={`table-${groupId}`} key={groupId} className="flex-shrink-0 h-full" style={{ width: `${Math.max(400, (visibleColumns.length + 1) * 90)}px` }}>
+                            <div id={`table-${groupId}`} key={groupId} className="flex-shrink-0 h-full" style={{ minWidth: `${Math.max(400, (visibleColumns.length + 1) * 90)}px` }}>
                               <SortableTableItem
                                 group={group}
                                 isExpanded={isExpanded}
