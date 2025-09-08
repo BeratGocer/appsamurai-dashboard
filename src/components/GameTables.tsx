@@ -952,8 +952,7 @@ export function GameTables({
             </SortableContext>
           </DndContext>
         </div>
-        {/* Left Scroll Indicator only */}
-        <div className="absolute left-0 top-8 bottom-0 w-8 bg-gradient-to-r from-background/90 to-transparent pointer-events-none" />
+        
       </div>
 
       {/* App+Country+Platform Grouped Tables - Horizontal Scrollable */}
@@ -1033,8 +1032,7 @@ export function GameTables({
                   </div>
                 </div>
                 
-                {/* Left Scroll Indicator only */}
-                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background/90 to-transparent pointer-events-none" />
+                
               </div>
             </div>
           );
