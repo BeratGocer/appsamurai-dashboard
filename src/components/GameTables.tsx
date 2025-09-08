@@ -33,6 +33,9 @@ interface GameTablesProps {
   onRefreshData?: () => void;
 }
 
+// Type helper for dynamic column-safe access on daily rows
+type DailyDataRow = GameCountryPublisherGroup['dailyData'][number] & Record<string, number | string | undefined>;
+
 type SortCriteria = 'volume' | 'roas_d0' | 'roas_d1' | 'roas_d2' | 'roas_d3' | 'roas_d4' | 'roas_d5' | 'roas_d6' | 'roas_d7' | 'roas_d14' | 'roas_d21' | 'roas_d30' | 'roas_d45' | 'roas_d60' | 'cost' | 'revenue' | 'alphabetical';
 
 interface SortableTableItemProps {
@@ -308,7 +311,7 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
         
         {isExpanded && (
           <CardContent className="pt-0 flex-1 flex flex-col">
-            <div className="rounded-md border flex-1">
+            <div className="rounded-md border overflow-hidden flex-1">
               <Table className="w-full" style={{ minWidth: `${Math.max(400, (visibleColumns.length + 1) * 90)}px` }}>
                 <TableHeader>
                   <TableRow>
@@ -334,13 +337,13 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                           {formatDate(dayData.date)}
                         </TableCell>
                         {visibleColumns.map(column => {
-                          const value = (dayData as any)[column];
+                          const value = (dayData as DailyDataRow)[column];
                           let formattedValue = '';
                           
                           // Sütun tipine göre formatla
                           if (column.startsWith('roas_') || column.startsWith('retention_rate_')) {
                             // ROAS ve retention değerleri için yüzde formatı
-                            formattedValue = formatROAS(value || 0);
+                            formattedValue = formatROAS(typeof value === 'number' ? value : Number(value ?? 0));
                           } else if (column === 'ecpi' || column === 'cost' || column === 'all_revenue' || 
                                      column === 'adjust_cost' || column === 'ad_revenue' || column === 'gross_profit') {
                             // Para birimi ve eCPI için sayı formatı
@@ -357,7 +360,7 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                             <TableCell key={column} className="font-mono table-cell-fixed text-center py-2 px-2 whitespace-nowrap min-w-[70px]">
                               <span 
                                 className="transition-all duration-200"
-                                style={getCellStyle(value || 0, column)}
+                                style={getCellStyle((typeof value === 'number' ? value : 0) || 0, column)}
                               >
                                 {formattedValue}
                               </span>
@@ -387,11 +390,11 @@ export function GameTables({
   visibleColumns = ['installs', 'roas_d0', 'roas_d7'],
   focusPublisher = null,
   dateRange = null,
-  showSettings: _showSettings = false,
+  // Removed unused: showSettings (rendering handled by parent per rules)
   onToggleSettings,
   kpiEditMode = false,
   onToggleKpiEdit,
-  availableColumns: _availableColumns = [],
+  // Removed unused: availableColumns (not used in this component)
   onRefreshData,
 }: GameTablesProps) {
   // DnD Sensors for React 19 compatibility
@@ -463,7 +466,7 @@ export function GameTables({
   });
 
   // Calculate total volume (installs) for a group - last 7 days or date range
-  const calculateGroupVolume = (group: GameCountryPublisherGroup): number => {
+  const calculateGroupVolume = React.useCallback((group: GameCountryPublisherGroup): number => {
     let relevantData = group.dailyData;
     
     if (dateRange && dateRange.startDate && dateRange.endDate) {
@@ -481,15 +484,15 @@ export function GameTables({
     }
     
     return relevantData.reduce((sum, day) => sum + day.installs, 0);
-  };
+  }, [dateRange]);
 
   // Calculate total volume for app+country+platform group - last 7 days only
-  const calculateAppCountryPlatformVolume = (groups: GameCountryPublisherGroup[]): number => {
+  const calculateAppCountryPlatformVolume = React.useCallback((groups: GameCountryPublisherGroup[]): number => {
     return groups.reduce((sum, group) => sum + calculateGroupVolume(group), 0);
-  };
+  }, [calculateGroupVolume]);
 
   // Calculate average ROAS for a group
-  const calculateGroupRoas = (group: GameCountryPublisherGroup, roasType: string): number => {
+  const calculateGroupRoas = React.useCallback((group: GameCountryPublisherGroup, roasType: keyof DailyDataRow): number => {
     let relevantData = group.dailyData;
     
     if (dateRange && dateRange.startDate && dateRange.endDate) {
@@ -504,12 +507,14 @@ export function GameTables({
       relevantData = sortedData.slice(-7);
     }
     
-    const validRoas = relevantData.filter(day => (day as any)[roasType] > 0);
-    return validRoas.length > 0 ? validRoas.reduce((sum, day) => sum + (day as any)[roasType], 0) / validRoas.length : 0;
-  };
+    const validRoas = relevantData.filter(day => Number((day as DailyDataRow)[roasType] ?? 0) > 0);
+    return validRoas.length > 0
+      ? validRoas.reduce((sum, day) => sum + Number((day as DailyDataRow)[roasType] ?? 0), 0) / validRoas.length
+      : 0;
+  }, [dateRange]);
 
   // Calculate total cost for a group
-  const calculateGroupCost = (group: GameCountryPublisherGroup): number => {
+  const calculateGroupCost = React.useCallback((group: GameCountryPublisherGroup): number => {
     let relevantData = group.dailyData;
     
     if (dateRange && dateRange.startDate && dateRange.endDate) {
@@ -525,10 +530,10 @@ export function GameTables({
     }
     
     return relevantData.reduce((sum, day) => sum + (day.cost || 0), 0);
-  };
+  }, [dateRange]);
 
   // Calculate total revenue for a group
-  const calculateGroupRevenue = (group: GameCountryPublisherGroup): number => {
+  const calculateGroupRevenue = React.useCallback((group: GameCountryPublisherGroup): number => {
     let relevantData = group.dailyData;
     
     if (dateRange && dateRange.startDate && dateRange.endDate) {
@@ -544,10 +549,10 @@ export function GameTables({
     }
     
     return relevantData.reduce((sum, day) => sum + (day.revenue || 0), 0);
-  };
+  }, [dateRange]);
 
   // Calculate group value based on sort criteria
-  const calculateGroupValue = (group: GameCountryPublisherGroup, criteria: SortCriteria): number => {
+  const calculateGroupValue = React.useCallback((group: GameCountryPublisherGroup, criteria: SortCriteria): number => {
     switch (criteria) {
       case 'volume':
         return calculateGroupVolume(group);
@@ -572,10 +577,10 @@ export function GameTables({
       default:
         return 0;
     }
-  };
+  }, [calculateGroupVolume, calculateGroupRoas, calculateGroupCost, calculateGroupRevenue]);
 
   // Calculate app+country+platform group value based on sort criteria
-  const calculateAppCountryPlatformValue = (groups: GameCountryPublisherGroup[], criteria: SortCriteria): number => {
+  const calculateAppCountryPlatformValue = React.useCallback((groups: GameCountryPublisherGroup[], criteria: SortCriteria): number => {
     switch (criteria) {
       case 'volume':
         return calculateAppCountryPlatformVolume(groups);
@@ -600,7 +605,7 @@ export function GameTables({
       default:
         return 0;
     }
-  };
+  }, [calculateAppCountryPlatformVolume, calculateGroupRoas, calculateGroupCost, calculateGroupRevenue]);
 
   // Group tables by APP + COUNTRY + PLATFORM (same app, same country, same platform, different adnetworks)
   const appCountryPlatformGroups = React.useMemo(() => {
@@ -678,7 +683,7 @@ export function GameTables({
     }
     
     return groupEntries;
-  }, [groups, sortCriteria, dateRange, isCustomSortMode, groupOrder]);
+  }, [groups, sortCriteria, isCustomSortMode, groupOrder, calculateAppCountryPlatformValue, calculateGroupValue]);
 
   // Initialize group order when groups change
   React.useEffect(() => {
@@ -718,7 +723,7 @@ export function GameTables({
       return valueB - valueA;
     });
     setSortedGroups(sorted);
-  }, [groups, sortCriteria, dateRange]);
+  }, [groups, sortCriteria, calculateGroupValue]);
 
   const toggleTable = (groupId: string) => {
     const newExpanded = new Set(expandedTables);
