@@ -260,13 +260,13 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                   <div className="mt-3 pt-2 border-t space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <span className="text-muted-foreground block">D0 ROAS:</span>
+                        <span className="text-muted-foreground block">Average D0 ROAS:</span>
                         <span className="font-bold text-blue-600 block">
                           {formatROAS(avgD0Roas)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block">D7 ROAS:</span>
+                        <span className="text-muted-foreground block">Average D7 ROAS:</span>
                         <span className="font-bold text-green-600 block">
                           {formatROAS(avgD7Roas)}
                         </span>
@@ -274,13 +274,13 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <span className="text-muted-foreground block">Günlük:</span>
+                        <span className="text-muted-foreground block">Average Daily Install:</span>
                         <span className="font-bold text-purple-600 block">
                           {averageDailyInstalls.toFixed(0)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block">Gün:</span>
+                        <span className="text-muted-foreground block">Day Count:</span>
                         <span className="font-bold block">
                           {group.dailyData.length}
                         </span>
