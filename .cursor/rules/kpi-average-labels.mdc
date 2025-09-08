@@ -1,0 +1,22 @@
+---
+description: Table summary KPI titles must include the "Average" prefix
+globs: src/components/GameTables.tsx
+---
+# Table Summary KPI Labeling
+
+All KPI titles shown inside table cards (collapsed summary area) must clearly indicate that they are averages by prefixing titles with "Average".
+
+## Requirements
+- Use English labels beginning with "Average" for summary KPIs:
+  - Average D0 ROAS
+  - Average D7 ROAS
+  - Average Daily Install
+  - Day Count (non-average count label)
+
+## Implementation Reference
+- Collapsed summary section in [src/components/GameTables.tsx](mdc:src/components/GameTables.tsx)
+
+## Rationale
+- Removes ambiguity that values are means across the displayed range.
+- Keeps wording consistent across tables and deployments.
+
