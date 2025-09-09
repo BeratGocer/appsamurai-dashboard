@@ -1,0 +1,35 @@
+---
+description: Full-stack data sync rules (backend-first loading, persistence, and client fallbacks)
+globs: src/**/*.ts,src/**/*.tsx,server/**/*.ts
+---
+# Full-Stack Data Sync Rules
+
+## Backend-First Loading
+- On app start, always try to load file list from backend using `listFiles()`; then fetch details via `getFile(id)` and populate `uploadedFiles`.
+- Only if backend fails, fallback to localStorage cache.
+- Reference: [src/App.tsx](mdc:src/App.tsx), functions `listFiles`, `getFile` from [src/utils/api.ts](mdc:src/utils/api.ts).
+
+## Upload Flow
+- `FileUpload.tsx` must send new uploads to backend via `createFile({ name, size, uploadDate, data })`.
+- After successful create, update UI state and localStorage cache for fast reloads.
+- Reference: [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx).
+
+## Optional Fields Safety
+- Guard all optional strings before `.replace()`/`.toLowerCase()` with nullish checks.
+- Example: `(file.customerName?.toLowerCase()?.replace(/\s+/g,'-') || '')`.
+- Reference: [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx).
+
+## Environment & Config
+- Frontend backend base URL must come from `VITE_API_BASE`.
+- Backend CORS must include the Netlify production origin.
+- Reference: [src/utils/api.ts](mdc:src/utils/api.ts), [server/src/index.ts](mdc:server/src/index.ts).
+
+## Local Cache Hygiene
+- When switching to backend-first, stale localStorage can shadow backend. Clear keys if needed:
+  - `appsamurai-uploaded-files`, `appsamurai-active-file-id`, keys starting with `dashboard-`.
+
+## Testing Checklist
+- Load: App starts → files fetched from backend → first file auto-active.
+- Upload: New CSV via UI → backend `POST /api/files` returns id → appears in list across devices.
+- Health: `GET /api/health` returns `{ status: 'ok' }`.
+

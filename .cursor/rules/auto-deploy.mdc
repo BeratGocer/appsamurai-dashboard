@@ -1,0 +1,35 @@
+---
+description: Auto Git push & deploy workflow for FE (Netlify) and BE (Railway)
+---
+# Auto Deploy Workflow
+
+## Frontend (Netlify)
+- Build: `npm run build` → outputs `dist/`.
+- Deploy: `netlify deploy --prod --dir=dist`.
+- Env: `VITE_API_BASE` must point to backend public URL.
+
+## Backend (Railway)
+- Project: `appsamurai-dashboard-backend` production env.
+- Domain: managed via `railway domain -s appsamurai-dashboard-backend`.
+- Env: `CORS_ORIGINS=https://ubiquitous-sherbet-b4f6bf.netlify.app`, `API_KEY`, `DATABASE_PUBLIC_URL`.
+- Deploy: from `server/` → `railway up --service appsamurai-dashboard-backend --ci`.
+
+## Commands
+```bash
+# FE
+git add .
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - FE update"
+git push origin main
+npm run build
+netlify deploy --prod --dir=dist
+
+# BE (server/)
+cd server
+npm run build
+railway up --service appsamurai-dashboard-backend --ci
+```
+
+## Verification
+- FE: Open production URL and check UI.
+- BE: `curl $VITE_API_BASE/api/health` should be `200 {"status":"ok"}`.
+
