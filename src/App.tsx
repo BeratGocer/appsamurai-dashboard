@@ -51,35 +51,20 @@ function App() {
             detailed[0].isActive = true
             setUploadedFiles(detailed)
             setActiveFileId(detailed[0].id)
-            // Cache locally for faster reloads (but backend is source of truth)
-            localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(detailed))
+            // Only cache active file ID for UI state
             localStorage.setItem('appsamurai-active-file-id', detailed[0].id)
           }
         } else {
           // No files in backend, clear local state
           setUploadedFiles([])
           setActiveFileId(null)
-          localStorage.removeItem('appsamurai-uploaded-files')
           localStorage.removeItem('appsamurai-active-file-id')
         }
       } catch (err) {
         console.error('Backend sync failed:', err)
-        // Fallback to localStorage only if backend is completely unavailable
-        const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
-        const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
-        if (savedFiles) {
-          try {
-            const files = JSON.parse(savedFiles) as UploadedFile[];
-            setUploadedFiles(files);
-            if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
-              setActiveFileId(savedActiveFileId);
-            } else if (files.length > 0) {
-              setActiveFileId(files[0].id);
-            }
-          } catch (error) {
-            console.error('Failed to load saved files:', error);
-          }
-        }
+        // No fallback - backend is required
+        setUploadedFiles([])
+        setActiveFileId(null)
       }
     })()
   }, [])
@@ -93,8 +78,7 @@ function App() {
     setActiveFileId(file.id)
     setShowUploadPage(false) // Return to dashboard after upload
     
-    // Save to localStorage (backend is source of truth)
-    localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(newFiles))
+    // Save only active file ID to localStorage
     localStorage.setItem('appsamurai-active-file-id', file.id)
   }
 
@@ -106,8 +90,7 @@ function App() {
       setUploadedFiles(updatedFiles)
       setActiveFileId(fileId)
       
-      // Save to localStorage with full data
-      localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
+      // Save only active file ID to localStorage
       localStorage.setItem('appsamurai-active-file-id', fileId)
     }
   }
@@ -137,16 +120,13 @@ function App() {
       }
       
       // Update localStorage after successful backend deletion
-      localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
       if (newActiveFileId) {
         localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
       } else {
         localStorage.removeItem('appsamurai-active-file-id')
       }
 
-      // Clean up per-file dashboard settings
-      localStorage.removeItem(`dashboard-settings-${fileId}`)
-      localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
+      // Settings are now managed by backend, no localStorage cleanup needed
       
     } catch (backendError) {
       console.error('Backend delete failed:', backendError)
@@ -169,7 +149,6 @@ function App() {
     })
     setUploadedFiles(updatedFiles)
     // keep active selection as is
-    localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
   }
 
   // Update existing file's data while preserving settings and merging new data
@@ -186,7 +165,6 @@ function App() {
     })
     setUploadedFiles(updatedFiles)
     // keep active selection as is
-    localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
   }
 
   const handleShowUpload = () => {
@@ -230,8 +208,7 @@ function App() {
             setActiveFileId(importData.files[0].id)
           }
           
-          // Save to localStorage
-          localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(importData.files))
+          // Save only active file ID to localStorage
           if (importData.activeFileId) {
             localStorage.setItem('appsamurai-active-file-id', importData.activeFileId)
           }

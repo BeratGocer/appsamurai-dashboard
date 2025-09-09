@@ -8,6 +8,7 @@ import { FileUpload } from './FileUpload'
 import { FileManager } from './FileManager'
 import { Navbar } from './Navbar'
 import { getCustomers, getAccountManagers, getGameCountryPublisherGroups, synchronizeGroupDates, generateFileDisplayName, getGamesFromData } from '@/utils/csvParser'
+import { getFileSettings, updateFileSettings } from '@/utils/api'
 
 
 import type { GameCountryPublisherGroup } from '@/types'
@@ -75,15 +76,24 @@ export function Dashboard({
 
   // Load settings for current file - REMOVED (moved inline to useEffect)
 
-  // Save settings to localStorage for current file
-  const handleSettingsChange = useCallback((newSettings: SettingsData) => {
+  // Save settings to backend for current file
+  const handleSettingsChange = useCallback(async (newSettings: SettingsData) => {
     setSettings(newSettings);
-    const settingsKey = activeFileId ? `dashboard-settings-${activeFileId}` : 'dashboard-settings-default';
-    localStorage.setItem(settingsKey, JSON.stringify(newSettings));
-  }, [activeFileId]);
+    if (activeFileId) {
+      try {
+        await updateFileSettings(activeFileId, {
+          dashboard_settings: newSettings,
+          kpi_settings: { fileId: activeFileId, configs: [] }, // Will be updated separately
+          hidden_tables: Array.from(hiddenTables)
+        });
+      } catch (error) {
+        console.error('Failed to save settings to backend:', error);
+      }
+    }
+  }, [activeFileId, hiddenTables]);
 
   // Hidden tables management
-  const handleTableVisibilityChange = useCallback((tableId: string, isHidden: boolean) => {
+  const handleTableVisibilityChange = useCallback(async (tableId: string, isHidden: boolean) => {
     const newHiddenTables = new Set(hiddenTables);
     if (isHidden) {
       newHiddenTables.add(tableId);
@@ -92,29 +102,56 @@ export function Dashboard({
     }
     setHiddenTables(newHiddenTables);
     
-    // Save to localStorage
-    const hiddenTablesKey = activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
-    localStorage.setItem(hiddenTablesKey, JSON.stringify(Array.from(newHiddenTables)));
-  }, [hiddenTables, activeFileId]);
+    // Save to backend
+    if (activeFileId) {
+      try {
+        await updateFileSettings(activeFileId, {
+          dashboard_settings: settings,
+          kpi_settings: { fileId: activeFileId, configs: [] },
+          hidden_tables: Array.from(newHiddenTables)
+        });
+      } catch (error) {
+        console.error('Failed to save hidden tables to backend:', error);
+      }
+    }
+  }, [hiddenTables, activeFileId, settings]);
 
-  const handleBulkHide = () => {
+  const handleBulkHide = async () => {
     const allTableIds = gameGroups.map(group => 
       `${group.game}-${group.country}-${group.platform}-${group.publisher}`
     );
     const newHiddenTables = new Set(allTableIds);
     setHiddenTables(newHiddenTables);
     
-    // Save to localStorage
-    const hiddenTablesKey = activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
-    localStorage.setItem(hiddenTablesKey, JSON.stringify(Array.from(newHiddenTables)));
+    // Save to backend
+    if (activeFileId) {
+      try {
+        await updateFileSettings(activeFileId, {
+          dashboard_settings: settings,
+          kpi_settings: { fileId: activeFileId, configs: [] },
+          hidden_tables: Array.from(newHiddenTables)
+        });
+      } catch (error) {
+        console.error('Failed to save bulk hide to backend:', error);
+      }
+    }
   };
 
-  const handleBulkShow = () => {
+  const handleBulkShow = async () => {
     setHiddenTables(new Set());
     
-    // Save to localStorage
-    const hiddenTablesKey = activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
-    localStorage.setItem(hiddenTablesKey, JSON.stringify([]));
+    // Save to backend
+    if (activeFileId) {
+      try {
+        await updateFileSettings(activeFileId, {
+          dashboard_settings: settings,
+          kpi_settings: { fileId: activeFileId, configs: [] },
+          hidden_tables: []
+        });
+      } catch (error) {
+        console.error('Failed to save bulk show to backend:', error);
+      }
+    }
   };
 
   // Settings toggle handler
@@ -252,47 +289,45 @@ export function Dashboard({
       setData([]);
     }
     
-    // Load settings for the new active file - inline function to avoid dependency issues
-    const loadFileSettingsInline = (fileId: string | null) => {
-      const settingsKey = fileId ? `dashboard-settings-${fileId}` : 'dashboard-settings-default';
-      const saved = localStorage.getItem(settingsKey);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return {
-            dateRange: parsed.dateRange || { startDate: '', endDate: '' },
-            conditionalRules: parsed.conditionalRules || [],
-            visibleColumns: parsed.visibleColumns || ['installs', 'roas_d0', 'roas_d7'],
-          };
-        } catch {
-          // If parsing fails, return default
-        }
+    // Load settings from backend for the new active file
+    const loadFileSettingsFromBackend = async (fileId: string | null) => {
+      if (!fileId) {
+        // Default settings when no file is active
+        setSettings({
+          dateRange: { startDate: '', endDate: '' },
+          conditionalRules: [],
+          visibleColumns: ['installs', 'roas_d0', 'roas_d7'],
+        });
+        setHiddenTables(new Set());
+        return;
       }
-      return {
-        dateRange: { startDate: '', endDate: '' },
-        conditionalRules: [],
-        visibleColumns: ['installs', 'roas_d0', 'roas_d7'],
-      };
-    };
-    
-    const fileSettings = loadFileSettingsInline(activeFileId);
-    setSettings(fileSettings);
 
-    // Load hidden tables for current file
-    const hiddenTablesKey = activeFileId ? `dashboard-hidden-tables-${activeFileId}` : 'dashboard-hidden-tables-default';
-    const savedHiddenTables = localStorage.getItem(hiddenTablesKey);
-    
-    if (savedHiddenTables) {
       try {
-        const parsed = JSON.parse(savedHiddenTables);
-        setHiddenTables(new Set(parsed));
+        const backendSettings = await getFileSettings(fileId);
+        
+        // Set dashboard settings
+        setSettings({
+          dateRange: backendSettings.dashboard_settings?.dateRange || { startDate: '', endDate: '' },
+          conditionalRules: backendSettings.dashboard_settings?.conditionalRules || [],
+          visibleColumns: backendSettings.dashboard_settings?.visibleColumns || ['installs', 'roas_d0', 'roas_d7'],
+        });
+        
+        // Set hidden tables
+        setHiddenTables(new Set(backendSettings.hidden_tables || []));
+        
       } catch (error) {
-        console.error('Failed to load hidden tables:', error);
+        console.error('Failed to load settings from backend:', error);
+        // Fallback to default settings
+        setSettings({
+          dateRange: { startDate: '', endDate: '' },
+          conditionalRules: [],
+          visibleColumns: ['installs', 'roas_d0', 'roas_d7'],
+        });
         setHiddenTables(new Set());
       }
-    } else {
-      setHiddenTables(new Set());
-    }
+    };
+    
+    loadFileSettingsFromBackend(activeFileId);
   }, [uploadedFiles, activeFileId]);
 
   // Set navigation functions for chat

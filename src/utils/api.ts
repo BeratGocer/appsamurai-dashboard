@@ -57,3 +57,38 @@ export async function deleteFile(id: string): Promise<{ id: string; message: str
   if (!res.ok) throw new Error(`deleteFile failed: ${res.status}`)
   return res.json()
 }
+
+// File settings API
+export interface FileSettings {
+  dashboard_settings: {
+    dateRange: { startDate: string; endDate: string }
+    conditionalRules: any[]
+    visibleColumns?: string[]
+  }
+  kpi_settings: {
+    fileId: string
+    configs: any[]
+  }
+  hidden_tables: string[]
+}
+
+export async function getFileSettings(fileId: string): Promise<FileSettings> {
+  const res = await fetch(`${base}/api/files/${fileId}/settings`, {
+    headers: { 'x-api-key': 'public-demo-key' }
+  })
+  if (!res.ok) throw new Error(`getFileSettings failed: ${res.status}`)
+  return res.json()
+}
+
+export async function updateFileSettings(fileId: string, settings: FileSettings): Promise<{ message: string }> {
+  const res = await fetch(`${base}/api/files/${fileId}/settings`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'public-demo-key'
+    },
+    body: JSON.stringify(settings)
+  })
+  if (!res.ok) throw new Error(`updateFileSettings failed: ${res.status}`)
+  return res.json()
+}

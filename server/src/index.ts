@@ -43,6 +43,16 @@ const initializeDatabase = async () => {
       logger.warn({ err: migrationErr }, 'Migration warning - columns may already exist')
     }
     
+    // Create file settings table
+    await pool.query(`CREATE TABLE IF NOT EXISTS file_settings (
+      file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,
+      dashboard_settings JSONB,
+      kpi_settings JSONB,
+      hidden_tables JSONB,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );`)
+    
     logger.info('Database initialized successfully')
   } catch (err) {
     logger.error({ err }, 'Database initialization failed')
@@ -133,6 +143,53 @@ app.delete('/api/files/:id', async (req, res) => {
   } catch (err) {
     logger.error({ err }, 'file delete error')
     res.status(500).json({ error: 'Delete failed' })
+  }
+})
+
+// File settings endpoints
+app.get('/api/files/:id/settings', async (req, res) => {
+  try {
+    if (!pool) return res.status(500).json({ error: 'Database not configured' })
+    
+    const r = await pool.query('SELECT dashboard_settings, kpi_settings, hidden_tables FROM file_settings WHERE file_id=$1', [req.params.id])
+    if (r.rows.length === 0) {
+      // Return default settings if none exist
+      return res.json({
+        dashboard_settings: { dateRange: { startDate: '', endDate: '' }, conditionalRules: [] },
+        kpi_settings: { fileId: req.params.id, configs: [] },
+        hidden_tables: []
+      })
+    }
+    
+    res.json(r.rows[0])
+  } catch (err) {
+    logger.error({ err }, 'file settings get error')
+    res.status(500).json({ error: 'Get settings failed' })
+  }
+})
+
+app.put('/api/files/:id/settings', async (req, res) => {
+  try {
+    if (!pool) return res.status(500).json({ error: 'Database not configured' })
+    
+    const { dashboard_settings, kpi_settings, hidden_tables } = req.body || {}
+    
+    // Upsert settings
+    await pool.query(`
+      INSERT INTO file_settings (file_id, dashboard_settings, kpi_settings, hidden_tables, updated_at)
+      VALUES ($1, $2, $3, $4, NOW())
+      ON CONFLICT (file_id) 
+      DO UPDATE SET 
+        dashboard_settings = EXCLUDED.dashboard_settings,
+        kpi_settings = EXCLUDED.kpi_settings,
+        hidden_tables = EXCLUDED.hidden_tables,
+        updated_at = NOW()
+    `, [req.params.id, JSON.stringify(dashboard_settings), JSON.stringify(kpi_settings), JSON.stringify(hidden_tables)])
+    
+    res.json({ message: 'Settings saved successfully' })
+  } catch (err) {
+    logger.error({ err }, 'file settings update error')
+    res.status(500).json({ error: 'Update settings failed' })
   }
 })
 
