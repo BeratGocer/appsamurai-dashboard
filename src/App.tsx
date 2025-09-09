@@ -35,46 +35,48 @@ function App() {
         }
       }
 
-      // Then try to sync with backend (optional)
-      try {
-        const resp = await listFiles()
-        if (resp.files && resp.files.length > 0) {
-          const detailed: UploadedFile[] = []
-          for (const f of resp.files) {
-            try {
-              const d = await getFile(f.id)
-              const rows = Array.isArray((d as any).data) ? (d as any).data : []
-              // Validate rows: require string app field to avoid runtime errors downstream
-              const validRows = rows.filter((r: any) => r && typeof r.app === 'string' && r.app.length > 0)
-              if (validRows.length === 0) {
-                continue
+      // Then try to sync with backend (optional) - only if localStorage is empty
+      if (!savedFiles || JSON.parse(savedFiles || '[]').length === 0) {
+        try {
+          const resp = await listFiles()
+          if (resp.files && resp.files.length > 0) {
+            const detailed: UploadedFile[] = []
+            for (const f of resp.files) {
+              try {
+                const d = await getFile(f.id)
+                const rows = Array.isArray((d as any).data) ? (d as any).data : []
+                // Validate rows: require string app field to avoid runtime errors downstream
+                const validRows = rows.filter((r: any) => r && typeof r.app === 'string' && r.app.length > 0)
+                if (validRows.length === 0) {
+                  continue
+                }
+                detailed.push({
+                  id: d.id,
+                  name: d.name,
+                  size: Number(d.size),
+                  uploadDate: d.upload_date,
+                  data: validRows as any,
+                  isActive: false,
+                  customerName: (d as any).customer_name || undefined,
+                  accountManager: (d as any).account_manager || undefined,
+                })
+              } catch (e) {
+                // skip broken file
+                console.warn('Skipping invalid file from backend', f.id, e)
               }
-              detailed.push({
-                id: d.id,
-                name: d.name,
-                size: Number(d.size),
-                uploadDate: d.upload_date,
-                data: validRows as any,
-                isActive: false,
-                customerName: (d as any).customer_name || undefined,
-                accountManager: (d as any).account_manager || undefined,
-              })
-            } catch (e) {
-              // skip broken file
-              console.warn('Skipping invalid file from backend', f.id, e)
+            }
+            if (detailed.length > 0) {
+              detailed[0].isActive = true
+              setUploadedFiles(detailed)
+              setActiveFileId(detailed[0].id)
+              // Cache locally for faster reloads
+              localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(detailed))
+              localStorage.setItem('appsamurai-active-file-id', detailed[0].id)
             }
           }
-          if (detailed.length > 0) {
-            detailed[0].isActive = true
-            setUploadedFiles(detailed)
-            setActiveFileId(detailed[0].id)
-            // Cache locally for faster reloads
-            localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(detailed))
-            localStorage.setItem('appsamurai-active-file-id', detailed[0].id)
-          }
+        } catch (err) {
+          console.warn('Backend sync failed, using localStorage data', err)
         }
-      } catch (err) {
-        console.warn('Backend sync failed, using localStorage data', err)
       }
     })()
   }, [])
