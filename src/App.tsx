@@ -146,7 +146,12 @@ function App() {
       await deleteFile(fileId)
       console.log('Backend delete successful for file:', fileId)
     } catch (backendError) {
-      console.warn('Backend delete failed, but frontend delete completed:', backendError)
+      // Check if it's a 404 error (file not found in backend)
+      if (backendError instanceof Error && backendError.message.includes('404')) {
+        console.log('File not found in backend (frontend-only file), frontend delete completed:', fileId)
+      } else {
+        console.warn('Backend delete failed, but frontend delete completed:', backendError)
+      }
     }
   }
 
