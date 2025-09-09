@@ -1,0 +1,88 @@
+---
+description: Data validation patterns for CSV parsing and KPI calculations
+globs: src/utils/csvParser.ts,src/components/GameTables.tsx,src/utils/kpiUtils.ts
+---
+# Data Validation Patterns
+
+## CSV Data Validation
+Validate CSV data before processing to ensure accurate calculations.
+
+## Column Validation
+```typescript
+// Check for required columns
+const requiredColumns = ['app', 'installs', 'roas_d0', 'roas_d7', 'day'];
+const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+
+if (missingColumns.length > 0) {
+  console.warn('Missing required columns:', missingColumns);
+}
+```
+
+## ROAS Data Validation
+```typescript
+// Validate ROAS data before calculations
+const validateRoasData = (dailyData: any[]) => {
+  return dailyData.map(day => ({
+    ...day,
+    roas_d0: typeof day.roas_d0 === 'number' && !isNaN(day.roas_d0) ? day.roas_d0 : 0,
+    roas_d7: typeof day.roas_d7 === 'number' && !isNaN(day.roas_d7) ? day.roas_d7 : 0,
+  }));
+};
+```
+
+## KPI Calculation Validation
+```typescript
+// Validate KPI calculations
+const validateKpiCalculation = (value: number, metric: string): number => {
+  if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+    console.warn(`Invalid ${metric} value:`, value);
+    return 0;
+  }
+  return value;
+};
+```
+
+## Data Type Validation
+```typescript
+// Ensure correct data types
+const validateDataTypes = (row: any) => {
+  return {
+    ...row,
+    installs: parseInt(row.installs) || 0,
+    roas_d0: parseFloat(row.roas_d0) || 0,
+    roas_d7: parseFloat(row.roas_d7) || 0,
+    cost: parseFloat(row.cost) || 0,
+    revenue: parseFloat(row.revenue) || 0,
+  };
+};
+```
+
+## Critical Rules
+- ✅ Always validate data types before calculations
+- ✅ Check for NaN and Infinity values
+- ✅ Handle missing columns gracefully
+- ✅ Log validation warnings for debugging
+- ✅ Use safe defaults for invalid data
+- ✅ Validate ROAS calculations separately for D0 and D7
+
+## Error Handling
+```typescript
+// Safe calculation with error handling
+const safeCalculate = (data: any[], field: string, operation: 'sum' | 'avg') => {
+  try {
+    const validData = data.filter(item => 
+      typeof item[field] === 'number' && 
+      !isNaN(item[field]) && 
+      isFinite(item[field])
+    );
+    
+    if (validData.length === 0) return 0;
+    
+    const total = validData.reduce((sum, item) => sum + item[field], 0);
+    return operation === 'avg' ? total / validData.length : total;
+  } catch (error) {
+    console.error(`Error calculating ${field}:`, error);
+    return 0;
+  }
+};
+```

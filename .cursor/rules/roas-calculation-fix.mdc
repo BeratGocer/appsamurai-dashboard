@@ -1,0 +1,42 @@
+---
+description: ROAS calculation fix for proper D0 and D7 separation
+globs: src/components/GameTables.tsx
+---
+# ROAS Calculation Fix
+
+## Problem
+D0 ROAS was incorrectly calculated using D7 ROAS values as a placeholder, causing both metrics to show identical values.
+
+## Solution
+Calculate D0 and D7 ROAS separately from their respective data columns.
+
+## Implementation Pattern
+```typescript
+// ❌ WRONG: Using D7 as placeholder for D0
+const avgD0Roas = avgD7Roas;
+
+// ✅ CORRECT: Calculate D0 from actual roas_d0 data
+const validD0Roas = group.dailyData.filter(day => day.roas_d0 > 0);
+const avgD0Roas = validD0Roas.length > 0 
+  ? validD0Roas.reduce((sum, day) => sum + day.roas_d0, 0) / validD0Roas.length 
+  : 0;
+
+// ✅ CORRECT: Calculate D7 from actual roas_d7 data
+const validD7Roas = group.dailyData.filter(day => day.roas_d7 > 0);
+const avgD7Roas = validD7Roas.length > 0 
+  ? validD7Roas.reduce((sum, day) => sum + day.roas_d7, 0) / validD7Roas.length 
+  : 0;
+```
+
+## Critical Rules
+- ✅ Always calculate D0 ROAS from `roas_d0` column data
+- ✅ Always calculate D7 ROAS from `roas_d7` column data
+- ✅ Filter out zero values before calculating averages
+- ✅ Handle empty data gracefully (return 0)
+- ✅ Never use one metric as placeholder for another
+- ✅ Ensure different ROAS metrics show different values when data differs
+
+## Data Validation
+- Verify CSV contains both `roas_d0` and `roas_d7` columns
+- Test with real data to ensure calculations are correct
+- Check that D0 and D7 values are different when they should be

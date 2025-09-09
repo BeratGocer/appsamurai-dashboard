@@ -225,8 +225,11 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
   //   ? validD30Roas.reduce((sum, day) => sum + day.roas_d30, 0) / validD30Roas.length 
   //   : 0;
 
-  // Calculate D0 ROAS average - for now using D7 as placeholder since D0 isn't available in current data
-  const avgD0Roas = avgD7Roas;
+  // Calculate D0 ROAS average from actual roas_d0 data
+  const validD0Roas = group.dailyData.filter(day => day.roas_d0 > 0);
+  const avgD0Roas = validD0Roas.length > 0 
+    ? validD0Roas.reduce((sum, day) => sum + day.roas_d0, 0) / validD0Roas.length 
+    : 0;
 
   return (
     <div 

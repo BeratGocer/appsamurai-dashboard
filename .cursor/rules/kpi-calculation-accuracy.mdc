@@ -1,0 +1,56 @@
+---
+description: KPI calculation accuracy and validation patterns
+globs: src/components/GameTables.tsx,src/components/DynamicKPISection.tsx,src/utils/kpiUtils.ts
+---
+# KPI Calculation Accuracy
+
+## Overview
+Ensure all KPI calculations are accurate and use correct data sources.
+
+## ROAS Calculation Standards
+```typescript
+// D0 ROAS - Day 0 Return on Ad Spend
+const validD0Roas = group.dailyData.filter(day => day.roas_d0 > 0);
+const avgD0Roas = validD0Roas.length > 0 
+  ? validD0Roas.reduce((sum, day) => sum + day.roas_d0, 0) / validD0Roas.length 
+  : 0;
+
+// D7 ROAS - Day 7 Return on Ad Spend  
+const validD7Roas = group.dailyData.filter(day => day.roas_d7 > 0);
+const avgD7Roas = validD7Roas.length > 0 
+  ? validD7Roas.reduce((sum, day) => sum + day.roas_d7, 0) / validD7Roas.length 
+  : 0;
+```
+
+## Install Calculation Standards
+```typescript
+// Total installs across all days
+const totalInstalls = group.dailyData.reduce((sum, day) => sum + day.installs, 0);
+
+// Average daily installs
+const averageDailyInstalls = group.dailyData.length > 0 
+  ? totalInstalls / group.dailyData.length 
+  : 0;
+```
+
+## Data Validation Rules
+- ✅ Always filter out zero values before calculating averages
+- ✅ Use correct column names (roas_d0, roas_d7, installs, etc.)
+- ✅ Handle empty datasets gracefully (return 0)
+- ✅ Never use one metric as placeholder for another
+- ✅ Validate data types before calculations
+- ✅ Test calculations with real CSV data
+
+## Error Prevention
+- Check for NaN and Infinity values
+- Validate date formats before processing
+- Ensure consistent data types across calculations
+- Handle missing fields gracefully
+- Log calculation results for debugging
+
+## Testing Requirements
+- Test with datasets where D0 ≠ D7
+- Test with datasets containing zero values
+- Test with empty datasets
+- Test with malformed data
+- Verify calculations match expected business logic

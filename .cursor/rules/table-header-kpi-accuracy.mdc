@@ -1,0 +1,83 @@
+---
+description: Table header KPI accuracy and display standards
+globs: src/components/GameTables.tsx
+---
+# Table Header KPI Accuracy
+
+## Overview
+Table headers must display accurate KPI calculations that match the actual data in the table.
+
+## Header KPI Display Pattern
+```typescript
+// Summary stats in collapsed view
+<div className="mt-3 pt-2 border-t space-y-2">
+  <div className="grid grid-cols-2 gap-2">
+    <div>
+      <span className="text-muted-foreground block">Average D0 ROAS:</span>
+      <span className="font-bold text-blue-600 block">
+        {formatROAS(avgD0Roas)}
+      </span>
+    </div>
+    <div>
+      <span className="text-muted-foreground block">Average D7 ROAS:</span>
+      <span className="font-bold text-green-600 block">
+        {formatROAS(avgD7Roas)}
+      </span>
+    </div>
+  </div>
+  <div className="grid grid-cols-2 gap-2">
+    <div>
+      <span className="text-muted-foreground block">Average Daily Install:</span>
+      <span className="font-bold text-purple-600 block">
+        {averageDailyInstalls.toFixed(0)}
+      </span>
+    </div>
+    <div>
+      <span className="text-muted-foreground block">Day Count:</span>
+      <span className="font-bold block">
+        {group.dailyData.length}
+      </span>
+    </div>
+  </div>
+</div>
+```
+
+## Calculation Requirements
+- ✅ D0 ROAS must be calculated from `roas_d0` column
+- ✅ D7 ROAS must be calculated from `roas_d7` column
+- ✅ Average Daily Install = total installs / number of days
+- ✅ Day Count = actual number of data points
+- ✅ Filter out zero values before averaging ROAS
+- ✅ Use consistent formatting across all KPIs
+
+## Data Source Validation
+```typescript
+// Verify data sources are correct
+const validD0Roas = group.dailyData.filter(day => day.roas_d0 > 0);
+const validD7Roas = group.dailyData.filter(day => day.roas_d7 > 0);
+
+// Ensure different calculations for different metrics
+const avgD0Roas = validD0Roas.length > 0 
+  ? validD0Roas.reduce((sum, day) => sum + day.roas_d0, 0) / validD0Roas.length 
+  : 0;
+
+const avgD7Roas = validD7Roas.length > 0 
+  ? validD7Roas.reduce((sum, day) => sum + day.roas_d7, 0) / validD7Roas.length 
+  : 0;
+```
+
+## Critical Rules
+- ✅ Never use placeholder values (e.g., D7 for D0)
+- ✅ Always calculate from actual data columns
+- ✅ Display values must match table data
+- ✅ Use proper percentage formatting for ROAS
+- ✅ Use proper number formatting for installs
+- ✅ Handle edge cases (zero values, empty data)
+
+## Testing Checklist
+- [ ] D0 and D7 ROAS show different values when data differs
+- [ ] Average calculations match manual verification
+- [ ] Day count matches actual data points
+- [ ] Formatting is consistent across all KPIs
+- [ ] Zero values are handled correctly
+- [ ] Empty datasets display appropriate defaults
