@@ -16,7 +16,7 @@ export default function GlobalChatAssistant() {
     onNavigateToOverview,
     onSelectGame,
     onFocusPublisher,
-    // getTodayContext
+    getTodayContext
   } = useChat()
 
   const parseIntent = (text: string) => {
@@ -44,34 +44,46 @@ export default function GlobalChatAssistant() {
     if (intent.publisher) onFocusPublisher?.(intent.publisher)
 
     try {
-      // Call OpenAI API
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      // Get context data from dashboard
+      const contextData = getTodayContext?.() || null
+      
+      // Prepare messages with context
+      const messagesWithContext = [
+        ...messages.map(msg => ({ role: msg.role, content: msg.text })),
+        { role: 'user', content: userText }
+      ]
+
+      // Add context to system message if available
+      let systemMessage = `Sen AppSamurai Dashboard için yardımcı bir AI asistanısın. Kullanıcılar sana kampanya performansı, oyun verileri ve dashboard hakkında sorular sorabilir. Türkçe cevap ver ve kısa, net açıklamalar yap.`
+      
+      if (contextData && contextData.rows && contextData.rows.length > 0) {
+        systemMessage += `\n\nDashboard verileri (${contextData.date}):\n`
+        contextData.rows.forEach((row: any) => {
+          systemMessage += `- ${row.game} (${row.country}, ${row.platform}): ${row.installs} install, ROAS D7: ${row.roas_d7}, ROAS D30: ${row.roas_d30}\n`
+        })
+      }
+
+      // Call backend API
+      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+          'x-api-key': 'public-demo-key'
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
           messages: [
-            {
-              role: 'system',
-              content: `Sen AppSamurai Dashboard için yardımcı bir AI asistanısın. Kullanıcılar sana kampanya performansı, oyun verileri ve dashboard hakkında sorular sorabilir. Türkçe cevap ver ve kısa, net açıklamalar yap. Eğer kullanıcı belirli bir oyun veya publisher hakkında soru sorarsa, dashboard verilerini analiz etmelerine yardımcı ol.`
-            },
-            ...messages.map(msg => ({ role: msg.role, content: msg.text })),
-            { role: 'user', content: userText }
-          ],
-          max_tokens: 500,
-          temperature: 0.7
+            { role: 'system', content: systemMessage },
+            ...messagesWithContext
+          ]
         })
       })
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`)
+        throw new Error(`Backend API Error: ${response.status}`)
       }
 
       const data = await response.json()
-      const reply = data.choices[0]?.message?.content || 'Üzgünüm, cevap oluşturulamadı.'
+      const reply = data.message || 'Üzgünüm, cevap oluşturulamadı.'
       addMessage({ role: 'assistant', text: reply })
     } catch (e) {
       console.error('Chat API Error:', e)

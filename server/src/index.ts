@@ -12,6 +12,7 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 3000
 const API_KEY = process.env.API_KEY || ''
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean)
 const DATABASE_URL = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL || ''
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''
 
 const pool = DATABASE_URL ? new Pool({ 
   connectionString: DATABASE_URL, 
@@ -190,6 +191,52 @@ app.put('/api/files/:id/settings', async (req, res) => {
   } catch (err) {
     logger.error({ err }, 'file settings update error')
     res.status(500).json({ error: 'Update settings failed' })
+  }
+})
+
+// ChatGPT API endpoint
+app.post('/api/chat', async (req, res) => {
+  try {
+    if (!OPENAI_API_KEY) {
+      return res.status(500).json({ error: 'OpenAI API key not configured' })
+    }
+
+    const { messages } = req.body || {}
+    if (!Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Invalid messages format' })
+    }
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Sen AppSamurai Dashboard için yardımcı bir AI asistanısın. Kullanıcılar sana kampanya performansı, oyun verileri ve dashboard hakkında sorular sorabilir. Türkçe cevap ver ve kısa, net açıklamalar yap. Eğer kullanıcı belirli bir oyun veya publisher hakkında soru sorarsa, dashboard verilerini analiz etmelerine yardımcı ol.`
+          },
+          ...messages
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API Error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const reply = data.choices[0]?.message?.content || 'Üzgünüm, cevap oluşturulamadı.'
+    
+    res.json({ message: reply })
+  } catch (err) {
+    logger.error({ err }, 'chat API error')
+    res.status(500).json({ error: 'Chat request failed' })
   }
 })
 
