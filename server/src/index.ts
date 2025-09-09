@@ -127,15 +127,16 @@ app.get('/api/files/:id', async (req, res) => {
 app.delete('/api/files/:id', async (req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
-    const r = await pool.query('DELETE FROM files WHERE id=$1 RETURNING id', [req.params.id])
-    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' })
     
-    // Set cache control headers
+    // Set cache control headers first
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0'
     })
+    
+    const r = await pool.query('DELETE FROM files WHERE id=$1 RETURNING id', [req.params.id])
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' })
     
     res.json({ id: r.rows[0].id, message: 'File deleted successfully' })
   } catch (err) {
