@@ -44,11 +44,38 @@ export default function GlobalChatAssistant() {
     if (intent.publisher) onFocusPublisher?.(intent.publisher)
 
     try {
-      // Simple local response for frontend-only mode
-      const reply = `Merhaba! "${userText}" mesajınızı aldım. Şu anda frontend-only modda çalışıyoruz.`
+      // Call OpenAI API
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `Sen AppSamurai Dashboard için yardımcı bir AI asistanısın. Kullanıcılar sana kampanya performansı, oyun verileri ve dashboard hakkında sorular sorabilir. Türkçe cevap ver ve kısa, net açıklamalar yap. Eğer kullanıcı belirli bir oyun veya publisher hakkında soru sorarsa, dashboard verilerini analiz etmelerine yardımcı ol.`
+            },
+            ...messages.map(msg => ({ role: msg.role, content: msg.text })),
+            { role: 'user', content: userText }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const reply = data.choices[0]?.message?.content || 'Üzgünüm, cevap oluşturulamadı.'
       addMessage({ role: 'assistant', text: reply })
     } catch (e) {
-      addMessage({ role: 'assistant', text: 'Üzgünüm, şu an cevap oluşturulamadı.' })
+      console.error('Chat API Error:', e)
+      addMessage({ role: 'assistant', text: 'Üzgünüm, şu an cevap oluşturulamadı. Lütfen tekrar deneyin.' })
     } finally {
       setLoading(false)
     }
