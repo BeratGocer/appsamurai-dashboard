@@ -544,7 +544,7 @@ export function Dashboard({
                 {(() => {
                   const customer = customers.find(c => c.id === selectedCustomer);
                   const customerFiles = uploadedFiles.filter(file => 
-                    file.customerName?.toLowerCase().replace(/\s+/g, '-') === selectedCustomer
+                    (file.customerName?.toLowerCase()?.replace(/\s+/g, '-') || '') === selectedCustomer
                   );
                   
                   return (
@@ -688,7 +688,7 @@ export function Dashboard({
                 {(() => {
                   const manager = accountManagers.find(m => m.id === selectedManager);
                   const managerFiles = uploadedFiles.filter(file => 
-                    file.accountManager?.toLowerCase().replace(/\s+/g, '-') === selectedManager
+                    (file.accountManager?.toLowerCase()?.replace(/\s+/g, '-') || '') === selectedManager
                   );
                   
                   return (
