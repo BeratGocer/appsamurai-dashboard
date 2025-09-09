@@ -15,9 +15,27 @@ function App() {
   const [showUploadPage, setShowUploadPage] = useState(false)
 
 
-  // Prefer backend list; fallback to localStorage for offline
+  // Load data from localStorage first, then try backend sync
   useEffect(() => {
     (async () => {
+      // First, load from localStorage for immediate display
+      const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
+      const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
+      if (savedFiles) {
+        try {
+          const files = JSON.parse(savedFiles) as UploadedFile[];
+          setUploadedFiles(files);
+          if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
+            setActiveFileId(savedActiveFileId);
+          } else if (files.length > 0) {
+            setActiveFileId(files[0].id);
+          }
+        } catch (error) {
+          console.error('Failed to load saved files:', error);
+        }
+      }
+
+      // Then try to sync with backend (optional)
       try {
         const resp = await listFiles()
         if (resp.files && resp.files.length > 0) {
@@ -53,27 +71,10 @@ function App() {
             // Cache locally for faster reloads
             localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(detailed))
             localStorage.setItem('appsamurai-active-file-id', detailed[0].id)
-            return
           }
         }
       } catch (err) {
-        console.warn('Backend list failed, falling back to localStorage', err)
-      }
-      // Fallback: Load data from localStorage on startup
-      const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
-      const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
-      if (savedFiles) {
-        try {
-          const files = JSON.parse(savedFiles) as UploadedFile[];
-          setUploadedFiles(files);
-          if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
-            setActiveFileId(savedActiveFileId);
-          } else if (files.length > 0) {
-            setActiveFileId(files[0].id);
-          }
-        } catch (error) {
-          console.error('Failed to load saved files:', error);
-        }
+        console.warn('Backend sync failed, using localStorage data', err)
       }
     })()
   }, [])
@@ -109,70 +110,45 @@ function App() {
 
   const handleFileDelete = async (fileId: string) => {
     try {
-      // Delete from backend first
-      await deleteFile(fileId)
-      
-      // Remove from frontend state
-      const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
-      setUploadedFiles(updatedFiles)
-      
-      let newActiveFileId = activeFileId;
-      
-      if (fileId === activeFileId) {
-        if (updatedFiles.length > 0) {
-          const newActiveFile = updatedFiles[0]
-          newActiveFile.isActive = true
-          newActiveFileId = newActiveFile.id;
-          setActiveFileId(newActiveFile.id)
-        } else {
-          newActiveFileId = null;
-          setActiveFileId(null)
-        }
+      // Try to delete from backend first, but don't fail if backend is down
+      try {
+        await deleteFile(fileId)
+      } catch (backendError) {
+        console.warn('Backend delete failed, continuing with frontend-only delete:', backendError)
       }
-      
-      // Save to localStorage with full data
-      localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
-      if (newActiveFileId) {
-        localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
-      } else {
-        localStorage.removeItem('appsamurai-active-file-id')
-      }
-
-      // Clean up per-file dashboard settings to avoid stale persistence
-      localStorage.removeItem(`dashboard-settings-${fileId}`)
-      localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
     } catch (error) {
-      console.error('Failed to delete file from backend:', error)
-      // Still remove from frontend state even if backend fails
-      const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
-      setUploadedFiles(updatedFiles)
-      
-      let newActiveFileId = activeFileId;
-      
-      if (fileId === activeFileId) {
-        if (updatedFiles.length > 0) {
-          const newActiveFile = updatedFiles[0]
-          newActiveFile.isActive = true
-          newActiveFileId = newActiveFile.id;
-          setActiveFileId(newActiveFile.id)
-        } else {
-          newActiveFileId = null;
-          setActiveFileId(null)
-        }
-      }
-      
-      // Save to localStorage with full data
-      localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
-      if (newActiveFileId) {
-        localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
-      } else {
-        localStorage.removeItem('appsamurai-active-file-id')
-      }
-
-      // Clean up per-file dashboard settings to avoid stale persistence
-      localStorage.removeItem(`dashboard-settings-${fileId}`)
-      localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
+      console.warn('Backend delete failed, continuing with frontend-only delete:', error)
     }
+    
+    // Always remove from frontend state and localStorage
+    const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
+    setUploadedFiles(updatedFiles)
+    
+    let newActiveFileId = activeFileId;
+    
+    if (fileId === activeFileId) {
+      if (updatedFiles.length > 0) {
+        const newActiveFile = updatedFiles[0]
+        newActiveFile.isActive = true
+        newActiveFileId = newActiveFile.id;
+        setActiveFileId(newActiveFile.id)
+      } else {
+        newActiveFileId = null;
+        setActiveFileId(null)
+      }
+    }
+    
+    // Save to localStorage with full data
+    localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
+    if (newActiveFileId) {
+      localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
+    } else {
+      localStorage.removeItem('appsamurai-active-file-id')
+    }
+
+    // Clean up per-file dashboard settings to avoid stale persistence
+    localStorage.removeItem(`dashboard-settings-${fileId}`)
+    localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
   }
 
   // Replace existing file's data while preserving settings by keeping the same id

@@ -76,6 +76,11 @@ export function FileUpload({
     try {
       const text = await file.text();
       
+      // Validate file content
+      if (!text || text.trim().length === 0) {
+        throw new Error('Dosya boş veya geçersiz');
+      }
+      
       // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
@@ -87,9 +92,24 @@ export function FileUpload({
         });
       }, 100);
 
-      // Client-side CSV parsing
-      const data = parseCSV(text);
-      if (data.length === 0) throw new Error('CSV file appears to be empty or invalid');
+      // Client-side CSV parsing with better error handling
+      let data;
+      try {
+        data = parseCSV(text);
+      } catch (parseError) {
+        console.error('CSV parsing error:', parseError);
+        throw new Error('CSV dosyası işlenirken hata oluştu. Dosya formatını kontrol edin.');
+      }
+      
+      if (!data || data.length === 0) {
+        throw new Error('CSV dosyası boş veya geçersiz veri içeriyor');
+      }
+      
+      // Validate data structure
+      const firstRow = data[0];
+      if (!firstRow || typeof firstRow.app !== 'string' || firstRow.app.trim() === '') {
+        throw new Error('CSV dosyasında geçerli oyun adı bulunamadı');
+      }
 
       // Check if this matches an existing campaign
       const matchingExistingFile = uploadedFiles.find(existingFile => 
@@ -108,18 +128,27 @@ export function FileUpload({
         setUploading(false);
         setUploadProgress(0);
       } else {
-        // Create new file - Backend persistence
-        const uploadDate = new Date().toISOString().split('T')[0]
-        const created = await createFile({ 
-          name: file.name, 
-          size: file.size, 
-          uploadDate, 
-          data,
-          customerName: customerName.trim() || undefined,
-          accountManager: accountManager.trim() || undefined
-        })
+        // Create new file - Try backend first, fallback to frontend-only
+        let fileId: string;
+        try {
+          const uploadDate = new Date().toISOString().split('T')[0]
+          const created = await createFile({ 
+            name: file.name, 
+            size: file.size, 
+            uploadDate, 
+            data,
+            customerName: customerName.trim() || undefined,
+            accountManager: accountManager.trim() || undefined
+          })
+          fileId = created.id;
+        } catch (backendError) {
+          console.warn('Backend upload failed, using frontend-only mode:', backendError)
+          // Generate a unique ID for frontend-only mode
+          fileId = `frontend-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        }
+        
         const uploadedFile: UploadedFile = {
-          id: created.id,
+          id: fileId,
           name: file.name,
           size: file.size,
           uploadDate: new Date().toISOString(),
