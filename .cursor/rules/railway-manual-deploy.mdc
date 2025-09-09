@@ -52,11 +52,19 @@ cd server && npm run build
 
 ## AI Asistanı Manuel Deploy Adımları
 1. GitHub'a push tamamlandıktan sonra
-2. AI asistanı Railway dashboard'a gider: https://railway.app/
-3. AI asistanı proje seçer: `appsamurai-dashboard-backend`
-4. AI asistanı "Deploy" butonuna basar
-5. AI asistanı deploy tamamlanmasını bekler
-6. AI asistanı backend endpoint'lerini test eder
+2. AI asistanı Railway CLI ile deploy yapar:
+   ```bash
+   cd server
+   railway login
+   railway link
+   railway up
+   ```
+3. AI asistanı deploy tamamlanmasını bekler
+4. AI asistanı backend endpoint'lerini test eder:
+   ```bash
+   curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/health
+   curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
+   ```
 
 ## Test Endpoints
 Deploy sonrası test edilecek endpoint'ler:

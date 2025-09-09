@@ -1,0 +1,64 @@
+---
+alwaysApply: true
+description: Railway CLI deployment patterns and troubleshooting
+---
+
+# Railway CLI Deployment
+
+## Railway CLI Commands
+Railway deploy işlemi CLI ile yapılır:
+
+```bash
+# 1. Railway'e login ol
+railway login
+
+# 2. Projeyi link et (sadece ilk seferde)
+railway link
+
+# 3. Deploy et
+railway up
+```
+
+## Proje Yapısı
+- **Backend klasörü**: `server/` dizininde
+- **Package.json**: `server/package.json` içinde build ve start scriptleri
+- **Build çıktısı**: `server/dist/` dizininde
+
+## Deploy Süreci
+1. **Indexing**: Dosyalar taranır
+2. **Compression**: Dosyalar sıkıştırılır
+3. **Upload**: Railway'e yüklenir
+4. **Build**: `npm ci` ve `npm run build` çalıştırılır
+5. **Deploy**: Container başlatılır ve `npm run start` çalıştırılır
+
+## Troubleshooting
+
+### "Template not found" Hatası
+- `railway deploy` yerine `railway up` kullan
+- Proje zaten mevcut, template gerekmez
+
+### Link Hatası
+- `railway link` ile projeyi bağla
+- Doğru workspace ve proje seç
+
+### Build Hatası
+- `server/package.json` kontrol et
+- Build script'leri doğru mu?
+
+## Test Komutları
+Deploy sonrası test:
+
+```bash
+# Health check
+curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/health
+
+# Files endpoint
+curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
+```
+
+## Critical Rules
+- ✅ Her zaman `railway up` kullan
+- ✅ `server/` dizininde çalıştır
+- ✅ Deploy sonrası test et
+- ✅ Build loglarını kontrol et
+- ✅ Container'ın başladığını doğrula

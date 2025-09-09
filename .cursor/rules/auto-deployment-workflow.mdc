@@ -32,9 +32,12 @@ cd server && npm run build
 
 ### 4. Railway Deploy (Manuel)
 **AI Asistanı yapar:**
-- AI asistanı Railway dashboard'a gider: https://railway.app/
-- AI asistanı proje seçer: `appsamurai-dashboard-backend`
-- AI asistanı "Deploy" butonuna basar
+```bash
+cd server
+railway login
+railway link
+railway up
+```
 
 ## Deployment Sırası
 1. ✅ **GitHub Push** - Otomatik
