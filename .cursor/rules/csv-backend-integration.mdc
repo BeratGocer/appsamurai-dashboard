@@ -1,4 +1,118 @@
 ---
+description: Backend API, merge logic, data contracts, and deployment standards for AppSamurai Dashboard
+---
+# Backend Integration Rule
+
+## Goals
+- CSV verilerini ve dosya ayarlarını kalıcı tutmak
+- "Güncelle / Yeni Dosya" akışını desteklemek (benzer kampanya tespiti + merge)
+- FE ile aynı mantığı servis etmek: tarih senkronizasyonu, grup yapısı, yüzdelikler FE’de formatlanır
+
+## Teknoloji ve Güvenlik
+- Runtime: Node.js + TypeScript + Express
+- DB: PostgreSQL (Railway)
+- Auth: `x-api-key` zorunlu (sabit API key)
+- CORS: yalnızca Netlify prod alanı `https://ubiquitous-sherbet-b4f6bf.netlify.app`
+- Logging: pino
+
+## Veri Modeli (özet)
+- files: id, name, size, uploaded_at, campaign_id, structure_hash, deleted_at
+- file_settings: file_id, hidden_tables, kpi_config, column_visibility, date_range, platform_country_order
+- campaign_rows: file_id, app, campaign_network, adgroup_network, country, platform, date, installs, ecpi, cost, all_revenue, roas_d0..roas_d45
+  - unique index: (file_id, app, campaign_network, adgroup_network, date)
+
+## Parsing ve Kurallar
+- Flexible CSV parsing (header varyasyonları desteklenir)
+- Adnetwork/publisher decoding konservatif; emin olunmayan değerler orijinal kalır
+- Game name `row.app` üzerinden çıkarılır
+- ROAS değerleri DB’de decimal; yüzde format FE’de
+
+## Merge Stratejisi
+- Merge key: `${app}-${campaign_network}-${adgroup_network}-${date}-${file_id}`
+- Aynı anahtar: replace; yeni anahtar: insert
+- Aggregation sorgu zamanında:
+  - Installs/cost/revenue sum
+  - ROAS/retention install-weighted average
+- Benzer kampanya tespiti: `generateCampaignId` (oyun+ülke kümeleri, sıralı ve deterministik) + >%50 oyun örtüşmesi ikincil kontrol
+
+## Tarih Senkronizasyonu
+- Dönen veride tarih aralığı tam doldurulmalı (eksik günler 0 ile)
+- Artan tarih sıralaması (ör: `GameTables.tsx`)
+
+## API Sözleşmeleri
+
+### Upload & Confirm
+- POST `/api/files/upload` (multipart `file`)
+```json
+{
+  "temp_file_ref": "string",
+  "detected": { "campaign_id": "string", "matching_file_id": "uuid|null" },
+  "preview": { "columns": ["col1"], "sampleRows": [ {} ] }
+}
+```
+- POST `/api/files/confirm`
+```json
+{ "temp_file_ref": "string", "mode": "update"|"new", "target_file_id": "uuid|null" }
+```
+→ `{ "file_id": "uuid" }`
+
+### Files & Settings
+- GET `/api/files` → liste
+- GET `/api/files/:id` → meta + preview
+- PATCH `/api/files/:id/settings`
+```json
+{
+  "hidden_tables": ["publisherKey"],
+  "kpi_config": {},
+  "column_visibility": ["installs","roas_d7"],
+  "date_range": { "start": "YYYY-MM-DD", "end": "YYYY-MM-DD" },
+  "platform_country_order": ["Android-US","iOS-TR"]
+}
+```
+
+### Data
+- GET `/api/data/overview` (query: `file_id`, `selected_game?`, `hidden_tables?`, `start_date?`, `end_date?`)
+```json
+{
+  "kpis": { "total_installs": 0, "avg_roas_d0": 0, "avg_roas_d7": 0, "avg_roas_d30": 0 },
+  "date_range": { "start": "YYYY-MM-DD", "end": "YYYY-MM-DD" }
+}
+```
+- GET `/api/data/tables` (query: `file_id`, filtreler, tarih aralığı)
+```json
+{
+  "groups": [
+    {
+      "game": "ColorJelly",
+      "country": "US",
+      "platform": "Android",
+      "publisher": "TBSDK",
+      "dailyData": [ { "date": "2025-01-01", "installs": 123, "roas_d7": 0.35, "roas_d30": 0.72 } ]
+    }
+  ],
+  "date_range": { "start": "YYYY-MM-DD", "end": "YYYY-MM-DD" }
+}
+```
+
+### Health
+- GET `/api/health` → `{ "status": "ok" }`
+
+## Performans
+- Upsert: `ON CONFLICT` unique index ile
+- Büyük yüklemeler: batch insert/staging
+- Indexler: `(file_id, app, country, platform, date)` ve unique anahtar
+
+## Branch ve Dağıtım
+- Backend repo: private, iki branch: `product` (prod), `developer` (dev)
+- Railway servisleri: prod→product, dev→developer
+- Env vars: `API_KEY`, `CORS_ORIGINS=https://ubiquitous-sherbet-b4f6bf.netlify.app`, `DATABASE_URL`
+
+## Frontend Hizalama
+- Yüzde format FE’de
+- Grup: APP+COUNTRY+PLATFORM, publisher’lar yan yana
+- Tarih artan; eksik günler 0
+
+---
 description: CSV backend integration patterns and requirements
 ---
 
