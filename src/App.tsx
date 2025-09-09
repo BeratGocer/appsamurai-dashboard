@@ -15,83 +15,85 @@ function App() {
   const [showUploadPage, setShowUploadPage] = useState(false)
 
 
-  // Load data from localStorage first, then try backend sync
+  // Backend-first data loading - always sync with backend
   useEffect(() => {
     (async () => {
-      // First, load from localStorage for immediate display
-      const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
-      const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
-      if (savedFiles) {
-        try {
-          const files = JSON.parse(savedFiles) as UploadedFile[];
-          setUploadedFiles(files);
-          if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
-            setActiveFileId(savedActiveFileId);
-          } else if (files.length > 0) {
-            setActiveFileId(files[0].id);
-          }
-        } catch (error) {
-          console.error('Failed to load saved files:', error);
-        }
-      }
-
-      // Then try to sync with backend (optional) - only if localStorage is empty
-      if (!savedFiles || JSON.parse(savedFiles || '[]').length === 0) {
-        try {
-          const resp = await listFiles()
-          if (resp.files && resp.files.length > 0) {
-            const detailed: UploadedFile[] = []
-            for (const f of resp.files) {
-              try {
-                const d = await getFile(f.id)
-                const rows = Array.isArray((d as any).data) ? (d as any).data : []
-                // Validate rows: require string app field to avoid runtime errors downstream
-                const validRows = rows.filter((r: any) => r && typeof r.app === 'string' && r.app.length > 0)
-                if (validRows.length === 0) {
-                  continue
-                }
-                detailed.push({
-                  id: d.id,
-                  name: d.name,
-                  size: Number(d.size),
-                  uploadDate: d.upload_date,
-                  data: validRows as any,
-                  isActive: false,
-                  customerName: (d as any).customer_name || undefined,
-                  accountManager: (d as any).account_manager || undefined,
-                })
-              } catch (e) {
-                // skip broken file
-                console.warn('Skipping invalid file from backend', f.id, e)
+      try {
+        console.log('Loading files from backend...')
+        const resp = await listFiles()
+        if (resp.files && resp.files.length > 0) {
+          const detailed: UploadedFile[] = []
+          for (const f of resp.files) {
+            try {
+              const d = await getFile(f.id)
+              const rows = Array.isArray((d as any).data) ? (d as any).data : []
+              // Validate rows: require string app field to avoid runtime errors downstream
+              const validRows = rows.filter((r: any) => r && typeof r.app === 'string' && r.app.length > 0)
+              if (validRows.length === 0) {
+                continue
               }
-            }
-            if (detailed.length > 0) {
-              detailed[0].isActive = true
-              setUploadedFiles(detailed)
-              setActiveFileId(detailed[0].id)
-              // Cache locally for faster reloads
-              localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(detailed))
-              localStorage.setItem('appsamurai-active-file-id', detailed[0].id)
+              detailed.push({
+                id: d.id,
+                name: d.name,
+                size: Number(d.size),
+                uploadDate: d.upload_date,
+                data: validRows as any,
+                isActive: false,
+                customerName: (d as any).customer_name || undefined,
+                accountManager: (d as any).account_manager || undefined,
+              })
+            } catch (e) {
+              // skip broken file
+              console.warn('Skipping invalid file from backend', f.id, e)
             }
           }
-        } catch (err) {
-          console.warn('Backend sync failed, using localStorage data', err)
+          if (detailed.length > 0) {
+            detailed[0].isActive = true
+            setUploadedFiles(detailed)
+            setActiveFileId(detailed[0].id)
+            // Cache locally for faster reloads (but backend is source of truth)
+            localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(detailed))
+            localStorage.setItem('appsamurai-active-file-id', detailed[0].id)
+          }
+        } else {
+          // No files in backend, clear local state
+          setUploadedFiles([])
+          setActiveFileId(null)
+          localStorage.removeItem('appsamurai-uploaded-files')
+          localStorage.removeItem('appsamurai-active-file-id')
+        }
+      } catch (err) {
+        console.error('Backend sync failed:', err)
+        // Fallback to localStorage only if backend is completely unavailable
+        const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
+        const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
+        if (savedFiles) {
+          try {
+            const files = JSON.parse(savedFiles) as UploadedFile[];
+            setUploadedFiles(files);
+            if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
+              setActiveFileId(savedActiveFileId);
+            } else if (files.length > 0) {
+              setActiveFileId(files[0].id);
+            }
+          } catch (error) {
+            console.error('Failed to load saved files:', error);
+          }
         }
       }
     })()
   }, [])
 
   const handleFileUpload = async (file: UploadedFile) => {
-    // Deactivate all other files
+    // File is already uploaded to backend in FileUpload component
+    // Just update frontend state
     const updatedFiles = uploadedFiles.map(f => ({ ...f, isActive: false }))
-    
-    // Add new file as active
     const newFiles = [...updatedFiles, file]
     setUploadedFiles(newFiles)
     setActiveFileId(file.id)
     setShowUploadPage(false) // Return to dashboard after upload
     
-    // Save to localStorage with full data
+    // Save to localStorage (backend is source of truth)
     localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(newFiles))
     localStorage.setItem('appsamurai-active-file-id', file.id)
   }
@@ -111,47 +113,45 @@ function App() {
   }
 
   const handleFileDelete = async (fileId: string) => {
-    // Always remove from frontend state and localStorage first
-    const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
-    setUploadedFiles(updatedFiles)
-    
-    let newActiveFileId = activeFileId;
-    
-    if (fileId === activeFileId) {
-      if (updatedFiles.length > 0) {
-        const newActiveFile = updatedFiles[0]
-        newActiveFile.isActive = true
-        newActiveFileId = newActiveFile.id;
-        setActiveFileId(newActiveFile.id)
-      } else {
-        newActiveFileId = null;
-        setActiveFileId(null)
-      }
-    }
-    
-    // Save to localStorage with full data
-    localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
-    if (newActiveFileId) {
-      localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
-    } else {
-      localStorage.removeItem('appsamurai-active-file-id')
-    }
-
-    // Clean up per-file dashboard settings to avoid stale persistence
-    localStorage.removeItem(`dashboard-settings-${fileId}`)
-    localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
-
-    // Try to delete from backend after frontend cleanup
     try {
+      // First delete from backend (source of truth)
       await deleteFile(fileId)
       console.log('Backend delete successful for file:', fileId)
-    } catch (backendError) {
-      // Check if it's a 404 error (file not found in backend)
-      if (backendError instanceof Error && backendError.message.includes('404')) {
-        console.log('File not found in backend (frontend-only file), frontend delete completed:', fileId)
-      } else {
-        console.warn('Backend delete failed, but frontend delete completed:', backendError)
+      
+      // Only update frontend after successful backend deletion
+      const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
+      setUploadedFiles(updatedFiles)
+      
+      let newActiveFileId = activeFileId;
+      
+      if (fileId === activeFileId) {
+        if (updatedFiles.length > 0) {
+          const newActiveFile = updatedFiles[0]
+          newActiveFile.isActive = true
+          newActiveFileId = newActiveFile.id;
+          setActiveFileId(newActiveFile.id)
+        } else {
+          newActiveFileId = null;
+          setActiveFileId(null)
+        }
       }
+      
+      // Update localStorage after successful backend deletion
+      localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
+      if (newActiveFileId) {
+        localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
+      } else {
+        localStorage.removeItem('appsamurai-active-file-id')
+      }
+
+      // Clean up per-file dashboard settings
+      localStorage.removeItem(`dashboard-settings-${fileId}`)
+      localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
+      
+    } catch (backendError) {
+      console.error('Backend delete failed:', backendError)
+      // Don't update frontend if backend deletion failed
+      alert('Dosya silinemedi. Lütfen tekrar deneyin.')
     }
   }
 
