@@ -141,8 +141,13 @@ function App() {
     localStorage.removeItem(`dashboard-settings-${fileId}`)
     localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
 
-    // Skip backend delete for now - backend DELETE endpoint not working
-    console.log('Frontend delete completed for file:', fileId)
+    // Try to delete from backend after frontend cleanup
+    try {
+      await deleteFile(fileId)
+      console.log('Backend delete successful for file:', fileId)
+    } catch (backendError) {
+      console.warn('Backend delete failed, but frontend delete completed:', backendError)
+    }
   }
 
   // Replace existing file's data while preserving settings by keeping the same id
