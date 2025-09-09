@@ -1,0 +1,49 @@
+---
+description: KPI game filtering fix for platform suffix handling
+---
+
+# KPI Game Filtering Fix
+
+## Problem
+KPI kartları tek oyun seçildiğinde sıfır dönüyordu çünkü oyun adı karşılaştırmasında platform soneki (Android/iOS) dikkate alınmıyordu.
+
+## Root Cause
+CSV verisinde `app` alanı "Blossom Match Android" şeklinde platform bilgisi içeriyor, ancak `selectedGame` değeri "Blossom Match" olarak geliyor. Doğrudan karşılaştırma başarısız oluyor.
+
+## Solution Pattern
+Oyun adı karşılaştırmasında platform sonekini kaldır:
+
+```typescript
+// ❌ WRONG: Direct comparison fails
+filteredData = filteredData.filter(row => row.app === selectedGame);
+
+// ✅ CORRECT: Remove platform suffix before comparison
+filteredData = filteredData.filter(row => {
+  const gameNameFromRow = row.app.replace(' Android', '').replace(' iOS', '').trim();
+  return gameNameFromRow === selectedGame;
+});
+```
+
+## Implementation Location
+- **File**: [src/utils/kpiUtils.ts](mdc:src/utils/kpiUtils.ts)
+- **Function**: `calculateKPIValue`
+- **Lines**: 144-151
+
+## Critical Rules
+- ✅ Always remove platform suffixes when comparing game names
+- ✅ Use `.replace(' Android', '').replace(' iOS', '').trim()` pattern
+- ✅ Apply this pattern in both KPI calculation and data filtering
+- ✅ Test with games that have platform suffixes
+- ✅ Ensure consistent game name handling across all components
+
+## Testing Checklist
+- [ ] Single game selection shows correct KPI values
+- [ ] Multiple games selection works correctly
+- [ ] Platform-specific filtering works
+- [ ] Game name matching is case-insensitive
+- [ ] Edge cases (empty names, special characters) handled
+
+## Related Components
+- [src/components/DynamicKPISection.tsx](mdc:src/components/DynamicKPISection.tsx)
+- [src/components/Dashboard.tsx](mdc:src/components/Dashboard.tsx)
+- [src/components/GameTable.tsx](mdc:src/components/GameTable.tsx)

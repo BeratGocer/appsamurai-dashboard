@@ -62,6 +62,8 @@ curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-produc
 - ✅ **Complete Workflow**: Include all steps from Git to Railway
 - ✅ **Error Handling**: Report any failures to user
 - ✅ **Testing**: Verify deployment success
+- ✅ **Single Push Rule**: Update rules first, then single push - never push twice
+- ✅ **KPI Fix Included**: Game filtering fix for platform suffixes applied
 
 ## Deployment URLs
 - **Frontend**: https://ubiquitous-sherbet-b4f6bf.netlify.app/

@@ -48,6 +48,8 @@ railway up
 - ✅ **Test After Deploy**: Verify deployment success
 - ✅ **Error Handling**: Report failures to user
 - ✅ **Sequential Process**: Complete each step before next
+- ✅ **Single Push Rule**: Never push twice - update rules first, then single push
+- ✅ **KPI Fix Applied**: Game filtering now handles platform suffixes correctly
 
 ## Post-Deploy Testing
 
