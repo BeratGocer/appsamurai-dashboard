@@ -58,6 +58,15 @@ app.post('/api/files', async (req, res) => {
       customer_name TEXT,
       account_manager TEXT
     );`)
+    
+    // Add missing columns if they don't exist (migration)
+    try {
+      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS customer_name TEXT;`)
+      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS account_manager TEXT;`)
+    } catch (migrationErr) {
+      logger.warn({ err: migrationErr }, 'Migration warning - columns may already exist')
+    }
+    
     const id = randomUUID()
     const result = await pool.query('INSERT INTO files(id,name,size,upload_date,data,customer_name,account_manager) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [id, name, size, uploadDate, JSON.stringify(data), customerName || null, accountManager || null])
     
@@ -87,6 +96,15 @@ app.get('/api/files', async (_req, res) => {
       customer_name TEXT,
       account_manager TEXT
     );`)
+    
+    // Add missing columns if they don't exist (migration)
+    try {
+      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS customer_name TEXT;`)
+      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS account_manager TEXT;`)
+    } catch (migrationErr) {
+      logger.warn({ err: migrationErr }, 'Migration warning - columns may already exist')
+    }
+    
     const r = await pool.query('SELECT id, name, size, upload_date, customer_name, account_manager, jsonb_array_length(data) as record_count FROM files ORDER BY upload_date DESC')
     
     // Set cache control headers
@@ -106,6 +124,15 @@ app.get('/api/files', async (_req, res) => {
 app.get('/api/files/:id', async (req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
+    
+    // Add missing columns if they don't exist (migration)
+    try {
+      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS customer_name TEXT;`)
+      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS account_manager TEXT;`)
+    } catch (migrationErr) {
+      logger.warn({ err: migrationErr }, 'Migration warning - columns may already exist')
+    }
+    
     const r = await pool.query('SELECT id, name, size, upload_date, data, customer_name, account_manager FROM files WHERE id=$1', [req.params.id])
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' })
     
