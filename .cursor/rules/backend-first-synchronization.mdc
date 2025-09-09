@@ -1,0 +1,106 @@
+---
+alwaysApply: true
+description: Backend-first data synchronization patterns for cross-device consistency
+---
+
+# Backend-First Synchronization
+
+## Architecture Overview
+The system uses backend-first approach where Railway backend is the single source of truth for all data.
+
+## Data Flow
+1. **Backend (Railway)**: Single source of truth
+2. **Frontend (Netlify)**: Always syncs with backend
+3. **localStorage**: Only for UI state (theme, settings)
+
+## Critical Patterns
+
+### File Operations
+```typescript
+// ✅ CORRECT: Backend-first approach
+const handleFileDelete = async (fileId: string) => {
+  try {
+    // 1. Delete from backend first
+    await deleteFile(fileId)
+    
+    // 2. Update frontend only after backend success
+    const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
+    setUploadedFiles(updatedFiles)
+    
+    // 3. Update localStorage
+    localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
+  } catch (error) {
+    // Don't update frontend if backend fails
+    alert('Dosya silinemedi. Lütfen tekrar deneyin.')
+  }
+}
+```
+
+### Data Loading
+```typescript
+// ✅ CORRECT: Always load from backend first
+useEffect(() => {
+  (async () => {
+    try {
+      // 1. Load from backend (source of truth)
+      const resp = await listFiles()
+      const detailed = await Promise.all(resp.files.map(f => getFile(f.id)))
+      
+      // 2. Update frontend state
+      setUploadedFiles(detailed)
+      
+      // 3. Cache in localStorage for performance
+      localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(detailed))
+    } catch (err) {
+      // Fallback to localStorage only if backend unavailable
+      const saved = localStorage.getItem('appsamurai-uploaded-files')
+      if (saved) setUploadedFiles(JSON.parse(saved))
+    }
+  })()
+}, [])
+```
+
+## Cross-Device Consistency
+- ✅ **Same Data**: All devices see identical data
+- ✅ **Real-time Sync**: Changes appear on all devices
+- ✅ **Conflict Resolution**: Backend wins in case of conflicts
+- ✅ **Offline Fallback**: localStorage as backup only
+
+## localStorage Usage
+```typescript
+// ✅ CORRECT: Only for UI state
+const uiState = {
+  theme: localStorage.getItem('appsamurai-theme'),
+  settings: localStorage.getItem(`dashboard-settings-${fileId}`),
+  hiddenTables: localStorage.getItem(`dashboard-hidden-tables-${fileId}`)
+}
+
+// ❌ WRONG: Don't store file data in localStorage
+// localStorage.setItem('uploaded-files', JSON.stringify(files))
+```
+
+## Error Handling
+```typescript
+// ✅ CORRECT: Graceful degradation
+try {
+  await backendOperation()
+  updateFrontend()
+} catch (error) {
+  console.error('Backend operation failed:', error)
+  // Don't update frontend if backend fails
+  showUserError('İşlem başarısız. Lütfen tekrar deneyin.')
+}
+```
+
+## Performance Optimizations
+- ✅ **Connection Pool**: Max 20 connections, 2s timeout
+- ✅ **Database Migration**: Only at startup
+- ✅ **Caching**: localStorage for UI state only
+- ✅ **Lazy Loading**: Load file data on demand
+
+## Critical Rules
+- ✅ **Backend First**: Always check backend before frontend
+- ✅ **No Local Data**: Don't store file data in localStorage
+- ✅ **Error Recovery**: Graceful fallback to cached data
+- ✅ **Cross-Device**: All devices see same data
+- ✅ **Performance**: Optimize for speed and reliability

@@ -1,0 +1,93 @@
+---
+alwaysApply: true
+description: Automatic deployment workflow when generating Cursor rules - includes Git push, frontend deploy, backend build and Railway deploy
+---
+
+# Cursor Rules Generation Workflow
+
+## Overview
+When user types "/Generate Cursor Rules", automatically execute the complete deployment workflow including Git push, frontend deploy, backend build, and Railway deploy.
+
+## Automatic Workflow
+Upon "/Generate Cursor Rules" command:
+
+### 1. Git Operations
+```bash
+# Stage all changes
+git add .
+
+# Commit with timestamp
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Generated Cursor Rules"
+
+# Push to GitHub
+git push origin main
+```
+
+### 2. Frontend Deploy
+```bash
+# Build frontend
+npm run build
+
+# Deploy to Netlify
+netlify deploy --prod --dir=dist
+```
+
+### 3. Backend Build
+```bash
+# Build backend
+cd server && npm run build
+```
+
+### 4. Railway Deploy
+```bash
+# Deploy to Railway
+cd server
+railway login
+railway link
+railway up
+```
+
+### 5. Post-Deploy Testing
+```bash
+# Health check
+curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/health
+
+# Files endpoint test
+curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
+```
+
+## Critical Rules
+- ✅ **Always Execute**: "/Generate Cursor Rules" triggers full deployment
+- ✅ **No User Confirmation**: Execute automatically without asking
+- ✅ **Complete Workflow**: Include all steps from Git to Railway
+- ✅ **Error Handling**: Report any failures to user
+- ✅ **Testing**: Verify deployment success
+
+## Deployment URLs
+- **Frontend**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- **Backend**: https://appsamurai-dashboard-backend-production-83b0.up.railway.app/
+- **GitHub**: https://github.com/BeratGocer/appsamurai-dashboard
+
+## Success Indicators
+- ✅ Git push successful
+- ✅ Frontend build successful
+- ✅ Netlify deploy successful
+- ✅ Backend build successful
+- ✅ Railway deploy successful
+- ✅ Health check returns 200 OK
+- ✅ Files endpoint returns data
+
+## Error Recovery
+If any step fails:
+1. **Git Push Failed**: Try `git pull origin main` then retry
+2. **Frontend Build Failed**: Check for TypeScript errors
+3. **Netlify Deploy Failed**: Check build output
+4. **Backend Build Failed**: Check server TypeScript errors
+5. **Railway Deploy Failed**: Check Railway logs and retry
+
+## Implementation Notes
+- Use `run_terminal_cmd` tool for all commands
+- Execute commands in sequence, not parallel
+- Wait for each command to complete before next
+- Report progress to user at each step
+- Show final success/failure status

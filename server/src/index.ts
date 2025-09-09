@@ -13,7 +13,41 @@ const API_KEY = process.env.API_KEY || ''
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean)
 const DATABASE_URL = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL || ''
 
-const pool = DATABASE_URL ? new Pool({ connectionString: DATABASE_URL, ssl: DATABASE_URL.includes('proxy.rlwy.net') ? { rejectUnauthorized: false } : undefined }) : undefined
+const pool = DATABASE_URL ? new Pool({ 
+  connectionString: DATABASE_URL, 
+  ssl: DATABASE_URL.includes('proxy.rlwy.net') ? { rejectUnauthorized: false } : undefined,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000
+}) : undefined
+
+// Initialize database schema once at startup
+const initializeDatabase = async () => {
+  if (!pool) return
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS files (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      size BIGINT NOT NULL,
+      upload_date TEXT NOT NULL,
+      data JSONB NOT NULL,
+      customer_name TEXT,
+      account_manager TEXT
+    );`)
+    
+    // Add missing columns if they don't exist (migration)
+    try {
+      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS customer_name TEXT;`)
+      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS account_manager TEXT;`)
+    } catch (migrationErr) {
+      logger.warn({ err: migrationErr }, 'Migration warning - columns may already exist')
+    }
+    
+    logger.info('Database initialized successfully')
+  } catch (err) {
+    logger.error({ err }, 'Database initialization failed')
+  }
+}
 
 app.use(helmet())
 app.use(express.json({ limit: '10mb' }))
@@ -49,33 +83,9 @@ app.post('/api/files', async (req, res) => {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
     const { name, size, uploadDate, data, customerName, accountManager } = req.body || {}
     if (!name || !size || !uploadDate || !Array.isArray(data)) return res.status(400).json({ error: 'Invalid payload' })
-    await pool.query(`CREATE TABLE IF NOT EXISTS files (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      size BIGINT NOT NULL,
-      upload_date TEXT NOT NULL,
-      data JSONB NOT NULL,
-      customer_name TEXT,
-      account_manager TEXT
-    );`)
-    
-    // Add missing columns if they don't exist (migration)
-    try {
-      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS customer_name TEXT;`)
-      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS account_manager TEXT;`)
-    } catch (migrationErr) {
-      logger.warn({ err: migrationErr }, 'Migration warning - columns may already exist')
-    }
     
     const id = randomUUID()
     const result = await pool.query('INSERT INTO files(id,name,size,upload_date,data,customer_name,account_manager) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [id, name, size, uploadDate, JSON.stringify(data), customerName || null, accountManager || null])
-    
-    // Set cache control headers
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    })
     
     res.json({ id: result.rows[0].id })
   } catch (err) {
@@ -87,32 +97,8 @@ app.post('/api/files', async (req, res) => {
 app.get('/api/files', async (_req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
-    await pool.query(`CREATE TABLE IF NOT EXISTS files (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      size BIGINT NOT NULL,
-      upload_date TEXT NOT NULL,
-      data JSONB NOT NULL,
-      customer_name TEXT,
-      account_manager TEXT
-    );`)
-    
-    // Add missing columns if they don't exist (migration)
-    try {
-      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS customer_name TEXT;`)
-      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS account_manager TEXT;`)
-    } catch (migrationErr) {
-      logger.warn({ err: migrationErr }, 'Migration warning - columns may already exist')
-    }
     
     const r = await pool.query('SELECT id, name, size, upload_date, customer_name, account_manager, jsonb_array_length(data) as record_count FROM files ORDER BY upload_date DESC')
-    
-    // Set cache control headers
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    })
     
     res.json({ files: r.rows })
   } catch (err) {
@@ -125,23 +111,8 @@ app.get('/api/files/:id', async (req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
     
-    // Add missing columns if they don't exist (migration)
-    try {
-      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS customer_name TEXT;`)
-      await pool.query(`ALTER TABLE files ADD COLUMN IF NOT EXISTS account_manager TEXT;`)
-    } catch (migrationErr) {
-      logger.warn({ err: migrationErr }, 'Migration warning - columns may already exist')
-    }
-    
     const r = await pool.query('SELECT id, name, size, upload_date, data, customer_name, account_manager FROM files WHERE id=$1', [req.params.id])
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' })
-    
-    // Set cache control headers to prevent 304 responses
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    })
     
     res.json(r.rows[0])
   } catch (err) {
@@ -154,13 +125,6 @@ app.get('/api/files/:id', async (req, res) => {
 app.delete('/api/files/:id', async (req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
-    
-    // Set cache control headers first
-    res.set({
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    })
     
     const r = await pool.query('DELETE FROM files WHERE id=$1 RETURNING id', [req.params.id])
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' })
@@ -177,7 +141,8 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   res.status(500).json({ error: 'Internal Server Error' })
 })
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  await initializeDatabase()
   logger.info({ port: PORT, cors: CORS_ORIGINS }, 'Server started')
 })
 
