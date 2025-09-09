@@ -3,6 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import pino from 'pino'
 import { Pool } from 'pg'
+import { randomUUID } from 'node:crypto'
 
 const app = express()
 const logger = pino()
@@ -44,13 +45,14 @@ app.post('/api/files', async (req, res) => {
     const { name, size, uploadDate, data } = req.body || {}
     if (!name || !size || !uploadDate || !Array.isArray(data)) return res.status(400).json({ error: 'Invalid payload' })
     await pool.query(`CREATE TABLE IF NOT EXISTS files (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       size BIGINT NOT NULL,
       upload_date TEXT NOT NULL,
       data JSONB NOT NULL
     );`)
-    const result = await pool.query('INSERT INTO files(name,size,upload_date,data) VALUES ($1,$2,$3,$4) RETURNING id', [name, size, uploadDate, JSON.stringify(data)])
+    const id = randomUUID()
+    const result = await pool.query('INSERT INTO files(id,name,size,upload_date,data) VALUES ($1,$2,$3,$4,$5) RETURNING id', [id, name, size, uploadDate, JSON.stringify(data)])
     res.json({ id: result.rows[0].id })
   } catch (err) {
     logger.error({ err }, 'files insert error')
@@ -62,7 +64,7 @@ app.get('/api/files', async (_req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
     await pool.query(`CREATE TABLE IF NOT EXISTS files (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       size BIGINT NOT NULL,
       upload_date TEXT NOT NULL,

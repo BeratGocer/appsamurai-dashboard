@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Upload, FileText, X, CheckCircle, AlertCircle, User, Building } from "lucide-react"
 import { parseCSV, isSameCampaign, mergeCampaignData } from '@/utils/csvParser'
+import { createFile } from '@/utils/api'
 import type { UploadedFile } from '@/types'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -107,27 +108,24 @@ export function FileUpload({
         setUploading(false);
         setUploadProgress(0);
       } else {
-        // Create new file
-        const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
+        // Create new file - Backend persistence
+        const uploadDate = new Date().toISOString().split('T')[0]
+        const created = await createFile({ name: file.name, size: file.size, uploadDate, data })
         const uploadedFile: UploadedFile = {
-          id: fileId,
+          id: created.id,
           name: file.name,
           size: file.size,
           uploadDate: new Date().toISOString(),
-          data: data,
+          data,
           isActive: true,
           customerName: customerName.trim() || undefined,
           accountManager: accountManager.trim() || undefined
-        };
-
-        setTimeout(() => {
-          onFileUpload(uploadedFile);
-          setUploading(false);
-          setUploadProgress(0);
-          setCustomerName('');
-          setAccountManager('');
-        }, 500);
+        }
+        onFileUpload(uploadedFile)
+        setUploading(false)
+        setUploadProgress(0)
+        setCustomerName('')
+        setAccountManager('')
       }
 
     } catch (err) {
