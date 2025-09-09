@@ -6,6 +6,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 import { ChatProvider } from './contexts/ChatContext'
 import GlobalChatAssistant from './components/GlobalChatAssistant'
 import type { UploadedFile } from './types'
+import { listFiles, getFile } from '@/utils/api'
 
 
 function App() {
@@ -14,24 +15,56 @@ function App() {
   const [showUploadPage, setShowUploadPage] = useState(false)
 
 
-  // Load data from localStorage on startup
+  // Prefer backend list; fallback to localStorage for offline
   useEffect(() => {
-    const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
-    const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
-    
-    if (savedFiles) {
+    (async () => {
       try {
-        const files = JSON.parse(savedFiles) as UploadedFile[];
-        setUploadedFiles(files);
-        if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
-          setActiveFileId(savedActiveFileId);
-        } else if (files.length > 0) {
-          setActiveFileId(files[0].id);
+        const resp = await listFiles()
+        if (resp.files && resp.files.length > 0) {
+          const detailed: UploadedFile[] = []
+          for (const f of resp.files) {
+            const d = await getFile(f.id)
+            detailed.push({
+              id: d.id,
+              name: d.name,
+              size: Number(d.size),
+              uploadDate: d.upload_date,
+              data: (d as any).data || [],
+              isActive: false,
+              customerName: undefined,
+              accountManager: undefined,
+            })
+          }
+          if (detailed.length > 0) {
+            detailed[0].isActive = true
+            setUploadedFiles(detailed)
+            setActiveFileId(detailed[0].id)
+            // Cache locally for faster reloads
+            localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(detailed))
+            localStorage.setItem('appsamurai-active-file-id', detailed[0].id)
+            return
+          }
         }
-      } catch (error) {
-        console.error('Failed to load saved files:', error);
+      } catch (err) {
+        console.warn('Backend list failed, falling back to localStorage', err)
       }
-    }
+      // Fallback: Load data from localStorage on startup
+      const savedFiles = localStorage.getItem('appsamurai-uploaded-files');
+      const savedActiveFileId = localStorage.getItem('appsamurai-active-file-id');
+      if (savedFiles) {
+        try {
+          const files = JSON.parse(savedFiles) as UploadedFile[];
+          setUploadedFiles(files);
+          if (savedActiveFileId && files.some((f: UploadedFile) => f.id === savedActiveFileId)) {
+            setActiveFileId(savedActiveFileId);
+          } else if (files.length > 0) {
+            setActiveFileId(files[0].id);
+          }
+        } catch (error) {
+          console.error('Failed to load saved files:', error);
+        }
+      }
+    })()
   }, [])
 
   const handleFileUpload = async (file: UploadedFile) => {
