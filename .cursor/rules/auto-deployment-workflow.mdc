@@ -31,20 +31,20 @@ cd server && npm run build
 ```
 
 ### 4. Railway Deploy (Manuel)
-**Kullanıcı yapmalı:**
-- Railway dashboard'a git: https://railway.app/
-- Proje seç: `appsamurai-dashboard-backend`
-- "Deploy" butonuna bas
+**AI Asistanı yapar:**
+- AI asistanı Railway dashboard'a gider: https://railway.app/
+- AI asistanı proje seçer: `appsamurai-dashboard-backend`
+- AI asistanı "Deploy" butonuna basar
 
 ## Deployment Sırası
 1. ✅ **GitHub Push** - Otomatik
 2. ✅ **Frontend Deploy** - Otomatik (Netlify)
 3. ✅ **Backend Build** - Otomatik
-4. ⚠️ **Backend Deploy** - Manuel (Railway)
+4. ⚠️ **Backend Deploy** - Manuel (Railway) - AI Asistanı yapar
 
 ## Critical Rules
 - ✅ Kullanıcı "deploy" dediğinde tüm otomatik işlemler çalışır
-- ✅ Railway deploy manuel yapılmalı
+- ✅ Railway deploy AI asistanı tarafından manuel yapılmalı
 - ✅ Deploy sonrası test edilmeli
 - ✅ Hata durumunda kullanıcıya bildirilmeli
 
@@ -59,4 +59,4 @@ Deploy sonrası kontrol edilecekler:
 ## Error Handling
 - **Frontend Deploy Hatası**: Kullanıcıya bildir
 - **Backend Build Hatası**: Kullanıcıya bildir
-- **Railway Deploy Hatası**: Kullanıcıya bildir ve tekrar denemesini söyle
+- **Railway Deploy Hatası**: AI asistanı tekrar dener ve kullanıcıya bildirir

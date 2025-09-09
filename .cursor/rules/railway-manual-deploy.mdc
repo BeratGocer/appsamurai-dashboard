@@ -11,11 +11,11 @@ description: Railway manual deployment workflow and deployment patterns
 - **GitHub**: Kod deposu
 
 ## Railway Deployment Workflow
-Railway'de deploy işlemi **manuel** olarak yapılmalıdır:
+Railway'de deploy işlemi **AI asistanı** tarafından manuel olarak yapılır:
 
 1. **Kod Değişiklikleri**: GitHub'a push edilir
-2. **Railway Dashboard**: https://railway.app/ adresine gidilir
-3. **Manuel Deploy**: Deploy butonuna basılır
+2. **AI Asistanı**: Railway dashboard'ına gider
+3. **Manuel Deploy**: AI asistanı deploy butonuna basar
 4. **Deploy Tamamlanması**: Backend güncellemesi tamamlanır
 
 ## Otomatik Deploy Sırası
@@ -34,15 +34,15 @@ netlify deploy --prod --dir=dist
 # 3. Backend build (otomatik)
 cd server && npm run build
 
-# 4. Railway deploy (MANUEL - kullanıcı yapmalı)
-# Railway dashboard'da deploy butonuna basılmalı
+# 4. Railway deploy (MANUEL - AI asistanı yapar)
+# AI asistanı Railway dashboard'da deploy butonuna basar
 ```
 
 ## Critical Rules
-- ✅ Railway deploy **HER ZAMAN** manuel yapılmalı
+- ✅ Railway deploy **AI ASİSTANI** tarafından manuel yapılmalı
 - ✅ Frontend ve GitHub push otomatik
-- ✅ Backend build otomatik ama deploy manuel
-- ✅ Railway dashboard'da deploy butonuna basılmalı
+- ✅ Backend build otomatik ama deploy AI asistanı tarafından manuel
+- ✅ AI asistanı Railway dashboard'da deploy butonuna basmalı
 - ✅ Deploy tamamlandıktan sonra test edilmeli
 
 ## Deployment URLs
@@ -50,13 +50,13 @@ cd server && npm run build
 - **Backend**: https://appsamurai-dashboard-backend-production-83b0.up.railway.app/
 - **GitHub**: https://github.com/BeratGocer/appsamurai-dashboard
 
-## Manuel Deploy Adımları
+## AI Asistanı Manuel Deploy Adımları
 1. GitHub'a push tamamlandıktan sonra
-2. Railway dashboard'a git: https://railway.app/
-3. Proje seç: `appsamurai-dashboard-backend`
-4. "Deploy" butonuna bas
-5. Deploy tamamlanmasını bekle
-6. Backend endpoint'lerini test et
+2. AI asistanı Railway dashboard'a gider: https://railway.app/
+3. AI asistanı proje seçer: `appsamurai-dashboard-backend`
+4. AI asistanı "Deploy" butonuna basar
+5. AI asistanı deploy tamamlanmasını bekler
+6. AI asistanı backend endpoint'lerini test eder
 
 ## Test Endpoints
 Deploy sonrası test edilecek endpoint'ler:
