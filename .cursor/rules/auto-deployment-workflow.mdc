@@ -1,85 +1,62 @@
 ---
-description: Auto deployment workflow and Git integration patterns
-globs: package.json,netlify.toml,.gitignore
+alwaysApply: true
+description: Auto deployment workflow for frontend and backend with manual Railway deploy
 ---
 
-# Auto Git Push & Deploy Rule
+# Auto Deployment Workflow
 
-## Overview
-This rule ensures that any file changes in the AppSamurai Dashboard project are automatically committed, pushed to GitHub, and deployed to production.
+## Deployment Strategy
+- **Frontend (Netlify)**: Otomatik deploy
+- **Backend (Railway)**: Manuel deploy
+- **GitHub**: Otomatik push
 
-## Automatic Workflow
-When files are modified, the following commands will be executed automatically:
+## Kullanıcı "Deploy" Dediğinde
 
-1. **Stage Changes**: `git add .`
-2. **Commit Changes**: `git commit -m "Auto-commit: [description of changes]"`
-3. **Push to GitHub**: `git push origin main`
-4. **Build Frontend**: `npm run build`
-5. **Deploy to Netlify**: `netlify deploy --prod --dir=dist`
-
-## Implementation Pattern
+### 1. Git Push (Otomatik)
 ```bash
-# Automatic staging
 git add .
-
-# Smart commit message generation
-git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - $(git status --porcelain | head -1 | cut -c4-)"
-
-# Push to remote
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - [description]"
 git push origin main
+```
 
-# Build frontend
+### 2. Frontend Build & Deploy (Otomatik)
+```bash
 npm run build
-
-# Deploy to production
 netlify deploy --prod --dir=dist
 ```
 
-## File Monitoring
-This rule applies to all project files except:
-- `node_modules/`
-- `dist/`
-- `.git/`
-- `.DS_Store`
-- `*.log`
+### 3. Backend Build (Otomatik)
+```bash
+cd server && npm run build
+```
 
-## Commit Message Format
-Auto-generated commit messages follow this pattern:
-- `Auto-commit: YYYY-MM-DD_HH:MM:SS - [file description]`
-- Example: `Auto-commit: 2025-01-03_16:30:45 - Updated Dashboard component`
+### 4. Railway Deploy (Manuel)
+**Kullanıcı yapmalı:**
+- Railway dashboard'a git: https://railway.app/
+- Proje seç: `appsamurai-dashboard-backend`
+- "Deploy" butonuna bas
+
+## Deployment Sırası
+1. ✅ **GitHub Push** - Otomatik
+2. ✅ **Frontend Deploy** - Otomatik (Netlify)
+3. ✅ **Backend Build** - Otomatik
+4. ⚠️ **Backend Deploy** - Manuel (Railway)
+
+## Critical Rules
+- ✅ Kullanıcı "deploy" dediğinde tüm otomatik işlemler çalışır
+- ✅ Railway deploy manuel yapılmalı
+- ✅ Deploy sonrası test edilmeli
+- ✅ Hata durumunda kullanıcıya bildirilmeli
+
+## Test Checklist
+Deploy sonrası kontrol edilecekler:
+- [ ] Frontend erişilebilir mi?
+- [ ] Backend health check çalışıyor mu?
+- [ ] Dosya yükleme çalışıyor mu?
+- [ ] Dosya silme çalışıyor mu?
+- [ ] Console'da hata var mı?
 
 ## Error Handling
-If push fails due to conflicts:
-1. Pull latest changes: `git pull origin main`
-2. Resolve conflicts if any
-3. Re-push: `git push origin main`
-
-## GitHub Integration
-- Repository: https://github.com/BeratGocer/appsamurai-dashboard
-- Branch: main
-- Remote: origin
-
-## Usage Instructions
-1. Make changes to any project file
-2. Save the file
-3. Rule automatically detects changes
-4. Git commands execute automatically
-5. Changes are pushed to GitHub
-6. Frontend is built automatically
-7. Changes are deployed to production Netlify site
-
-## Safety Measures
-- Only staged files are committed
-- Commit messages include timestamp
-- Push only to main branch
-- No force push operations
-- Preserves existing Git history
-- Build process creates fresh dist/ directory
-- Deploy only to production environment
-- No rollback operations without explicit request
-
-## Deployment Information
-- **Production URL**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
-- **Build Command**: `npm run build`
-- **Deploy Directory**: `dist/`
-- **Deploy Command**: `netlify deploy --prod --dir=dist`
+- **Frontend Deploy Hatası**: Kullanıcıya bildir
+- **Backend Build Hatası**: Kullanıcıya bildir
+- **Railway Deploy Hatası**: Kullanıcıya bildir ve tekrar denemesini söyle

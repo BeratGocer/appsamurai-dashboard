@@ -1,0 +1,66 @@
+---
+alwaysApply: true
+description: Railway manual deployment workflow and deployment patterns
+---
+
+# Railway Manual Deployment
+
+## Deployment Architecture
+- **Frontend**: Netlify (otomatik deploy)
+- **Backend**: Railway (manuel deploy)
+- **GitHub**: Kod deposu
+
+## Railway Deployment Workflow
+Railway'de deploy işlemi **manuel** olarak yapılmalıdır:
+
+1. **Kod Değişiklikleri**: GitHub'a push edilir
+2. **Railway Dashboard**: https://railway.app/ adresine gidilir
+3. **Manuel Deploy**: Deploy butonuna basılır
+4. **Deploy Tamamlanması**: Backend güncellemesi tamamlanır
+
+## Otomatik Deploy Sırası
+Kullanıcı "deploy" dediğinde şu sıra takip edilir:
+
+```bash
+# 1. Git push (otomatik)
+git add .
+git commit -m "Auto-commit: [description]"
+git push origin main
+
+# 2. Frontend build ve deploy (otomatik)
+npm run build
+netlify deploy --prod --dir=dist
+
+# 3. Backend build (otomatik)
+cd server && npm run build
+
+# 4. Railway deploy (MANUEL - kullanıcı yapmalı)
+# Railway dashboard'da deploy butonuna basılmalı
+```
+
+## Critical Rules
+- ✅ Railway deploy **HER ZAMAN** manuel yapılmalı
+- ✅ Frontend ve GitHub push otomatik
+- ✅ Backend build otomatik ama deploy manuel
+- ✅ Railway dashboard'da deploy butonuna basılmalı
+- ✅ Deploy tamamlandıktan sonra test edilmeli
+
+## Deployment URLs
+- **Frontend**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- **Backend**: https://appsamurai-dashboard-backend-production-83b0.up.railway.app/
+- **GitHub**: https://github.com/BeratGocer/appsamurai-dashboard
+
+## Manuel Deploy Adımları
+1. GitHub'a push tamamlandıktan sonra
+2. Railway dashboard'a git: https://railway.app/
+3. Proje seç: `appsamurai-dashboard-backend`
+4. "Deploy" butonuna bas
+5. Deploy tamamlanmasını bekle
+6. Backend endpoint'lerini test et
+
+## Test Endpoints
+Deploy sonrası test edilecek endpoint'ler:
+- `GET /api/health` - Backend çalışıyor mu?
+- `GET /api/files` - Dosya listesi alınıyor mu?
+- `POST /api/files` - Dosya yükleniyor mu?
+- `DELETE /api/files/:id` - Dosya siliniyor mu?
