@@ -1,20 +1,18 @@
 ---
+alwaysApply: true
 description: Deployment workflow and production verification patterns
 ---
 
-# Deployment Workflow Patterns
+# Deployment Workflow
 
-## Overview
-This rule documents the complete deployment workflow for the AppSamurai Dashboard, including Git operations, build process, and production verification.
-
-## Deployment Architecture
+## Architecture
 - **Frontend**: Netlify at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
-- **Backend**: Railway at `https://backend-production-80f6.up.railway.app/`
+- **Backend**: Railway at `https://appsamurai-dashboard-backend-production-83b0.up.railway.app/`
 - **GitHub**: `https://github.com/BeratGocer/appsamurai-dashboard`
 
-## Complete Deployment Workflow
+## Deployment Sequence
 
-### 1. Code Changes
+### 1. Git Operations
 ```bash
 # Stage all changes
 git add .
@@ -26,90 +24,80 @@ git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - [description]"
 git push origin main
 ```
 
-### 2. Build Process
+### 2. Frontend Deploy
 ```bash
-# Clean build (recommended for major changes)
-rm -rf dist/
+# Build frontend
 npm run build
 
-# Standard build
-npm run build
-```
-
-### 3. Netlify Deployment
-```bash
-# Deploy to production
+# Deploy to Netlify
 netlify deploy --prod --dir=dist
 ```
 
-## Production Verification
+### 3. Backend Deploy
+```bash
+# Build backend
+cd server && npm run build
 
-### Browser Automation Testing
+# Deploy to Railway
+railway up
+```
+
+## Critical Rules
+- ✅ **Always Push First**: Git push before any deployment
+- ✅ **Build Before Deploy**: Run build commands before deployment
+- ✅ **Test After Deploy**: Verify deployment success
+- ✅ **Error Handling**: Report failures to user
+- ✅ **Sequential Process**: Complete each step before next
+
+## Post-Deploy Testing
+
+### Health Checks
+```bash
+# Backend health check
+curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/health
+
+# Files endpoint test
+curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
+```
+
+### Frontend Testing
+- Navigate to production URL
+- Check console for errors
+- Verify file loading works
+- Test settings functionality
+
+## Error Recovery
+If any step fails:
+1. **Git Push Failed**: Try `git pull origin main` then retry
+2. **Frontend Build Failed**: Check TypeScript errors
+3. **Netlify Deploy Failed**: Check build output
+4. **Backend Build Failed**: Check server TypeScript errors
+5. **Railway Deploy Failed**: Check Railway logs and retry
+
+## Success Indicators
+- ✅ Git push successful
+- ✅ Frontend build successful
+- ✅ Netlify deploy successful
+- ✅ Backend build successful
+- ✅ Railway deploy successful
+- ✅ Health check returns 200 OK
+- ✅ Files endpoint returns data
+
+## Browser Testing
 Use Playwright for production verification:
-
 ```typescript
 // Navigate to production site
 await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/')
 
-// Test specific functionality
-await page.click('[data-testid="uploaded-file"]')
-await page.screenshot({ path: 'verification.png' })
+// Test file loading
+await page.waitForSelector('[data-testid="file-list"]')
+
+// Test settings functionality
+await page.click('[data-testid="settings-button"]')
 ```
 
-### Cache Management
-- **Hard Refresh**: `Control+Shift+R` for cache clearing
-- **Unique Deploy URLs**: Use for testing fresh deployments
-- **Service Worker**: Clear browser caches when needed
-
-## Common Issues and Solutions
-
-### Issue: Changes Not Visible After Deployment
-**Solutions**:
-1. Check unique deploy URL for fresh deployment
-2. Clear browser cache with hard refresh
-3. Verify build process completed successfully
-4. Check Netlify build logs for errors
-
-### Issue: Multiple Components Rendering Same Content
-**Solution**: Search all components for similar patterns:
-```bash
-grep -r "pattern" src/
-```
-
-### Issue: Deployment Fails
-**Solutions**:
-1. Check Git status for uncommitted changes
-2. Verify build process locally first
-3. Check Netlify configuration
-4. Review build logs for specific errors
-
-## Critical Rules
-- ✅ Always push to Git before deploying
-- ✅ Use fresh builds for major changes (`rm -rf dist/`)
-- ✅ Test with browser automation after deployment
-- ✅ Use unique deploy URLs for verification
-- ✅ Clear browser cache when testing changes
-- ✅ Check multiple components if changes don't appear
-- ✅ Verify production URL shows expected changes
-
-## File Monitoring
-This workflow applies to all project files except:
-- `node_modules/`
-- `dist/`
-- `.git/`
-- `.DS_Store`
-- `*.log`
-
-## Build Output
-- **Entry Point**: `dist/index.html`
-- **Assets**: `dist/assets/index-[hash].js` and `dist/assets/index-[hash].css`
-- **Size**: ~495KB JS, ~36KB CSS (gzipped)
-
-## Safety Measures
-- Only staged files are committed
-- Commit messages include timestamp
-- Push only to main branch
-- No force push operations
-- Preserves existing Git history
-- Build process creates fresh dist/ directory
-- Deploy only to production environment
+## Monitoring
+- **Build Logs**: Check Netlify and Railway build logs
+- **Console Errors**: Monitor browser console for errors
+- **Network Requests**: Verify API calls are successful
+- **Performance**: Check page load times and responsiveness

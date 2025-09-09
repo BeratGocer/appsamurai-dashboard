@@ -1,0 +1,120 @@
+---
+alwaysApply: true
+description: localStorage quota management and optimization patterns
+---
+
+# localStorage Quota Management
+
+## Problem
+localStorage has limited storage capacity (typically 5-10MB). Storing large file data arrays causes `QuotaExceededError`.
+
+## Solution
+**Store only metadata in localStorage, not full data arrays.**
+
+## Implementation Patterns
+
+### File Data Storage
+```typescript
+// ❌ WRONG: Storing full data arrays
+const fileData = {
+  id: 'file-123',
+  name: 'campaign-data.csv',
+  data: [/* 1000+ campaign records */] // This causes quota exceeded
+}
+localStorage.setItem('appsamurai-uploaded-files', JSON.stringify([fileData]))
+
+// ✅ CORRECT: Store only metadata
+const fileMetadata = {
+  id: 'file-123',
+  name: 'campaign-data.csv',
+  size: 1024000,
+  uploadDate: '2025-09-09',
+  // No data array - load from backend when needed
+}
+localStorage.setItem('appsamurai-uploaded-files-metadata', JSON.stringify([fileMetadata]))
+```
+
+### Error Handling
+```typescript
+// ✅ CORRECT: Handle quota exceeded errors
+try {
+  localStorage.setItem('appsamurai-uploaded-files-metadata', JSON.stringify(metadata))
+} catch (error) {
+  if (error.name === 'QuotaExceededError') {
+    // Clear old data and retry
+    localStorage.clear()
+    localStorage.setItem('appsamurai-uploaded-files-metadata', JSON.stringify(metadata))
+  } else {
+    throw error
+  }
+}
+```
+
+### Data Loading Strategy
+```typescript
+// ✅ CORRECT: Load full data from backend when needed
+const loadFileData = async (fileId: string) => {
+  try {
+    // Load from backend (source of truth)
+    const fileData = await getFile(fileId)
+    return fileData
+  } catch (error) {
+    console.error('Failed to load file data:', error)
+    return null
+  }
+}
+
+// Use metadata for UI, load full data on demand
+const fileList = metadata.map(file => ({
+  ...file,
+  data: [] // Empty initially, load when needed
+}))
+```
+
+## Critical Rules
+- ✅ **Metadata Only**: Store only file metadata in localStorage
+- ✅ **Backend for Data**: Load full data from backend API
+- ✅ **Error Handling**: Handle QuotaExceededError gracefully
+- ✅ **Lazy Loading**: Load data only when needed
+- ✅ **Cleanup**: Remove unused localStorage keys
+- ✅ **Size Limits**: Monitor localStorage usage
+
+## localStorage Keys
+```typescript
+// ✅ ALLOWED: UI state only
+const allowedKeys = [
+  'appsamurai-theme',           // Theme preference
+  'appsamurai-active-file-id',  // Active file ID
+  'appsamurai-uploaded-files-metadata' // File metadata only
+]
+
+// ❌ FORBIDDEN: Large data arrays
+const forbiddenKeys = [
+  'appsamurai-uploaded-files',  // Full file data
+  'dashboard-settings-{fileId}', // Per-file settings
+  'dashboard-hidden-tables-{fileId}' // Per-file hidden tables
+]
+```
+
+## Performance Optimization
+- **Lazy Loading**: Load file data only when file is selected
+- **Caching**: Cache metadata for faster UI updates
+- **Cleanup**: Remove old/unused localStorage keys
+- **Monitoring**: Log localStorage usage for debugging
+
+## Error Recovery
+```typescript
+// ✅ CORRECT: Graceful error recovery
+try {
+  localStorage.setItem(key, value)
+} catch (error) {
+  if (error.name === 'QuotaExceededError') {
+    // Clear old data and retry
+    localStorage.clear()
+    localStorage.setItem(key, value)
+  } else {
+    // Log error and continue without localStorage
+    console.warn('localStorage error:', error)
+  }
+}
+```

@@ -1,0 +1,114 @@
+---
+alwaysApply: true
+description: Backend-first architecture patterns for AppSamurai Dashboard
+---
+
+# Backend-First Architecture
+
+## Core Principle
+**Backend is the single source of truth for all data**. Frontend should never store file data or settings in localStorage.
+
+## Data Storage Rules
+
+### ✅ Backend Storage
+- **File Data**: All campaign data stored in PostgreSQL
+- **File Settings**: Dashboard settings, KPI configs, hidden tables
+- **File Metadata**: File names, sizes, upload dates
+- **User Settings**: Theme preferences, UI state
+
+### ❌ Frontend Storage (localStorage)
+- **ONLY UI State**: Theme, active file ID, temporary UI state
+- **NEVER Store**: File data arrays, settings objects, large datasets
+
+## Implementation Patterns
+
+### File Operations
+```typescript
+// ✅ CORRECT: Backend-first approach
+const handleFileDelete = async (fileId: string) => {
+  try {
+    // 1. Delete from backend first
+    await deleteFile(fileId)
+    
+    // 2. Update frontend only after backend success
+    const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
+    setUploadedFiles(updatedFiles)
+    
+    // 3. Update only UI state in localStorage
+    localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
+  } catch (error) {
+    // Don't update frontend if backend fails
+    alert('Dosya silinemedi. Lütfen tekrar deneyin.')
+  }
+}
+```
+
+### Settings Management
+```typescript
+// ✅ CORRECT: Backend settings API
+const handleSettingsChange = async (newSettings: SettingsData) => {
+  setSettings(newSettings)
+  if (activeFileId) {
+    try {
+      await updateFileSettings(activeFileId, {
+        dashboard_settings: newSettings,
+        kpi_settings: { fileId: activeFileId, configs: [] },
+        hidden_tables: Array.from(hiddenTables)
+      })
+    } catch (error) {
+      console.error('Failed to save settings to backend:', error)
+    }
+  }
+}
+```
+
+### Data Loading
+```typescript
+// ✅ CORRECT: Always load from backend first
+useEffect(() => {
+  (async () => {
+    try {
+      // 1. Load from backend (source of truth)
+      const resp = await listFiles()
+      const detailed = await Promise.all(resp.files.map(f => getFile(f.id)))
+      
+      // 2. Update frontend state
+      setUploadedFiles(detailed)
+      
+      // 3. Only cache UI state in localStorage
+      localStorage.setItem('appsamurai-active-file-id', detailed[0].id)
+    } catch (err) {
+      // No fallback to localStorage for file data
+      console.error('Backend sync failed:', err)
+    }
+  })()
+}, [])
+```
+
+## Critical Rules
+- ✅ **Backend First**: Always check backend before frontend
+- ✅ **No File Data in localStorage**: Only store UI state
+- ✅ **Settings in Backend**: Use backend settings API
+- ✅ **Error Handling**: Graceful degradation without localStorage fallback
+- ✅ **Performance**: Load data on demand from backend
+- ✅ **Cross-Device Sync**: All devices see same data from backend
+
+## localStorage Usage
+```typescript
+// ✅ CORRECT: Only for UI state
+const uiState = {
+  theme: localStorage.getItem('appsamurai-theme'),
+  activeFileId: localStorage.getItem('appsamurai-active-file-id')
+}
+
+// ❌ WRONG: Don't store file data or settings
+// localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(files))
+// localStorage.setItem('dashboard-settings-{fileId}', JSON.stringify(settings))
+```
+
+## Backend API Endpoints
+- `GET /api/files` - List all files
+- `GET /api/files/:id` - Get file data
+- `GET /api/files/:id/settings` - Get file settings
+- `POST /api/files/:id/settings` - Create file settings
+- `PUT /api/files/:id/settings` - Update file settings

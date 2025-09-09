@@ -143,7 +143,11 @@ export function calculateKPIValue(
     filteredData = visibleData;
   } else if (selectedGame) {
     // If no hidden tables but game is selected, filter raw data
-    filteredData = filteredData.filter(row => row.app === selectedGame);
+    // Remove platform suffix from app name for comparison
+    filteredData = filteredData.filter(row => {
+      const gameNameFromRow = row.app.replace(' Android', '').replace(' iOS', '').trim();
+      return gameNameFromRow === selectedGame;
+    });
   }
   
   const validData = filteredData.filter(row => {
