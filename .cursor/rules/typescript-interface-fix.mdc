@@ -1,0 +1,61 @@
+---
+description: TypeScript interface fix for GameCountryPublisherGroup dailyData properties
+---
+
+# TypeScript Interface Fix
+
+## Problem Solved
+Fixed TypeScript errors where `dailyData` interface was missing optional properties for:
+- ROAS metrics (roas_d1, roas_d2, etc.)
+- Retention rates (retention_rate_d1, retention_rate_d2, etc.)
+- Financial metrics (adjust_cost, ad_revenue, ecpi, etc.)
+
+## Key Changes Made
+
+### Enhanced GameCountryPublisherGroup Interface
+```typescript
+dailyData: Array<{
+  date: string;
+  installs: number;
+  roas_d0: number;
+  roas_d1?: number;
+  roas_d2?: number;
+  roas_d3?: number;
+  roas_d4?: number;
+  roas_d5?: number;
+  roas_d6?: number;
+  roas_d7: number;
+  roas_d14?: number;
+  roas_d21?: number;
+  roas_d30: number;
+  roas_d45?: number;
+  roas_d60?: number;
+  cost: number;
+  revenue: number;
+  ecpi?: number;
+  adjust_cost?: number;
+  ad_revenue?: number;
+  gross_profit?: number;
+  retention_rate_d1?: number;
+  retention_rate_d2?: number;
+  retention_rate_d3?: number;
+  retention_rate_d4?: number;
+  retention_rate_d5?: number;
+  retention_rate_d6?: number;
+  retention_rate_d7?: number;
+  retention_rate_d12?: number;
+  retention_rate_d14?: number;
+  retention_rate_d21?: number;
+  retention_rate_d30?: number;
+}>;
+```
+
+## Critical Rules
+- ✅ All optional properties marked with `?`
+- ✅ Required properties: `date`, `installs`, `roas_d0`, `roas_d7`, `roas_d30`, `cost`, `revenue`
+- ✅ Optional properties: All other ROAS, retention, and financial metrics
+- ✅ No `any` types - use proper TypeScript interfaces
+- ✅ Maintain backward compatibility with existing code
+
+## Files Modified
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Updated `GameCountryPublisherGroup` interface

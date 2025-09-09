@@ -1,0 +1,53 @@
+---
+description: Platform detection fix for CSV parsing - handles unknown values and hyphen-separated formats
+---
+
+# Platform Detection Fix
+
+## Problem Solved
+Fixed platform detection issues where:
+- `unknown` campaign networks were showing as "Unknown" instead of "Test"
+- `WordSearch-iOS-US-AppSamurai` format wasn't being parsed correctly (hyphen vs underscore)
+- US country codes were showing as "Global" instead of "US"
+
+## Key Changes Made
+
+### 1. Enhanced Campaign Network Parsing
+```typescript
+// Try both underscore and hyphen splitting
+let parts = campaignNetwork.split('_');
+if (parts.length < 2) {
+  parts = campaignNetwork.split('-');
+}
+```
+
+### 2. Platform Detection for Unknown Values
+```typescript
+// For unknown campaign networks, return Test as platform
+if (campaignNetwork === 'unknown' || campaignNetwork === 'Unknown') {
+  return 'Test';
+}
+```
+
+### 3. Direct Pattern Matching
+```typescript
+// Try to extract platform from campaign network patterns
+if (campaignNetwork.includes('-iOS-')) return 'iOS';
+if (campaignNetwork.includes('-Android-')) return 'Android';
+```
+
+## Supported Formats
+- `WordSearch-iOS-US-AppSamurai` → Platform: iOS, Country: US
+- `WordSearch-Android-US-AppSamurai` → Platform: Android, Country: US
+- `unknown` → Platform: Test
+- `JewelQuest-iOS-US-AppSamurai` → Platform: iOS, Country: US
+
+## Critical Rules
+- ✅ Always try both underscore and hyphen splitting
+- ✅ Map `unknown` to `Test` platform (not `Unknown`)
+- ✅ Use direct pattern matching for common formats
+- ✅ Preserve country codes (US, UK, etc.) correctly
+- ✅ Handle both `-iOS-` and `-Android-` patterns
+
+## Files Modified
+- [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - Enhanced `parseCampaignNetwork` and `extractPlatform` functions
