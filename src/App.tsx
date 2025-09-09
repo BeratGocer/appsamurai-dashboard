@@ -111,18 +111,7 @@ function App() {
   }
 
   const handleFileDelete = async (fileId: string) => {
-    try {
-      // Try to delete from backend first, but don't fail if backend is down
-      try {
-        await deleteFile(fileId)
-      } catch (backendError) {
-        console.warn('Backend delete failed, continuing with frontend-only delete:', backendError)
-      }
-    } catch (error) {
-      console.warn('Backend delete failed, continuing with frontend-only delete:', error)
-    }
-    
-    // Always remove from frontend state and localStorage
+    // Always remove from frontend state and localStorage first
     const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
     setUploadedFiles(updatedFiles)
     
@@ -151,6 +140,14 @@ function App() {
     // Clean up per-file dashboard settings to avoid stale persistence
     localStorage.removeItem(`dashboard-settings-${fileId}`)
     localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
+
+    // Try to delete from backend after frontend cleanup
+    try {
+      await deleteFile(fileId)
+      console.log('Backend delete successful for file:', fileId)
+    } catch (backendError) {
+      console.warn('Backend delete failed, but frontend delete completed:', backendError)
+    }
   }
 
   // Replace existing file's data while preserving settings by keeping the same id
