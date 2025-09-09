@@ -23,17 +23,28 @@ function App() {
         if (resp.files && resp.files.length > 0) {
           const detailed: UploadedFile[] = []
           for (const f of resp.files) {
-            const d = await getFile(f.id)
-            detailed.push({
-              id: d.id,
-              name: d.name,
-              size: Number(d.size),
-              uploadDate: d.upload_date,
-              data: (d as any).data || [],
-              isActive: false,
-              customerName: undefined,
-              accountManager: undefined,
-            })
+            try {
+              const d = await getFile(f.id)
+              const rows = Array.isArray((d as any).data) ? (d as any).data : []
+              // Validate rows: require string app field to avoid runtime errors downstream
+              const validRows = rows.filter((r: any) => r && typeof r.app === 'string' && r.app.length > 0)
+              if (validRows.length === 0) {
+                continue
+              }
+              detailed.push({
+                id: d.id,
+                name: d.name,
+                size: Number(d.size),
+                uploadDate: d.upload_date,
+                data: validRows as any,
+                isActive: false,
+                customerName: undefined,
+                accountManager: undefined,
+              })
+            } catch (e) {
+              // skip broken file
+              console.warn('Skipping invalid file from backend', f.id, e)
+            }
           }
           if (detailed.length > 0) {
             detailed[0].isActive = true
