@@ -1,0 +1,140 @@
+---
+description: ChatGPT backend integration patterns and security best practices
+---
+
+# ChatGPT Backend Integration Patterns
+
+## Security Architecture
+ChatGPT API integration must follow backend-first security patterns:
+
+### ✅ Backend API Endpoint
+```typescript
+// Backend: /api/chat endpoint
+app.post('/api/chat', async (req, res) => {
+  const { messages } = req.body || {}
+  
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}` // Environment variable
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemMessage },
+        ...messages
+      ],
+      max_tokens: 500,
+      temperature: 0.7
+    })
+  })
+  
+  const data = await response.json()
+  res.json({ message: data.choices[0]?.message?.content })
+})
+```
+
+### ❌ Frontend Direct API Calls
+```typescript
+// WRONG: Never call OpenAI API directly from frontend
+const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  headers: {
+    'Authorization': `Bearer ${API_KEY}` // Exposes API key!
+  }
+})
+```
+
+## Context Data Integration
+Dashboard data must be sent as context to ChatGPT:
+
+```typescript
+// Frontend: Send context data to backend
+const contextData = getTodayContext?.() || null
+
+let systemMessage = `Sen AppSamurai Dashboard için yardımcı bir AI asistanısın...`
+
+if (contextData && contextData.rows && contextData.rows.length > 0) {
+  systemMessage += `\n\nDashboard verileri (${contextData.date}):\n`
+  contextData.rows.forEach((row: ContextRow) => {
+    systemMessage += `- ${row.game} (${row.country}, ${row.platform}): ${row.installs} install, ROAS D7: ${(row.roas_d7 * 100).toFixed(1)}%, ROAS D30: ${(row.roas_d30 * 100).toFixed(1)}%\n`
+  })
+}
+
+// Send to backend
+const response = await fetch(`${VITE_API_BASE}/api/chat`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'public-demo-key'
+  },
+  body: JSON.stringify({
+    messages: [
+      { role: 'system', content: systemMessage },
+      ...messagesWithContext
+    ]
+  })
+})
+```
+
+## Type Safety
+Always use proper TypeScript types for context data:
+
+```typescript
+interface ContextRow {
+  game: string
+  country: string
+  platform: string
+  installs: number
+  roas_d7: number
+  roas_d30: number
+}
+
+interface ContextData {
+  date: string
+  rows: ContextRow[]
+}
+```
+
+## ROAS Formatting
+ROAS values must be displayed as percentages:
+
+```typescript
+// ✅ CORRECT: Convert to percentage
+ROAS D7: ${(row.roas_d7 * 100).toFixed(1)}%
+
+// ❌ WRONG: Raw decimal
+ROAS D7: ${row.roas_d7}
+```
+
+## Environment Variables
+- **Backend**: `OPENAI_API_KEY` in Railway environment
+- **Frontend**: `VITE_API_BASE` for backend URL
+- **Never**: Store API keys in frontend code or config files
+
+## Error Handling
+```typescript
+try {
+  const response = await fetch(`${VITE_API_BASE}/api/chat`, { ... })
+  
+  if (!response.ok) {
+    throw new Error(`Backend API Error: ${response.status}`)
+  }
+  
+  const data = await response.json()
+  const reply = data.message || 'Üzgünüm, cevap oluşturulamadı.'
+  addMessage({ role: 'assistant', text: reply })
+} catch (e) {
+  console.error('Chat API Error:', e)
+  addMessage({ role: 'assistant', text: 'Üzgünüm, şu an cevap oluşturulamadı. Lütfen tekrar deneyin.' })
+}
+```
+
+## Critical Rules
+- ✅ Always use backend API endpoint for ChatGPT calls
+- ✅ Send dashboard context data with messages
+- ✅ Use proper TypeScript types (no `any`)
+- ✅ Format ROAS values as percentages
+- ✅ Store API keys in environment variables only
+- ✅ Handle errors gracefully with user-friendly messages
+- ✅ Use Turkish language for all user-facing text

@@ -1,0 +1,106 @@
+---
+description: Context data patterns for AI chat integration with dashboard data
+---
+
+# Context Data Patterns
+
+## Context Data Structure
+Dashboard data must be structured for AI consumption:
+
+```typescript
+interface ContextData {
+  date: string
+  rows: ContextRow[]
+}
+
+interface ContextRow {
+  game: string
+  country: string
+  platform: string
+  publisher: string
+  installs: number
+  roas_d7: number
+  roas_d30: number
+  // Add other relevant metrics
+}
+```
+
+## Context Generation Function
+```typescript
+const getTodayContext = () => {
+  const dates = gameGroups.flatMap(g => g.dailyData.map(d => d.date))
+  if (dates.length === 0) return null
+  
+  const latest = [...dates].sort().at(-1) as string
+  const rows = gameGroups.map(g => {
+    const d = g.dailyData.find(x => x.date === latest)
+    return d ? {
+      game: g.game,
+      country: g.country,
+      platform: g.platform,
+      publisher: g.publisher,
+      date: d.date,
+      installs: d.installs,
+      roas_d7: d.roas_d7,
+      roas_d30: d.roas_d30,
+    } : null
+  }).filter(Boolean)
+  
+  return { date: latest, rows }
+}
+```
+
+## Context Message Formatting
+Context data must be formatted for AI readability:
+
+```typescript
+let systemMessage = `Sen AppSamurai Dashboard için yardımcı bir AI asistanısın...`
+
+if (contextData && contextData.rows && contextData.rows.length > 0) {
+  systemMessage += `\n\nDashboard verileri (${contextData.date}):\n`
+  contextData.rows.forEach((row: ContextRow) => {
+    systemMessage += `- ${row.game} (${row.country}, ${row.platform}): ${row.installs} install, ROAS D7: ${(row.roas_d7 * 100).toFixed(1)}%, ROAS D30: ${(row.roas_d30 * 100).toFixed(1)}%\n`
+  })
+}
+```
+
+## Data Filtering
+Only include relevant data in context:
+
+```typescript
+// Filter out zero-value data
+const relevantRows = contextData.rows.filter(row => 
+  row.installs > 0 || row.roas_d7 > 0 || row.roas_d30 > 0
+)
+
+// Limit context size to prevent token overflow
+const limitedRows = relevantRows.slice(0, 50) // Max 50 rows
+```
+
+## Context Updates
+Context should update when dashboard data changes:
+
+```typescript
+// In Dashboard component
+useEffect(() => {
+  if (gameGroups && gameGroups.length > 0) {
+    const context = getTodayContext()
+    // Update chat context
+  }
+}, [gameGroups, selectedGame, hiddenTables])
+```
+
+## Performance Considerations
+- Cache context data to avoid recalculation
+- Limit context size to prevent API token limits
+- Only include essential metrics for AI analysis
+- Update context when relevant filters change
+
+## Critical Rules
+- ✅ Always include date information in context
+- ✅ Format ROAS values as percentages
+- ✅ Filter out irrelevant or zero-value data
+- ✅ Limit context size to prevent token overflow
+- ✅ Update context when dashboard data changes
+- ✅ Use consistent data structure across components
+- ✅ Include essential metrics: installs, ROAS D7, ROAS D30

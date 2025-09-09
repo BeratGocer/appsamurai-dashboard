@@ -58,8 +58,8 @@ export default function GlobalChatAssistant() {
       
       if (contextData && contextData.rows && contextData.rows.length > 0) {
         systemMessage += `\n\nDashboard verileri (${contextData.date}):\n`
-        contextData.rows.forEach((row: any) => {
-          systemMessage += `- ${row.game} (${row.country}, ${row.platform}): ${row.installs} install, ROAS D7: ${row.roas_d7}, ROAS D30: ${row.roas_d30}\n`
+        contextData.rows.forEach((row: { game: string; country: string; platform: string; installs: number; roas_d7: number; roas_d30: number }) => {
+          systemMessage += `- ${row.game} (${row.country}, ${row.platform}): ${row.installs} install, ROAS D7: ${(row.roas_d7 * 100).toFixed(1)}%, ROAS D30: ${(row.roas_d30 * 100).toFixed(1)}%\n`
         })
       }
 

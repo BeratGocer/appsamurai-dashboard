@@ -1,0 +1,129 @@
+---
+description: AI chat UI patterns and user experience guidelines
+---
+
+# AI Chat UI Patterns
+
+## Chat State Management
+Chat system supports three distinct states:
+
+```typescript
+interface ChatContextType {
+  isOpen: boolean        // Chat is visible
+  isMinimized: boolean  // Chat is minimized (small form)
+  setIsMinimized: (minimized: boolean) => void
+  messages: ChatMessage[]
+  addMessage: (message: ChatMessage) => void
+  input: string
+  setInput: (input: string) => void
+  loading: boolean
+  setLoading: (loading: boolean) => void
+}
+```
+
+## UI State Rendering
+Conditional rendering based on state combinations:
+
+```tsx
+{/* Chat Toggle Button - Only when closed */}
+{!isOpen && (
+  <button className="fixed bottom-4 right-4 z-50...">
+    <MessageSquare className="w-5 h-5" />
+  </button>
+)}
+
+{/* Minimized Panel - Small floating form */}
+{isOpen && isMinimized && (
+  <div className="fixed bottom-4 right-4 z-50 bg-card border rounded-lg shadow-xl">
+    {/* Small floating panel content */}
+  </div>
+)}
+
+{/* Full Panel - Takes entire right side */}
+{isOpen && !isMinimized && (
+  <div className="fixed top-0 right-0 h-full w-80 md:w-96 bg-card border-l shadow-xl z-50">
+    {/* Full-width panel content */}
+  </div>
+)}
+```
+
+## Z-Index Management
+Critical z-index values for proper layering:
+
+```typescript
+// Chat toggle button - highest priority
+className="fixed bottom-4 right-4 z-50"
+
+// Full chat panel - above all content
+className="fixed top-0 right-0 h-full w-80 md:w-96 bg-card border-l shadow-xl z-50"
+
+// Minimize button - above panel content
+className="text-sm opacity-70 hover:opacity-100 p-1 rounded hover:bg-muted relative z-10"
+```
+
+## Message Display Patterns
+```tsx
+{messages.map((message, i) => (
+  <div key={i} className={message.role === 'user' ? 'text-right' : 'text-left'}>
+    <div className={`inline-block px-3 py-2 rounded-lg text-sm max-w-[80%] ${
+      message.role === 'user' 
+        ? 'bg-primary text-primary-foreground ml-auto' 
+        : 'bg-muted'
+    }`}>
+      {message.text}
+    </div>
+  </div>
+))}
+```
+
+## Loading States
+```tsx
+{loading && (
+  <div className="text-xs text-muted-foreground flex items-center gap-2">
+    <div className="animate-spin w-3 h-3 border border-primary border-t-transparent rounded-full"></div>
+    Yazılıyor...
+  </div>
+)}
+```
+
+## Input Handling
+```tsx
+<input
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  placeholder="Mesaj yazın..."
+  className="flex-1 px-3 py-2 border rounded-md bg-background text-sm"
+  onKeyDown={(e) => { if (e.key === 'Enter') handleSend() }}
+  disabled={loading}
+/>
+```
+
+## Intent Parsing
+Parse user intents for navigation and context:
+
+```typescript
+const parseIntent = (text: string) => {
+  const lower = text.toLowerCase()
+  const gameMatch = lower.match(/([a-z0-9\s]+) bugün|([a-z0-9\s]+) dünkü|([a-z0-9\s]+) performans/i)
+  const extracted = gameMatch?.[1]?.trim() || gameMatch?.[2]?.trim() || gameMatch?.[3]?.trim() || ''
+  const cleanedGame = extracted ? extracted.replace(/bugün|dünkü|performans|nasıl|gösterdi/g, '').trim() : ''
+  const publisherMatch = text.match(/([A-Z]{3}_|TBSDK|SFT_|SDA_)/)
+  return { game: cleanedGame || undefined, publisher: publisherMatch?.[1] }
+}
+```
+
+## Responsive Design
+- **Mobile**: `w-80` (320px) for chat panel
+- **Desktop**: `md:w-96` (384px) for chat panel
+- **Layout**: Dashboard content uses `flex-1` to accommodate chat space
+
+## Critical Rules
+- ✅ Use z-50 for chat panels to ensure they're above other elements
+- ✅ Add relative z-10 to minimize button for clickability
+- ✅ Only navigate to overview when intent.game is present
+- ✅ Handle Turkish intent parsing for game/publisher extraction
+- ✅ Provide context data for AI responses
+- ✅ Use conditional rendering based on isOpen and isMinimized states
+- ✅ Include loading states and error handling
+- ✅ Support keyboard navigation (Enter to send)
+- ✅ Use consistent spacing and styling
