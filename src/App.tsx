@@ -6,7 +6,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 import { ChatProvider } from './contexts/ChatContext'
 import GlobalChatAssistant from './components/GlobalChatAssistant'
 import type { UploadedFile } from './types'
-import { listFiles, getFile } from '@/utils/api'
+import { listFiles, getFile, deleteFile } from '@/utils/api'
 
 
 function App() {
@@ -38,8 +38,8 @@ function App() {
                 uploadDate: d.upload_date,
                 data: validRows as any,
                 isActive: false,
-                customerName: undefined,
-                accountManager: undefined,
+                customerName: (d as any).customer_name || undefined,
+                accountManager: (d as any).account_manager || undefined,
               })
             } catch (e) {
               // skip broken file
@@ -108,35 +108,71 @@ function App() {
   }
 
   const handleFileDelete = async (fileId: string) => {
-    // Remove from frontend state
-    const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
-    setUploadedFiles(updatedFiles)
-    
-    let newActiveFileId = activeFileId;
-    
-    if (fileId === activeFileId) {
-      if (updatedFiles.length > 0) {
-        const newActiveFile = updatedFiles[0]
-        newActiveFile.isActive = true
-        newActiveFileId = newActiveFile.id;
-        setActiveFileId(newActiveFile.id)
-      } else {
-        newActiveFileId = null;
-        setActiveFileId(null)
+    try {
+      // Delete from backend first
+      await deleteFile(fileId)
+      
+      // Remove from frontend state
+      const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
+      setUploadedFiles(updatedFiles)
+      
+      let newActiveFileId = activeFileId;
+      
+      if (fileId === activeFileId) {
+        if (updatedFiles.length > 0) {
+          const newActiveFile = updatedFiles[0]
+          newActiveFile.isActive = true
+          newActiveFileId = newActiveFile.id;
+          setActiveFileId(newActiveFile.id)
+        } else {
+          newActiveFileId = null;
+          setActiveFileId(null)
+        }
       }
-    }
-    
-    // Save to localStorage with full data
-    localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
-    if (newActiveFileId) {
-      localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
-    } else {
-      localStorage.removeItem('appsamurai-active-file-id')
-    }
+      
+      // Save to localStorage with full data
+      localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
+      if (newActiveFileId) {
+        localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
+      } else {
+        localStorage.removeItem('appsamurai-active-file-id')
+      }
 
-    // Clean up per-file dashboard settings to avoid stale persistence
-    localStorage.removeItem(`dashboard-settings-${fileId}`)
-    localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
+      // Clean up per-file dashboard settings to avoid stale persistence
+      localStorage.removeItem(`dashboard-settings-${fileId}`)
+      localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
+    } catch (error) {
+      console.error('Failed to delete file from backend:', error)
+      // Still remove from frontend state even if backend fails
+      const updatedFiles = uploadedFiles.filter(f => f.id !== fileId)
+      setUploadedFiles(updatedFiles)
+      
+      let newActiveFileId = activeFileId;
+      
+      if (fileId === activeFileId) {
+        if (updatedFiles.length > 0) {
+          const newActiveFile = updatedFiles[0]
+          newActiveFile.isActive = true
+          newActiveFileId = newActiveFile.id;
+          setActiveFileId(newActiveFile.id)
+        } else {
+          newActiveFileId = null;
+          setActiveFileId(null)
+        }
+      }
+      
+      // Save to localStorage with full data
+      localStorage.setItem('appsamurai-uploaded-files', JSON.stringify(updatedFiles))
+      if (newActiveFileId) {
+        localStorage.setItem('appsamurai-active-file-id', newActiveFileId)
+      } else {
+        localStorage.removeItem('appsamurai-active-file-id')
+      }
+
+      // Clean up per-file dashboard settings to avoid stale persistence
+      localStorage.removeItem(`dashboard-settings-${fileId}`)
+      localStorage.removeItem(`dashboard-hidden-tables-${fileId}`)
+    }
   }
 
   // Replace existing file's data while preserving settings by keeping the same id

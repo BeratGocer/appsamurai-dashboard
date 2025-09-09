@@ -110,7 +110,14 @@ export function FileUpload({
       } else {
         // Create new file - Backend persistence
         const uploadDate = new Date().toISOString().split('T')[0]
-        const created = await createFile({ name: file.name, size: file.size, uploadDate, data })
+        const created = await createFile({ 
+          name: file.name, 
+          size: file.size, 
+          uploadDate, 
+          data,
+          customerName: customerName.trim() || undefined,
+          accountManager: accountManager.trim() || undefined
+        })
         const uploadedFile: UploadedFile = {
           id: created.id,
           name: file.name,

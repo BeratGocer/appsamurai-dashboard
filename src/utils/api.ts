@@ -16,9 +16,11 @@ export interface BackendFileMeta {
   size: number | string
   upload_date: string
   record_count?: number
+  customer_name?: string
+  account_manager?: string
 }
 
-export async function createFile(payload: { name: string; size: number; uploadDate: string; data: any[] }): Promise<{ id: string }>{
+export async function createFile(payload: { name: string; size: number; uploadDate: string; data: any[]; customerName?: string; accountManager?: string }): Promise<{ id: string }>{
   const res = await fetch(`${base}/api/files`, {
     method: 'POST',
     headers: {
@@ -39,10 +41,19 @@ export async function listFiles(): Promise<{ files: BackendFileMeta[] }>{
   return res.json()
 }
 
-export async function getFile(id: string): Promise<{ id: string; name: string; size: number | string; upload_date: string; data: any[] }>{
+export async function getFile(id: string): Promise<{ id: string; name: string; size: number | string; upload_date: string; data: any[]; customer_name?: string; account_manager?: string }>{
   const res = await fetch(`${base}/api/files/${id}`, {
     headers: { 'x-api-key': 'public-demo-key' }
   })
   if (!res.ok) throw new Error(`getFile failed: ${res.status}`)
+  return res.json()
+}
+
+export async function deleteFile(id: string): Promise<{ id: string; message: string }>{
+  const res = await fetch(`${base}/api/files/${id}`, {
+    method: 'DELETE',
+    headers: { 'x-api-key': 'public-demo-key' }
+  })
+  if (!res.ok) throw new Error(`deleteFile failed: ${res.status}`)
   return res.json()
 }

@@ -35,24 +35,39 @@ app.use((req, res, next) => {
 })
 
 app.get('/api/health', (_req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  })
   res.json({ status: 'ok' })
 })
 
-// Minimal persistence for files (id, name, size, upload_date, data JSON)
+// Minimal persistence for files (id, name, size, upload_date, data JSON, customer_name, account_manager)
 app.post('/api/files', async (req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
-    const { name, size, uploadDate, data } = req.body || {}
+    const { name, size, uploadDate, data, customerName, accountManager } = req.body || {}
     if (!name || !size || !uploadDate || !Array.isArray(data)) return res.status(400).json({ error: 'Invalid payload' })
     await pool.query(`CREATE TABLE IF NOT EXISTS files (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       size BIGINT NOT NULL,
       upload_date TEXT NOT NULL,
-      data JSONB NOT NULL
+      data JSONB NOT NULL,
+      customer_name TEXT,
+      account_manager TEXT
     );`)
     const id = randomUUID()
-    const result = await pool.query('INSERT INTO files(id,name,size,upload_date,data) VALUES ($1,$2,$3,$4,$5) RETURNING id', [id, name, size, uploadDate, JSON.stringify(data)])
+    const result = await pool.query('INSERT INTO files(id,name,size,upload_date,data,customer_name,account_manager) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [id, name, size, uploadDate, JSON.stringify(data), customerName || null, accountManager || null])
+    
+    // Set cache control headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
+    
     res.json({ id: result.rows[0].id })
   } catch (err) {
     logger.error({ err }, 'files insert error')
@@ -68,9 +83,19 @@ app.get('/api/files', async (_req, res) => {
       name TEXT NOT NULL,
       size BIGINT NOT NULL,
       upload_date TEXT NOT NULL,
-      data JSONB NOT NULL
+      data JSONB NOT NULL,
+      customer_name TEXT,
+      account_manager TEXT
     );`)
-    const r = await pool.query('SELECT id, name, size, upload_date, jsonb_array_length(data) as record_count FROM files ORDER BY upload_date DESC')
+    const r = await pool.query('SELECT id, name, size, upload_date, customer_name, account_manager, jsonb_array_length(data) as record_count FROM files ORDER BY upload_date DESC')
+    
+    // Set cache control headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
+    
     res.json({ files: r.rows })
   } catch (err) {
     logger.error({ err }, 'files list error')
@@ -81,12 +106,41 @@ app.get('/api/files', async (_req, res) => {
 app.get('/api/files/:id', async (req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
-    const r = await pool.query('SELECT id, name, size, upload_date, data FROM files WHERE id=$1', [req.params.id])
+    const r = await pool.query('SELECT id, name, size, upload_date, data, customer_name, account_manager FROM files WHERE id=$1', [req.params.id])
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' })
+    
+    // Set cache control headers to prevent 304 responses
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
+    
     res.json(r.rows[0])
   } catch (err) {
     logger.error({ err }, 'file get error')
     res.status(500).json({ error: 'Get failed' })
+  }
+})
+
+// Delete file endpoint
+app.delete('/api/files/:id', async (req, res) => {
+  try {
+    if (!pool) return res.status(500).json({ error: 'Database not configured' })
+    const r = await pool.query('DELETE FROM files WHERE id=$1 RETURNING id', [req.params.id])
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' })
+    
+    // Set cache control headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    })
+    
+    res.json({ id: r.rows[0].id, message: 'File deleted successfully' })
+  } catch (err) {
+    logger.error({ err }, 'file delete error')
+    res.status(500).json({ error: 'Delete failed' })
   }
 })
 
