@@ -808,10 +808,12 @@ export function parseCampaignNetwork(campaignNetwork: string): {
       }
       
       // Country detection - handle both direct codes and CNTUS format
+      // CRITICAL: Country codes NEVER appear at the beginning of campaign network
+      // Format is usually: GAME_PLATFORM_COUNTRY_ADNETWORK or PLATFORM_COUNTRY_ADNETWORK
       if (part.includes('CNTUS')) {
         result.country = 'US';
         countryIndex = i;
-      } else if (['AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ', 'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM', 'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT', 'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI', 'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW'].includes(part)) {
+      } else if (i > 0 && ['AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ', 'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM', 'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT', 'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI', 'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW'].includes(part)) {
         // Use comprehensive country mapping
         const countryMapping: Record<string, string> = {
           'US': 'United States', 'USA': 'United States', 'UK': 'United Kingdom', 'GB': 'Great Britain',
@@ -875,14 +877,8 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     // Extract ad network (usually the last part, but avoid known platform/country/type parts)
     if (parts.length > 1) {
       const lastPart = parts[parts.length - 1];
-      
-      // Special handling for COUNTRY_PLATFORM_ADNETWORK format (e.g., BF_AND_TEST)
-      if (parts.length === 3 && countryIndex === 0 && platformIndex === 1) {
-        // Format: COUNTRY_PLATFORM_ADNETWORK
-        result.adnetwork = decodeAdNetwork(lastPart);
-      }
       // If last part is not a known platform/country/type, use it as adnetwork
-      else if (!['AND', 'iOS', 'GP', 'US', 'UK', 'TR', 'DE', 'FR', 'CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(lastPart)) {
+      if (!['AND', 'iOS', 'GP', 'US', 'UK', 'TR', 'DE', 'FR', 'CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(lastPart)) {
         result.adnetwork = decodeAdNetwork(lastPart);
       } else {
         // Look for adnetwork in other positions
@@ -1628,7 +1624,6 @@ export function testAdNetworkDecoding(): void {
     'SFT_45209_', 'SFT_45209_191164', 'SFT_45209_200452', 'SFT_45209_200540', 'SFT_45209_201098', 'SFT_45209_201623', 'SFT_45209_201946', 'SFT_45209_202796', 'SFT_45209_203279', 'SFT_45209_203285', 'SFT_45209_203350', 'SFT_45209_203540', 'SFT_45209_204115', 'SFT_45209_204147', 'SFT_45209_204413', 'SFT_45209_204432', 'SFT_45209_204560', 'SFT_45209_204590', 'SFT_45209_204685', 'SFT_45209_204765', 'SFT_45209_204935', 'SFT_45209_204972', 'SFT_45209_204987', 'SFT_45209_205038', 'SFT_45209_205117', 'SFT_45209_205192', 'SFT_45209_205201', 'SFT_45209_205229', 'SFT_45209_205474', 'SFT_45209_205477', 'SFT_45209_205590', 'SFT_45209_205771', 'SFT_45209_205813', 'SFT_45209_205841', 'SFT_45209_205907', 'SFT_45209_206305', 'SFT_45209_206599', 'SFT_45209_206636', 'SFT_45209_206791', 'SFT_45209_206811', 'SFT_45209_206818', 'SFT_45209_206948', 'SFT_45209_207242', 'SFT_45209_207364', 'SFT_45209_207460', 'SFT_45209_207468', 'SFT_45209_207475', 'SFT_45209_207491', 'SFT_45209_207495', 'SFT_45209_207509', 'SFT_45209_207555', 'SFT_45209_207576', 'SFT_45209_207580', 'SFT_45209_207608', 'SFT_45209_207632', 'SFT_45209_207639', 'SFT_45209_207650', 'SFT_45209_207675', 'SFT_45209_207691', 'SFT_45209_207744', 'SFT_45209_207746', 'SFT_45209_207777', 'SFT_45209_207779', 'SFT_45209_207793', 'SFT_45209_207888', 'SFT_45209_207908', 'SFT_45209_207930', 'SFT_45209_207962', 'SFT_45209_207983', 'SFT_45209_208098', 'SFT_45209_208110', 'SFT_45209_208117', 'SFT_45209_208146', 'SFT_45209_208179', 'SFT_45209_208198', 'SFT_45209_208231', 'SFT_45209_208237', 'SFT_45209_208243', 'SFT_45209_208253', 'SFT_45209_208312', 'SFT_45209_208329', 'SFT_45209_208358', 'SFT_45209_300576', 'SFT_45209_4136', 'SFT_45209_5406', 'SFT_45209_5555',
     'SFT_49238_', 'SFT_49378_206305', 'SFT_49378_207689', 'SFT_49388_15182', 'SFT_49388_206305', 'SFT_49388_207861', 'SFT_49558_208162', 'SFT_49558_208163', 'SFT_49558_208165', 'SFT_49788_208005', 'SFT_MTkwMzZ8',
     'e3N1Yl9hZmZ9', 'OTIwSkZrSHNEcm01', 'OTlwSkZrSHNEcm01', 'ZUpIY1o2eFJEa1Mw', 'WUpaY0xnb1A3QWNh',
-    'BF_AND_TEST', 'US_iOS_Prime', 'TR_AND_Fluent', 'DE_GP_Copper',
     'UNKNOWN_CODE', 'TEST123', 'RANDOM'
   ];
   
