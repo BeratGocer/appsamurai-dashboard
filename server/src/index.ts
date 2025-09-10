@@ -63,15 +63,27 @@ const initializeDatabase = async () => {
 app.use(helmet())
 app.use(express.json({ limit: '10mb' }))
 app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true)
-    if (CORS_ORIGINS.length === 0) return cb(null, true)
-    if (CORS_ORIGINS.includes(origin)) return cb(null, true)
-    return cb(new Error('CORS blocked'))
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true)
+    
+    // Allow all origins if CORS_ORIGINS is empty
+    if (CORS_ORIGINS.length === 0) return callback(null, true)
+    
+    // Check if origin is in allowed list
+    if (CORS_ORIGINS.includes(origin)) {
+      return callback(null, true)
+    }
+    
+    // Log blocked origin for debugging
+    logger.warn({ origin, allowedOrigins: CORS_ORIGINS }, 'CORS blocked origin')
+    return callback(new Error('Not allowed by CORS'))
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'X-API-Key'],
+  exposedHeaders: ['Content-Length', 'X-Foo'],
+  optionsSuccessStatus: 200
 }))
 
 // API key guard
@@ -117,7 +129,7 @@ app.post('/api/files', async (req, res) => {
     
     // Add timeout for large data operations
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Database operation timeout')), 30000)
+      setTimeout(() => reject(new Error('Database operation timeout')), 120000) // 2 minutes
     })
     
     const insertPromise = pool.query(
