@@ -1447,7 +1447,6 @@ export function extractPlatform(app: string, campaignNetwork: string = ''): stri
   return 'Unknown';
 }
 
-
 // Decode ad network codes using the latest Adnetworks.csv mapping
 export function decodeAdNetwork(encryptedCode: string): string {
   if (!encryptedCode || encryptedCode.toLowerCase() === 'unknown') return 'Unknown';
@@ -1547,6 +1546,17 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'SAT': 'AppQwest'
   };
   
+  // Special case: S ile başlayan kodlar için özel kurallar
+  // SPE gibi özel durumlar mapping'de kalacak, diğerleri orijinal isimle görünecek
+  if (cleanCode.startsWith('S')) {
+    // Önce mapping'de var mı kontrol et
+    if (adNetworkMap[cleanCode]) {
+      return adNetworkMap[cleanCode];
+    }
+    // Mapping'de yoksa orijinal ismi döndür
+    return cleanCode;
+  }
+  
   // Special case: SFT_ prefix should always map to Fluent
   if (cleanCode.startsWith('SFT_')) {
     return 'Fluent';
@@ -1622,17 +1632,14 @@ export function decodeAdNetwork(encryptedCode: string): string {
     }
   }
   
-  // ONLY decode codes that start with S (or TEST/PTSDK_ADVN)
-  if (cleanCode.startsWith('S') || cleanCode === 'TEST' || cleanCode === 'PTSDK_ADVN') {
-    // Extract prefix and match
-    for (const [prefix, realName] of Object.entries(adNetworkMap)) {
-      if (cleanCode.startsWith(prefix)) {
-        return realName;
-      }
+  // Extract prefix and match
+  for (const [prefix, realName] of Object.entries(adNetworkMap)) {
+    if (cleanCode.startsWith(prefix)) {
+      return realName;
     }
   }
   
-  // Return original if no match found (don't decode non-S codes)
+  // Return original if no match found
   return cleanCode;
 }
 
