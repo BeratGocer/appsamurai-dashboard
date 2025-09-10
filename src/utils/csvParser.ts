@@ -971,7 +971,7 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'NH': 'Mode Earn App',
     'SIE': 'Influence Mobile',
     'dX': 'Influence Mobile',
-    'MTg2Njl8': 'Unknown'
+    'MTg2Njl8': '18669'
   };
   
   // Special case: SFT_ prefix should always map to Fluent
