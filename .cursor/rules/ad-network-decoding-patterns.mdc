@@ -4,64 +4,114 @@ description: Ad network decoding implementation patterns and troubleshooting
 
 # Ad Network Decoding Patterns
 
-## Core Decoding Logic
-The system uses two distinct methods for decoding ad network codes from [Adnetworks.csv](mdc:Adnetworks.csv):
+## Core Principle
+**NEVER decode anything not explicitly listed in Adnetworkler.csv**. Only use exact matches from the CSV file.
 
-### Method 1: S + First + Last Letter
-- **Pattern**: S + Ad network name's first letter + last letter
-- **Examples**: 
-  - Prime → SPE (S + P + E)
-  - Fluent → SFT (S + F + T)
-  - Dynata → SDA (S + D + A)
+## CSV-Based Decoding Strategy
 
-### Method 2: First Two Characters
-- **Pattern**: Use first two characters of the code itself
-- **Examples**:
-  - MTDSFDGVQ → MT → Fluent
-  - WUdfadgqafdva → WU → Prime
-  - ajdagfdavadva → aj → Prodege ySense iFrame
-
-## Implementation in Code
-The decoding logic is implemented in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) in the `decodeAdNetwork()` function:
-
+### 1. Exact Match Priority
 ```typescript
-// Direct mappings from Adnetworks.csv
+// ✅ CORRECT: Only decode exact matches from CSV
 const adNetworkMap: Record<string, string> = {
   'SCR': 'Copper',
-  'SPE': 'Prime',
+  'SPE': 'Prime', 
   'SFT': 'Fluent',
-  'SDA': 'Dynata',
-  'MT': 'Fluent',
-  'WU': 'Prime',
-  'aj': 'Prodege ySense iFrame',
-  // ... complete list from Adnetworks.csv
+  'aGNaOHZvZXNTOEE1': 'Freeward iFrame',
+  'NTg1': 'AppsPrize',
+  // ... all entries from Adnetworkler.csv
 };
 
-// Prefix-based decoding using startsWith()
-for (const [prefix, adNetwork] of Object.entries(prefixMappings)) {
-  if (cleanCode.startsWith(prefix)) {
-    return adNetwork;
-  }
+// Check exact match first
+if (adNetworkMap[cleanCode]) {
+  return adNetworkMap[cleanCode];
 }
 ```
 
+### 2. S-Prefix Rules (Preserved Logic)
+```typescript
+// S ile başlayan kodlar için özel kurallar korunur
+if (cleanCode.startsWith('S')) {
+  // SFT_ prefix → Fluent
+  if (cleanCode.startsWith('SFT_')) {
+    return 'Fluent';
+  }
+  
+  // SIE_ prefix → Influence Mobile  
+  if (cleanCode.startsWith('SIE_')) {
+    return 'Influence Mobile';
+  }
+  
+  // Suffix matching for S codes
+  const suffixMappings = {
+    'SCE': 'Catbyte',
+    'SFT': 'Fluent',
+    'SPE': 'Prime',
+    // ... all S codes from CSV
+  };
+}
+```
+
+### 3. Numeric Pattern Handling
+```typescript
+// Numeric patterns like "48591_208110" → Fluent
+if (/^\d+_/.test(cleanCode)) {
+  return 'Fluent';
+}
+```
+
+### 4. Raw Fallback
+```typescript
+// CSV'de olmayan her şey raw haliyle döndür
+return cleanCode;
+```
+
 ## Critical Rules
-- ✅ Always use `startsWith()` for prefix matching
-- ✅ Check first two characters for Method 2 codes
-- ✅ Maintain complete sync with [Adnetworks.csv](mdc:Adnetworks.csv)
-- ✅ Handle special cases (SFT_, SIE_, MT prefixes)
-- ✅ Support both campaign_network and adgroup_network decoding
+- ✅ **Exact Match Only**: Only decode codes explicitly in Adnetworkler.csv
+- ✅ **No Base64 Decoding**: Never attempt to decode base64 strings
+- ✅ **No Uydurma**: Never guess or invent decode mappings
+- ✅ **S-Prefix Preserved**: Maintain existing S-prefix logic
+- ✅ **Raw Fallback**: Return original code if not in CSV
+- ✅ **CSV Source of Truth**: Adnetworkler.csv is the only source for mappings
 
-## Testing Examples
-When testing decoding logic, use these examples:
-- `MTDSFDGVQ` → `Fluent` (MT prefix)
-- `WUdfadgqafdva` → `Prime` (WU prefix)
-- `ajdagfdavadva` → `Prodege ySense iFrame` (aj prefix)
-- `SPE_anything` → `Prime` (SPE prefix)
-- `SFT_anything` → `Fluent` (SFT prefix)
+## File References
+- CSV mapping: [Adnetworkler.csv](mdc:Adnetworkler.csv)
+- Decode function: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - `decodeAdNetwork` function
 
-## Troubleshooting
-- If decoding fails, check if code exists in [Adnetworks.csv](mdc:Adnetworks.csv)
-- Verify `startsWith()` logic is working correctly
-- Ensure prefix mappings are complete and up-to-date
-- Test with various code lengths and formats
+## Implementation Pattern
+```typescript
+export function decodeAdNetwork(encryptedCode: string): string {
+  // 1. Clean input
+  let cleanCode = encryptedCode.trim();
+  
+  // 2. Handle special cases
+  if (cleanCode === 'unknown') return 'Test';
+  if (cleanCode === 'test') return 'Test';
+  
+  // 3. Check exact match from CSV
+  if (adNetworkMap[cleanCode]) {
+    return adNetworkMap[cleanCode];
+  }
+  
+  // 4. S-prefix rules (preserved)
+  if (cleanCode.startsWith('S')) {
+    // SFT_, SIE_ prefix handling
+    // Suffix matching for S codes
+  }
+  
+  // 5. Numeric pattern → Fluent
+  if (/^\d+_/.test(cleanCode)) {
+    return 'Fluent';
+  }
+  
+  // 6. Raw fallback
+  return cleanCode;
+}
+```
+
+## Testing Checklist
+- [ ] CSV codes decode correctly
+- [ ] S-prefix codes work as before
+- [ ] Non-CSV codes return raw
+- [ ] No base64 decoding attempts
+- [ ] Numeric patterns map to Fluent
+- [ ] Unknown codes return original
