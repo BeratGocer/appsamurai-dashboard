@@ -629,8 +629,8 @@ function decodeAdNetwork(code: string): string {
     return 'Fluent';
   }
   
-  // Base64 decode denemesi (tüm base64 stringler için)
-  if (/^[A-Za-z0-9+/=]+$/.test(cleanCode)) {
+  // Base64 decode denemesi (sadece mapping'de olmayan kodlar için)
+  if (!base64Mappings[cleanCode] && /^[A-Za-z0-9+/=]+$/.test(cleanCode)) {
     try {
       const decoded = atob(cleanCode);
       if (decoded.length > 0 && decoded.length < 100) {
@@ -645,8 +645,8 @@ function decodeAdNetwork(code: string): string {
     }
   }
   
-  // Base64 kodları sonunda | karakteri ile (örn: MTkwMzZ8)
-  if (/^[A-Za-z0-9+/=]+\|$/.test(cleanCode)) {
+  // Base64 kodları sonunda | karakteri ile (sadece mapping'de olmayan kodlar için)
+  if (!base64Mappings[cleanCode] && /^[A-Za-z0-9+/=]+\|$/.test(cleanCode)) {
     const base64Part = cleanCode.slice(0, -1); // | karakterini kaldır
     try {
       const decoded = atob(base64Part);
