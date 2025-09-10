@@ -536,7 +536,7 @@ export function parseCampaignNetwork(campaignNetwork: string): {
   // Handle different underscore formats intelligently
   const result = {
     platform: 'Unknown',
-    country: 'Global',
+    country: 'No data',
     adnetwork: 'Unknown',
     campaignType: 'Unknown',
     eventType: 'Unknown',
@@ -1155,7 +1155,7 @@ export function extractCountryFromCampaign(campaignNetwork: string): string {
     case 'GLOBAL':
       return 'Global';
     default:
-      return country === 'Unknown' ? 'Global' : country;
+      return country === 'Unknown' ? 'No data' : country;
   }
 }
 
