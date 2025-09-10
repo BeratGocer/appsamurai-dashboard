@@ -1466,37 +1466,6 @@ export function decodeAdNetwork(encryptedCode: string): string {
   
   // Ad network mapping from Adnetworks.csv - COMPLETE SYNC
   const adNetworkMap: Record<string, string> = {
-    // Base64 decoded mappings
-    'VGVzdA==': 'Test',
-    'QWQgaXQgdXA=': 'Ad it Up', 
-    'Q29wcGVy': 'Copper',
-    'RHluYXRh': 'Dynata',
-    'SXJvblNvdXJjZQ==': 'IronSource',
-    'VW5pdHk=': 'Unity',
-    'QWRNb2I=': 'AdMob',
-    'RmFjZWJvb2s=': 'Facebook',
-    'QXBwTG92aW4=': 'AppLovin',
-    'UHJpbWU=': 'Prime',
-    'Rmx1ZW50': 'Fluent',
-    'S2xpbms=': 'Klink',
-    'VU5L': 'TNK',
-    'RW5lYmE=': 'Eneba',
-    'UGxheXdlbGw=': 'Playwell',
-    'QXBwc1ByaXpl': 'AppsPrize',
-    'QXlldCBTdHVkaW9z': 'Ayet Studios',
-    'RW1iZXJGdW5k': 'EmberFund',
-    'TG9vdGFibHk=': 'Lootably',
-    'UmVQb2NrZXQ=': 'RePocket',
-    'QWQgZm9yIFVz': 'Ad for Us',
-    'QnV6enZpbA==': 'Buzzvil',
-    'VGFwQ2hhbXBz': 'TapChamps',
-    'T2ZmZXJUb3Jv': 'OfferToro',
-    'QVRM': 'ATM',
-    'UG9pa2V5': 'Poikey',
-    'UmV3YXJkeQ==': 'Rewardy',
-    'SG9waSBTMlM=': 'Hopi S2S',
-    'TW9kZSBFYXJuIEFwcA==': 'Mode Earn App',
-    
     // Direct codes from Adnetworks.csv - COMPLETE LIST
     'SCR': 'Copper',
     'SPE': 'Prime',
@@ -1525,10 +1494,10 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'Z0': 'Ad for Us',
     'OX': 'Buzzvil',
     'U0': 'TapChamps',
-    'Mz': 'OfferToro',
+    'Mz': 'AppsPrize',
     'dW': 'ATM',
     'Mm': 'Poikey',
-    'Mj': 'Dynata',
+    'Mj': 'AppsPrize',
     'ND': 'AppsPrize',
     'N3': 'AppsPrize',
     'MX': 'Dynata',
@@ -1558,14 +1527,24 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'SWK': 'AppsPrize',
     'V1': 'Prodege Swagbucks iFrame',
     'Str': 'TradeDoubler',
-    
-    // NEW ADDITIONS
     'SBL': 'Buzzvil',
     'SAS': 'Ad for Us',
     'SMN': 'Mode Earn App',
     'Yj': 'catbyte',
     'SRY': 'Rewardy',
-    'STS': 'TapChamps'
+    'STS': 'TapChamps',
+    
+    // Base64 encoded mappings from Adnetworks.csv
+    'OWNmZDNJZDA3ZWYxNDEyZTkyOGF8': 'Catbyte',
+    'NjUz': 'AppsPrize',
+    'cGhBMnhIRSIwMV9u': 'TradeDoubler',
+    'd0dfRUxkVjEzZ1JC': 'Versemedia',
+    'NjI3': 'AppsPrize',
+    'ZJTUG54VII4SnYz': 'Prodege Inbox Dollar iFrame',
+    'd3J4ZE5yNkFWZUF': 'Fyber',
+    'ajRZSnpNT3IWaHFX': 'Prodege ySense iFrame',
+    'NjQy': 'AppsPrize',
+    'NjEy': 'AppsPrize'
   };
   
   // Special case: SFT_ prefix should always map to Fluent
@@ -1810,7 +1789,7 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
     if (!publisherRaw) return 'Unknown';
     
     // Handle decoded ad network names - normalize case for consistency
-    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile', 'Catbyte', 'Efez', 'sMiles', 'Jumptask iFrame', 'JumpTask API', 'Prodege Swagbucks iFrame', 'TradeDoubler', 'catbyte'];
+    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile', 'Catbyte', 'Efez', 'sMiles', 'Jumptask iFrame', 'JumpTask API', 'Prodege Swagbucks iFrame', 'TradeDoubler', 'catbyte', 'Versemedia', 'Prodege Inbox Dollar iFrame', 'Fyber', 'Prodege ySense iFrame'];
     
     // Case-insensitive matching for known ad networks
     const normalizedInput = publisherRaw.toLowerCase();
