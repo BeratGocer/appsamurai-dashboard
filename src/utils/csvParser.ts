@@ -1001,6 +1001,30 @@ export function decodeAdNetwork(encryptedCode: string): string {
     return 'Fluent';
   }
   
+  // NEW: Check for ad network suffixes in campaign names
+  // This handles cases like "BTA_US_CPI_W_A25_SCE" where SCE is the ad network
+  const suffixMappings: Record<string, string> = {
+    'SCE': 'Catbyte',
+    'SFT': 'Fluent',
+    'SPE': 'Prime',
+    'SDA': 'Dynata',
+    'SAP': 'Ad it Up',
+    'SKK': 'Klink',
+    'STK': 'TNK',
+    'SEA': 'Eneba',
+    'SIE': 'Influence Mobile',
+    'SAM': 'ATM',
+    'TBSDK': 'TBSDK',
+    'SPL': 'Playwell',
+    'PTSDK': 'AppsPrize'
+  };
+  
+  // Check if the code ends with any known ad network suffix
+  for (const [suffix, realName] of Object.entries(suffixMappings)) {
+    if (cleanCode.endsWith(`_${suffix}`) || cleanCode.endsWith(suffix)) {
+      return realName;
+    }
+  }
   
   // Extract prefix and match
   for (const [prefix, realName] of Object.entries(adNetworkMap)) {

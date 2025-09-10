@@ -1,0 +1,59 @@
+---
+description: Ad network suffix decoding patterns for campaign data
+globs: *.ts,*.tsx
+---
+
+# Ad Network Suffix Decoding Patterns
+
+## Problem
+Campaign names like `BTA_US_CPI_W_A25_SCE` contain ad network codes as suffixes that need to be decoded. The `SCE` suffix represents Catbyte ad network, but the original decoding function only checked prefixes, not suffixes.
+
+## Solution
+Enhanced `decodeAdNetwork` function in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) to support both prefix and suffix matching:
+
+```typescript
+// NEW: Check for ad network suffixes in campaign names
+// This handles cases like "BTA_US_CPI_W_A25_SCE" where SCE is the ad network
+const suffixMappings: Record<string, string> = {
+  'SCE': 'Catbyte',
+  'SFT': 'Fluent',
+  'SPE': 'Prime',
+  'SDA': 'Dynata',
+  'SAP': 'Ad it Up',
+  'SKK': 'Klink',
+  'STK': 'TNK',
+  'SEA': 'Eneba',
+  'SIE': 'Influence Mobile',
+  'SAM': 'ATM',
+  'TBSDK': 'TBSDK',
+  'SPL': 'Playwell',
+  'PTSDK': 'AppsPrize'
+};
+
+// Check if the code ends with any known ad network suffix
+for (const [suffix, realName] of Object.entries(suffixMappings)) {
+  if (cleanCode.endsWith(`_${suffix}`) || cleanCode.endsWith(suffix)) {
+    return realName;
+  }
+}
+```
+
+## Supported Suffixes
+- `SCE` → `Catbyte` (Brain Test All-Star, Farm Block Escape campaigns)
+- `TBSDK` → `TBSDK` (FashionBattle campaigns)
+- `SPL` → `Playwell` (DC campaigns)
+- `PTSDK` → `AppsPrize` (DC campaigns)
+- Plus all existing prefix mappings (SFT_, SPE_, etc.)
+
+## Implementation Pattern
+1. **Suffix Check First**: Check for known ad network suffixes before prefix matching
+2. **Flexible Matching**: Support both `_SCE` and `SCE` formats
+3. **Comprehensive Coverage**: Include all discovered suffixes from CSV analysis
+4. **Backward Compatibility**: Maintain existing prefix-based decoding
+
+## Critical Rules
+- ✅ Always check suffixes before prefixes in `decodeAdNetwork`
+- ✅ Support both underscore and direct suffix formats
+- ✅ Add new suffixes to `suffixMappings` when discovered
+- ✅ Test with real CSV data to ensure accuracy
+- ✅ Maintain existing prefix-based functionality
