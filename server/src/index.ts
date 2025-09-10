@@ -68,7 +68,10 @@ app.use(cors({
     if (CORS_ORIGINS.length === 0) return cb(null, true)
     if (CORS_ORIGINS.includes(origin)) return cb(null, true)
     return cb(new Error('CORS blocked'))
-  }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
 }))
 
 // API key guard
@@ -92,15 +95,47 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/files', async (req, res) => {
   try {
     if (!pool) return res.status(500).json({ error: 'Database not configured' })
+    
     const { name, size, uploadDate, data, customerName, accountManager } = req.body || {}
-    if (!name || !size || !uploadDate || !Array.isArray(data)) return res.status(400).json({ error: 'Invalid payload' })
+    
+    // Validate required fields
+    if (!name || !size || !uploadDate) {
+      return res.status(400).json({ error: 'Missing required fields: name, size, uploadDate' })
+    }
+    
+    // Validate data array
+    if (!Array.isArray(data)) {
+      return res.status(400).json({ error: 'Data must be an array' })
+    }
+    
+    // Check data size limit (prevent memory issues)
+    if (data.length > 100000) {
+      return res.status(400).json({ error: 'Data too large: maximum 100,000 records allowed' })
+    }
     
     const id = randomUUID()
-    const result = await pool.query('INSERT INTO files(id,name,size,upload_date,data,customer_name,account_manager) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [id, name, size, uploadDate, JSON.stringify(data), customerName || null, accountManager || null])
     
+    // Add timeout for large data operations
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Database operation timeout')), 30000)
+    })
+    
+    const insertPromise = pool.query(
+      'INSERT INTO files(id,name,size,upload_date,data,customer_name,account_manager) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', 
+      [id, name, size, uploadDate, JSON.stringify(data), customerName || null, accountManager || null]
+    )
+    
+    const result = await Promise.race([insertPromise, timeoutPromise]) as any
+    
+    logger.info({ id, name, size, recordCount: data.length }, 'File uploaded successfully')
     res.json({ id: result.rows[0].id })
   } catch (err) {
-    logger.error({ err }, 'files insert error')
+    logger.error({ err, name: req.body?.name, size: req.body?.size }, 'files insert error')
+    
+    if (err.message === 'Database operation timeout') {
+      return res.status(408).json({ error: 'Upload timeout - file too large' })
+    }
+    
     res.status(500).json({ error: 'Insert failed' })
   }
 })
