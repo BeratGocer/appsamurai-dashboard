@@ -1,105 +1,72 @@
 ---
-alwaysApply: true
-description: Deployment workflow and production verification patterns
+description: Auto deployment workflow for AppSamurai Dashboard
 ---
 
-# Deployment Workflow
+# Auto Deployment Workflow
 
-## Architecture
-- **Frontend**: Netlify at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
-- **Backend**: Railway at `https://appsamurai-dashboard-backend-production-83b0.up.railway.app/`
-- **GitHub**: `https://github.com/BeratGocer/appsamurai-dashboard`
+## Deployment Strategy
+- **Frontend (Netlify)**: Otomatik deploy
+- **Backend (Railway)**: Manuel deploy
+- **GitHub**: Otomatik push
 
-## Deployment Sequence
+## Kullanıcı "Deploy" Dediğinde
 
-### 1. Git Operations
+### 1. Git Push (Otomatik)
 ```bash
-# Stage all changes
 git add .
-
-# Commit with timestamp
 git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - [description]"
-
-# Push to GitHub
 git push origin main
 ```
 
-### 2. Frontend Deploy
+### 2. Frontend Build & Deploy (Otomatik)
 ```bash
-# Build frontend
 npm run build
-
-# Deploy to Netlify
 netlify deploy --prod --dir=dist
 ```
 
-### 3. Backend Deploy
+### 3. Backend Build (Otomatik)
 ```bash
-# Build backend
 cd server && npm run build
+```
 
-# Deploy to Railway
+### 4. Railway Deploy (Manuel)
+**AI Asistanı yapar:**
+```bash
+cd server
+railway login
+railway link
 railway up
 ```
 
+## Deployment Sırası
+1. ✅ **GitHub Push** - Otomatik
+2. ✅ **Frontend Deploy** - Otomatik (Netlify)
+3. ✅ **Backend Build** - Otomatik
+4. ⚠️ **Backend Deploy** - Manuel (Railway) - AI Asistanı yapar
+
 ## Critical Rules
-- ✅ **Always Push First**: Git push before any deployment
-- ✅ **Build Before Deploy**: Run build commands before deployment
-- ✅ **Test After Deploy**: Verify deployment success
-- ✅ **Error Handling**: Report failures to user
-- ✅ **Sequential Process**: Complete each step before next
-- ✅ **Single Push Rule**: Never push twice - update rules first, then single push
-- ✅ **KPI Fix Applied**: Game filtering now handles platform suffixes correctly
+- ✅ Kullanıcı "deploy" dediğinde tüm otomatik işlemler çalışır
+- ✅ Railway deploy AI asistanı tarafından manuel yapılmalı
+- ✅ Deploy sonrası test edilmeli
+- ✅ Hata durumunda kullanıcıya bildirilmeli
 
-## Post-Deploy Testing
+## Test Checklist
+Deploy sonrası kontrol edilecekler:
+- [ ] Frontend erişilebilir mi?
+- [ ] Backend health check çalışıyor mu?
+- [ ] Dosya yükleme çalışıyor mu?
+- [ ] Dosya silme çalışıyor mu?
+- [ ] Console'da hata var mı?
 
-### Health Checks
-```bash
-# Backend health check
-curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/health
+## Error Handling
+- **Frontend Deploy Hatası**: Kullanıcıya bildir
+- **Backend Build Hatası**: Kullanıcıya bildir
+- **Railway Deploy Hatası**: AI asistanı tekrar dener ve kullanıcıya bildirir
 
-# Files endpoint test
-curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
-```
-
-### Frontend Testing
-- Navigate to production URL
-- Check console for errors
-- Verify file loading works
-- Test settings functionality
-
-## Error Recovery
-If any step fails:
-1. **Git Push Failed**: Try `git pull origin main` then retry
-2. **Frontend Build Failed**: Check TypeScript errors
-3. **Netlify Deploy Failed**: Check build output
-4. **Backend Build Failed**: Check server TypeScript errors
-5. **Railway Deploy Failed**: Check Railway logs and retry
-
-## Success Indicators
-- ✅ Git push successful
-- ✅ Frontend build successful
-- ✅ Netlify deploy successful
-- ✅ Backend build successful
-- ✅ Railway deploy successful
-- ✅ Health check returns 200 OK
-- ✅ Files endpoint returns data
-
-## Browser Testing
-Use Playwright for production verification:
-```typescript
-// Navigate to production site
-await page.goto('https://ubiquitous-sherbet-b4f6bf.netlify.app/')
-
-// Test file loading
-await page.waitForSelector('[data-testid="file-list"]')
-
-// Test settings functionality
-await page.click('[data-testid="settings-button"]')
-```
-
-## Monitoring
-- **Build Logs**: Check Netlify and Railway build logs
-- **Console Errors**: Monitor browser console for errors
-- **Network Requests**: Verify API calls are successful
-- **Performance**: Check page load times and responsiveness
+## Cursor Rules Generation
+Kullanıcı "/Generate Cursor Rules" dediğinde:
+1. ✅ **Git Push**: Otomatik olarak değişiklikleri commit edip push et
+2. ✅ **Frontend Deploy**: `npm run build` ve `netlify deploy --prod --dir=dist`
+3. ✅ **Backend Build**: `cd server && npm run build`
+4. ✅ **Railway Deploy**: AI asistanı `railway up` komutunu çalıştırır
+5. ✅ **Test**: Deploy sonrası health check ve functionality test

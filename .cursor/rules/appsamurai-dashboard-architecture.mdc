@@ -46,7 +46,7 @@ CSV Files → [csvParser.ts](mdc:src/utils/csvParser.ts) → State Management �
 
 ## Deployment
 - **Frontend**: Netlify at `https://ubiquitous-sherbet-b4f6bf.netlify.app/`
-- **Backend**: Railway at `https://backend-production-80f6.up.railway.app/`
+- **Backend**: Railway at `https://appsamurai-dashboard-backend-production-83b0.up.railway.app/`
 - **GitHub**: `https://github.com/BeratGocer/appsamurai-dashboard`
 
 ## Critical Components

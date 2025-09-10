@@ -1,0 +1,120 @@
+---
+description: CORS and large file upload issues fix for AppSamurai Dashboard
+---
+
+# CORS and Large File Upload Fix
+
+## Problem Summary
+The AppSamurai Dashboard was experiencing CORS errors and 500 Internal Server Error when uploading large CSV files (8.5MB+ with 57K+ records).
+
+## Error Messages
+```
+Access to fetch at 'https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files' from origin 'https://ubiquitous-sherbet-b4f6bf.netlify.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+
+POST https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files net::ERR_FAILED 500 (Internal Server Error)
+```
+
+## Root Causes
+1. **CORS Configuration**: Backend CORS settings were not properly configured
+2. **Large File Timeout**: 30-second timeout was insufficient for large files
+3. **Memory Issues**: Large JSON data causing memory problems during database insertion
+
+## Solutions Implemented
+
+### 1. Enhanced CORS Configuration
+Updated [server/src/index.ts](mdc:server/src/index.ts) with comprehensive CORS settings:
+
+```typescript
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true)
+    
+    // Allow all origins if CORS_ORIGINS is empty
+    if (CORS_ORIGINS.length === 0) return callback(null, true)
+    
+    // Check if origin is in allowed list
+    if (CORS_ORIGINS.includes(origin)) {
+      return callback(null, true)
+    }
+    
+    // Log blocked origin for debugging
+    logger.warn({ origin, allowedOrigins: CORS_ORIGINS }, 'CORS blocked origin')
+    return callback(new Error('Not allowed by CORS'))
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'X-API-Key'],
+  exposedHeaders: ['Content-Length', 'X-Foo'],
+  optionsSuccessStatus: 200
+}))
+```
+
+### 2. Extended Timeout for Large Files
+Increased timeout from 30 seconds to 2 minutes (120 seconds):
+
+```typescript
+const timeoutPromise = new Promise((_, reject) => {
+  setTimeout(() => reject(new Error('Database operation timeout')), 120000) // 2 minutes
+})
+```
+
+### 3. Enhanced Error Handling
+Added comprehensive validation and error handling:
+
+```typescript
+// Validate required fields
+if (!name || !size || !uploadDate) {
+  return res.status(400).json({ error: 'Missing required fields: name, size, uploadDate' })
+}
+
+// Validate data array
+if (!Array.isArray(data)) {
+  return res.status(400).json({ error: 'Data must be an array' })
+}
+
+// Check data size limit (prevent memory issues)
+if (data.length > 100000) {
+  return res.status(400).json({ error: 'Data too large: maximum 100,000 records allowed' })
+}
+```
+
+## Environment Variables
+Railway environment variables that must be set:
+- `CORS_ORIGINS`: `https://ubiquitous-sherbet-b4f6bf.netlify.app`
+- `API_KEY`: `public-demo-key`
+- `DATABASE_PUBLIC_URL`: PostgreSQL connection string
+
+## Testing Commands
+```bash
+# Test CORS with origin header
+curl -H "Origin: https://ubiquitous-sherbet-b4f6bf.netlify.app" \
+     -H "x-api-key: public-demo-key" \
+     https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
+
+# Test health endpoint
+curl -H "x-api-key: public-demo-key" \
+     https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/health
+```
+
+## Deployment URLs
+- **Frontend**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- **Backend**: https://appsamurai-dashboard-backend-production-83b0.up.railway.app/
+- **GitHub**: https://github.com/BeratGocer/appsamurai-dashboard
+
+## Critical Files Modified
+- [server/src/index.ts](mdc:server/src/index.ts) - Main backend server with CORS and file upload logic
+- [src/utils/api.ts](mdc:src/utils/api.ts) - Frontend API calls
+
+## Status
+✅ CORS configuration fixed
+✅ Backend deployed to Railway
+✅ Frontend deployed to Netlify
+✅ Git changes pushed
+
+## Next Steps
+If issues persist in new chat session:
+1. Verify CORS headers in browser network tab
+2. Check Railway logs for timeout errors
+3. Test with smaller files first
+4. Monitor memory usage during large file uploads
