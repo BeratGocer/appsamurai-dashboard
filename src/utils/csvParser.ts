@@ -869,9 +869,9 @@ export function extractPlatform(app: string, campaignNetwork: string = ''): stri
   return 'Unknown';
 }
 
-// Decode ad network codes using the latest Adnetworks.csv mapping
+// Return raw ad network codes without any decoding
 export function decodeAdNetwork(encryptedCode: string): string {
-  if (!encryptedCode || encryptedCode.toLowerCase() === 'unknown') return 'Unknown';
+  if (!encryptedCode) return 'Unknown';
   
   // Clean up the input - remove ,undefined and other artifacts
   let cleanCode = encryptedCode.trim();
@@ -882,237 +882,13 @@ export function decodeAdNetwork(encryptedCode: string): string {
     cleanCode = cleanCode.split(',')[0];
   }
   
-  // Handle special cases first
-  if (cleanCode === 'unknown') return 'Test';
-  if (cleanCode === 'test') return 'Test';
-  
-  // Sadece Adnetworkler.csv'deki kodlar - TAM EŞLEŞME SADECE
-  const adNetworkMap: Record<string, string> = {
-    // Direct codes from Adnetworkler.csv
-    'SCR': 'Copper',
-    'SPE': 'Prime',
-    'SFT': 'Fluent',
-    'SDA': 'Dynata',
-    'SAP': 'Ad it Up',
-    'SKK': 'Klink',
-    'STK': 'TNK',
-    'SEA': 'Eneba',
-    'TEST': 'Test',
-    'SPL': 'Playwell',
-    'SAN': 'AppsPrize',
-    'SIE': 'Influence Mobile',
-    'SAM': 'ATM',
-    'SCE': 'Catbyte',
-    'SEZ': 'Efez',
-    'SJK': 'JumpTask API',
-    'SWK': 'AppsPrize',
-    'Str': 'TradeDoubler',
-    'SBL': 'Buzzvil',
-    'SAS': 'Ad for Us',
-    'SMN': 'Mode Earn App',
-    'SRY': 'Rewardy',
-    'STS': 'TapChamps',
-    'S2': 'Klink',
-    'SAT': 'AppQwest',
-    'SER': 'EmberFund',
-    
-    // Base64 codes from Adnetworkler.csv (all AppsPrize)
-    'NTg1': 'AppsPrize',
-    'NTk2': 'AppsPrize',
-    'NjM4': 'AppsPrize',
-    'NjU2': 'AppsPrize',
-    'NjEy': 'AppsPrize',
-    'NTIx': 'AppsPrize',
-    'NTk5': 'AppsPrize',
-    'NDc2': 'AppsPrize',
-    'NjI3': 'AppsPrize',
-    'NDg1': 'AppsPrize',
-    'MTE5': 'AppsPrize',
-    'NjQy': 'AppsPrize',
-    'NTI3': 'AppsPrize',
-    'NjUz': 'AppsPrize',
-    'Mjgx': 'AppsPrize',
-    'MTQz': 'AppsPrize',
-    'OTg4': 'AppsPrize',
-    'ODMx': 'AppsPrize',
-    'OTk5': 'AppsPrize',
-    'NzAz': 'AppsPrize',
-    'ODY0': 'AppsPrize',
-    'ODYz': 'AppsPrize',
-    'OTAw': 'AppsPrize',
-    'NTYy': 'AppsPrize',
-    'ODky': 'AppsPrize',
-    'ODU5': 'AppsPrize',
-    'Nzc2': 'AppsPrize',
-    'MzI5': 'AppsPrize',
-    'NTcz': 'AppsPrize',
-    'Nzc1': 'AppsPrize',
-    
-    // Long base64 codes from Adnetworkler.csv
-    'aGNaOHZvZXNTOEE1': 'Freeward iFrame',
-    'c01LNHJBVkJ3Sk9z': 'GG2U iFrame',
-    'YzE3YTMzZjBkNTc3NGYzNzk1ZTB8': 'Catbyte',
-    'VkY2ODg2QzNEVXpZ': 'Gamehag iFrame',
-    'QUR0UXk4VGt0SEkz': 'Efez Games iFrame',
-    'V3B4WmFRc29OZlp3': 'FireFaucet iFrame',
-    'YzZiN2NiMGU5YjNjNDJmMDkyNmR8': 'Catbyte',
-    'bGUtVmdJa09FWFZj': 'Playback Rewards',
-    'MDAwYzliNGE5NGJiNGUyNjk2ZWN8': 'Catbyte',
-    'NlU3ckxQaElyTWVU': 'Stepler iOS (Diamonds) for Production',
-    'UDJGcTd6aTdrbGVa': 'Stepler iOS (Diamonds) for Staging',
-    'b1J5WHpUbTZFRkdwRXBZd1ltclJVdTJ3WGNYZDVFQ3dhU2k5VzVySnYyZzRSUmoyQ21aZmhVczVZMXUwNDVQWTRMSUJiTmszQ0xIY2hDQ3RDTG5VdlZVSUtqQ05QdU5BX1dWVnVkcEp4U3RhbVFHN2MyNVlZdk8wa0pLUENMUHl8': 'Playwell',
-    
-    // PTSDK_H_ format codes from Adnetworkler.csv (all AppsPrize)
-    'PTSDK_H_NTg1': 'AppsPrize',
-    'PTSDK_H_NTk2': 'AppsPrize',
-    'PTSDK_H_NjM4': 'AppsPrize',
-    'PTSDK_H_NjU2': 'AppsPrize',
-    'PTSDK_H_NjEy': 'AppsPrize',
-    'PTSDK_H_NTIx': 'AppsPrize',
-    'PTSDK_H_NTk5': 'AppsPrize',
-    'PTSDK_H_NDc2': 'AppsPrize',
-    'PTSDK_H_NjI3': 'AppsPrize',
-    'PTSDK_H_NDg1': 'AppsPrize',
-    'PTSDK_H_MTE5': 'AppsPrize',
-    'PTSDK_H_NjQy': 'AppsPrize',
-    'PTSDK_H_NTI3': 'AppsPrize',
-    'PTSDK_H_NjUz': 'AppsPrize',
-    'PTSDK_H_Mjgx': 'AppsPrize',
-    'PTSDK_H_MTQz': 'AppsPrize',
-    'PTSDK_H_OTg4': 'AppsPrize',
-    'PTSDK_H_ODMx': 'AppsPrize',
-    'PTSDK_H_OTk5': 'AppsPrize',
-    'PTSDK_H_NzAz': 'AppsPrize',
-    'PTSDK_H_ODY0': 'AppsPrize',
-    'PTSDK_H_ODYz': 'AppsPrize',
-    'PTSDK_H_OTAw': 'AppsPrize',
-    'PTSDK_H_NTYy': 'AppsPrize',
-    'PTSDK_H_ODky': 'AppsPrize',
-    'PTSDK_H_ODU5': 'AppsPrize',
-    'PTSDK_H_Nzc2': 'AppsPrize',
-    'PTSDK_H_MzI5': 'AppsPrize',
-    'PTSDK_H_NTcz': 'AppsPrize',
-    'PTSDK_H_Nzc1': 'AppsPrize',
-    
-    // PTSDK_ format codes from Adnetworkler.csv (all AppsPrize)
-    'PTSDK_NTg4': 'AppsPrize',
-    'PTSDK_NTI4': 'AppsPrize',
-    'PTSDK_NzQ4': 'AppsPrize',
-    'PTSDK_Mjgx': 'AppsPrize',
-    'PTSDK_MTE5': 'AppsPrize',
-    'PTSDK_NDc2': 'AppsPrize',
-    'PTSDK_NDg1': 'AppsPrize',
-    'PTSDK_NjEy': 'AppsPrize',
-    'PTSDK_NjI3': 'AppsPrize',
-    'PTSDK_NjM4': 'AppsPrize',
-    'PTSDK_NjQy': 'AppsPrize',
-    'PTSDK_NjU2': 'AppsPrize',
-    'PTSDK_NjUz': 'AppsPrize',
-    'PTSDK_NTg1': 'AppsPrize',
-    'PTSDK_NTI3': 'AppsPrize',
-    'PTSDK_NTIx': 'AppsPrize',
-    'PTSDK_NTk2': 'AppsPrize',
-    'PTSDK_NTk5': 'AppsPrize',
-    
-    // Additional PTSDK_H_ format codes
-    'PTSDK_H_NTI4': 'AppsPrize',
-    'PTSDK_H_NzQ4': 'AppsPrize',
-    'PTSDK_H_NTg4': 'AppsPrize',
-    
-    // Additional codes
-    'ZlJTUG54Vll4SnYz': 'Prodege Inbox Dollar iFrame',
-    'YjdhNTIyMzlhZDhmNGNmNWFlZjZ8': 'Catbyte'
-  };
-  
-  // 1. Önce tam eşleşme kontrol et (CSV'deki kodlar)
-  if (adNetworkMap[cleanCode]) {
-    return adNetworkMap[cleanCode];
-  }
-  
-  // 2. QUR0UXk4VGt0SEkz ile başlayan kodlar için prefix matching
-  if (cleanCode.startsWith('QUR0UXk4VGt0SEkz')) {
-    return 'Efez Games iFrame';
-  }
-  
-  // 2.1. NlU3ckxQaElyTWVU ile başlayan kodlar için prefix matching
-  if (cleanCode.startsWith('NlU3ckxQaElyTWVU')) {
-    return 'Stepler iOS (Diamonds) for Production';
-  }
-  
-  // 2.2. UDJGcTd6aTdrbGVa ile başlayan kodlar için prefix matching
-  if (cleanCode.startsWith('UDJGcTd6aTdrbGVa')) {
-    return 'Stepler iOS (Diamonds) for Staging';
-  }
-  
-  // 3. S ile başlayan kodlar için özel kurallar (mevcut mantık korunacak)
-  if (cleanCode.startsWith('S') || cleanCode.startsWith('s')) {
-    // S ile başlayan kodlar için prefix kontrolü
-    if (cleanCode.startsWith('SFT_')) {
-      return 'Fluent';
-    }
-    if (cleanCode.startsWith('SIE_')) {
-      return 'Influence Mobile';
-    }
-    // Diğer S ile başlayanlar için suffix kontrolü
-    const suffixMappings: Record<string, string> = {
-      'SCE': 'Catbyte',
-      'SFT': 'Fluent',
-      'SPE': 'Prime',
-      'SDA': 'Dynata',
-      'SAP': 'Ad it Up',
-      'SKK': 'Klink',
-      'STK': 'TNK',
-      'SEA': 'Eneba',
-      'SIE': 'Influence Mobile',
-      'SAM': 'ATM',
-      'SPL': 'Playwell',
-      'SAN': 'AppsPrize',
-      'SEZ': 'Efez',
-      'SJK': 'JumpTask API',
-      'SWK': 'AppsPrize',
-      'Str': 'TradeDoubler',
-      'SBL': 'Buzzvil',
-      'SAS': 'Ad for Us',
-      'SMN': 'Mode Earn App',
-      'SRY': 'Rewardy',
-      'STS': 'TapChamps',
-      'S2': 'Klink',
-      'SAT': 'AppQwest',
-      'SER': 'EmberFund'
-    };
-    
-    // Check if the code ends with any known ad network suffix
-    for (const [suffix, realName] of Object.entries(suffixMappings)) {
-      if (cleanCode.endsWith(`_${suffix}`) || cleanCode.endsWith(suffix)) {
-        return realName;
-      }
-    }
-  }
-  
-  // 4. Numeric patterns like "48591_208110", "34631_", "34631_206305", etc. should map to Fluent
-  if (/^\d+_/.test(cleanCode)) {
-    return 'Fluent';
-  }
-  
-  // 5. TBSDK patterns
-  if (cleanCode.includes('TBSDK')) {
-    return 'TBSDK';
-  }
-  
-  // 6. PTSDK patterns (should map to AppsPrize)
-  if (cleanCode.includes('PTSDK')) {
-    return 'AppsPrize';
-  }
-  
-  // Base64 decode yasak - sadece belirtilen yöntemler kullanılacak
-  
-  // 8. Return original code if no match found
+  // Return raw code without any decoding
   return cleanCode;
 }
 
-// Decode publisher codes from adgroup_network (C column) - keep unrecognized codes as-is
+// Return raw publisher codes without any decoding
 export function decodePublisherCode(adgroupNetwork: string): string {
-  if (!adgroupNetwork || adgroupNetwork.toLowerCase() === 'unknown') return 'Unknown';
+  if (!adgroupNetwork) return 'Unknown';
   
   // Clean up the input - remove ,undefined and other artifacts
   let cleanCode = adgroupNetwork.trim();
@@ -1123,77 +899,7 @@ export function decodePublisherCode(adgroupNetwork: string): string {
     cleanCode = cleanCode.split(',')[0];
   }
   
-  const code = cleanCode.toUpperCase();
-  
-  // Known publisher mappings - only decode what we're sure about
-  const knownMappings: Record<string, string> = {
-    // Base64 decode yasak - sadece tam eşleşme
-    
-    // Direct codes
-    'TEST': 'Test',
-    'UNKNOWN': 'Unknown',
-    
-    // Specific SFT codes that appear in the data
-    'SFT_34631_5406': 'Fluent',
-    'SFT_45209_5406': 'Fluent'
-  };
-
-  // Check direct mappings first
-  if (knownMappings[code] || knownMappings[adgroupNetwork]) {
-    return knownMappings[code] || knownMappings[adgroupNetwork];
-  }
-
-  // Special case: SFT_ prefix should always map to Fluent
-  if (cleanCode.startsWith('SFT_')) {
-    return 'Fluent';
-  }
-  
-  // Special case: dX prefix should always map to Influence Mobile
-  if (cleanCode.startsWith('dX')) {
-    return 'Influence Mobile';
-  }
-  
-  // Special case: MT prefix should always map to Fluent
-  if (cleanCode.startsWith('MT')) {
-    return 'Fluent';
-  }
-  
-  // Handle prefix formats like SFT_, SPE_, SAP_, LV9U_
-  if (cleanCode.includes('_')) {
-    const parts = cleanCode.split('_');
-    const prefix = parts[0];
-    
-    // Known prefix mappings - map to actual decoded names from Adnetworks.csv
-    const knownPrefixes: Record<string, string> = {
-      'SFT': 'Fluent',  // SFT maps to Fluent according to Adnetworks.csv
-      'SPE': 'Prime',   // SPE maps to Prime according to Adnetworks.csv
-      'SAP': 'Ad it Up', // SAP maps to Ad it Up according to Adnetworks.csv
-      'SDA': 'Dynata',  // SDA maps to Dynata according to Adnetworks.csv
-      'SKK': 'Klink',   // SKK maps to Klink according to Adnetworks.csv
-      'STK': 'TNK',     // STK maps to TNK according to Adnetworks.csv
-      'SEA': 'Eneba',   // SEA maps to Eneba according to Adnetworks.csv
-      'SIE': 'Influence Mobile', // SIE maps to Influence Mobile according to Adnetworks.csv
-      'MT': 'Fluent'    // MT maps to Fluent according to Adnetworks.csv
-    };
-    
-    if (knownPrefixes[prefix]) {
-      return knownPrefixes[prefix];
-    }
-  }
-
-  // Try base64 decoding only for clear base64 patterns
-  if (adgroupNetwork.length > 8 && /^[A-Za-z0-9+/]+=*$/.test(adgroupNetwork)) {
-    try {
-      const decoded = atob(adgroupNetwork);
-      if (decoded && decoded.length > 0 && /^[a-zA-Z0-9\s\-_.]+$/.test(decoded)) {
-        return decoded;
-      }
-    } catch {
-      // Base64 decode failed, keep original
-    }
-  }
-  
-  // IMPORTANT: Keep unrecognized codes as-is (this is what user wants)
+  // Return raw code without any decoding
   return cleanCode;
 }
 
@@ -1278,31 +984,7 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
   const normalizePublisher = (publisherRaw: string): string => {
     if (!publisherRaw) return 'Unknown';
     
-    // Handle decoded ad network names - normalize case for consistency
-    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile', 'Catbyte', 'Efez', 'sMiles', 'Jumptask iFrame', 'JumpTask API', 'Prodege Swagbucks iFrame', 'TradeDoubler', 'catbyte', 'Versemedia', 'Prodege Inbox Dollar iFrame', 'Fyber', 'Prodege ySense iFrame'];
-    
-    // Case-insensitive matching for known ad networks
-    const normalizedInput = publisherRaw.toLowerCase();
-    const matchedNetwork = decodedAdNetworks.find(network => 
-      network.toLowerCase() === normalizedInput
-    );
-    
-    if (matchedNetwork) {
-      return matchedNetwork; // Return the properly capitalized version
-    }
-    
-    // Handle prefix patterns for raw codes - but check if the prefix itself can be decoded
-    const match = publisherRaw.match(/^([A-Za-z]{3})_/);
-    if (match) {
-      const prefix = match[1];
-      const decodedPrefix = decodeAdNetwork(prefix);
-      // If the prefix itself decodes to a known ad network, return the decoded name
-      if (decodedAdNetworks.includes(decodedPrefix)) {
-        return decodedPrefix;
-      }
-      return `${prefix}_`;
-    }
-    
+    // Return raw publisher code without any normalization
     return publisherRaw;
   };
 
