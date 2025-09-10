@@ -61,7 +61,7 @@ const initializeDatabase = async () => {
 }
 
 app.use(helmet())
-app.use(express.json({ limit: '50mb' }))
+app.use(express.json({ limit: '100mb' }))
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)

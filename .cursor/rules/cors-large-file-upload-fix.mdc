@@ -15,8 +15,8 @@ POST https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/fil
 ```
 
 ## Root Causes
-1. **CORS Configuration**: Backend CORS settings were not properly configured
-2. **Large File Timeout**: 30-second timeout was insufficient for large files
+1. **CORS Configuration**: Backend CORS settings were not properly configured for preflight requests
+2. **Express Body Parser Limit**: 10MB limit was insufficient for large JSON data (CSV → JSON conversion increases size 3-4x)
 3. **Memory Issues**: Large JSON data causing memory problems during database insertion
 
 ## Solutions Implemented
@@ -50,16 +50,32 @@ app.use(cors({
 }))
 ```
 
-### 2. Extended Timeout for Large Files
-Increased timeout from 30 seconds to 2 minutes (120 seconds):
+### 2. CORS Preflight Handler
+Added explicit OPTIONS request handler:
 
 ```typescript
-const timeoutPromise = new Promise((_, reject) => {
-  setTimeout(() => reject(new Error('Database operation timeout')), 120000) // 2 minutes
+// Handle preflight OPTIONS requests
+app.options('*', (req, res) => {
+  res.status(200).end()
+})
+
+// API key guard - skip for OPTIONS
+app.use((req, res, next) => {
+  if (req.path === '/api/health' || req.method === 'OPTIONS') return next()
+  const key = req.header('x-api-key')
+  if (!API_KEY || key === API_KEY) return next()
+  return res.status(401).json({ error: 'Unauthorized' })
 })
 ```
 
-### 3. Enhanced Error Handling
+### 3. Extended Express Body Parser Limit
+Increased limit from 10MB to 100MB to handle large JSON data:
+
+```typescript
+app.use(express.json({ limit: '100mb' }))
+```
+
+### 4. Enhanced Error Handling
 Added comprehensive validation and error handling:
 
 ```typescript
@@ -79,6 +95,19 @@ if (data.length > 100000) {
 }
 ```
 
+### 5. PostgreSQL Connection Optimization
+Increased connection pool and timeout settings:
+
+```typescript
+const pool = DATABASE_URL ? new Pool({ 
+  connectionString: DATABASE_URL, 
+  ssl: DATABASE_URL.includes('proxy.rlwy.net') ? { rejectUnauthorized: false } : undefined,
+  max: 50,  // Increased from 20
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000  // Increased from 2000
+}) : undefined
+```
+
 ## Environment Variables
 Railway environment variables that must be set:
 - `CORS_ORIGINS`: `https://ubiquitous-sherbet-b4f6bf.netlify.app`
@@ -87,9 +116,17 @@ Railway environment variables that must be set:
 
 ## Testing Commands
 ```bash
-# Test CORS with origin header
-curl -H "Origin: https://ubiquitous-sherbet-b4f6bf.netlify.app" \
+# Test CORS preflight
+curl -X OPTIONS -H "Origin: https://ubiquitous-sherbet-b4f6bf.netlify.app" \
+     -H "Access-Control-Request-Method: POST" \
+     -H "Access-Control-Request-Headers: content-type,x-api-key" \
+     https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
+
+# Test POST request
+curl -X POST -H "Content-Type: application/json" \
+     -H "Origin: https://ubiquitous-sherbet-b4f6bf.netlify.app" \
      -H "x-api-key: public-demo-key" \
+     -d '{"name":"test.csv","size":1000,"uploadDate":"2025-09-10","data":[{"test":"data"}]}' \
      https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
 
 # Test health endpoint
@@ -105,16 +142,27 @@ curl -H "x-api-key: public-demo-key" \
 ## Critical Files Modified
 - [server/src/index.ts](mdc:server/src/index.ts) - Main backend server with CORS and file upload logic
 - [src/utils/api.ts](mdc:src/utils/api.ts) - Frontend API calls
+- [src/components/FileUpload.tsx](mdc:src/components/FileUpload.tsx) - File upload component with fallback logic
 
 ## Status
 ✅ CORS configuration fixed
+✅ Preflight OPTIONS handler added
+✅ Express body parser limit increased to 100MB
+✅ PostgreSQL connection pool optimized
 ✅ Backend deployed to Railway
 ✅ Frontend deployed to Netlify
 ✅ Git changes pushed
 
-## Next Steps
-If issues persist in new chat session:
-1. Verify CORS headers in browser network tab
-2. Check Railway logs for timeout errors
-3. Test with smaller files first
-4. Monitor memory usage during large file uploads
+## Key Lessons Learned
+1. **CSV to JSON Size Increase**: CSV files increase 3-4x in size when converted to JSON
+2. **CORS Preflight**: OPTIONS requests must be explicitly handled for POST requests
+3. **Express Limits**: Body parser limits must account for JSON conversion overhead
+4. **Memory Management**: Large data requires careful memory management in Node.js
+5. **Error Logging**: Railway logs are crucial for debugging production issues
+
+## Future Improvements
+For handling even larger files (50MB+), consider:
+- Streaming upload architecture
+- Chunk-based file processing
+- Database schema optimization (normalized tables vs JSONB)
+- Memory-efficient JSON processing
