@@ -469,7 +469,18 @@ export function getGameCompletionMetrics(data: CampaignData[]): GameCompletionMe
 function decodeAdNetwork(code: string): string {
   if (!code) return code;
   
-  const cleanCode = code.trim().toUpperCase();
+  const cleanCode = code.trim();
+  
+  // Esnek arama fonksiyonu - büyük küçük harf duyarsız
+  const findMapping = (mappings: Record<string, string>, searchCode: string): string | null => {
+    // Önce tam eşleşme ara (büyük küçük harf duyarsız)
+    for (const [key, value] of Object.entries(mappings)) {
+      if (key.toLowerCase() === searchCode.toLowerCase()) {
+        return value;
+      }
+    }
+    return null;
+  };
   
   // S ile başlayan ad network kodları (Adnetworkler.csv'den)
   const sNetworkMappings: Record<string, string> = {
@@ -500,6 +511,10 @@ function decodeAdNetwork(code: string): string {
     'SAT': 'AppQwest',
     'SER': 'EmberFund'
   };
+  
+  // S network kodları için esnek arama
+  const sNetworkResult = findMapping(sNetworkMappings, cleanCode);
+  if (sNetworkResult) return sNetworkResult;
   
   // Base64 kodları (Adnetworkler.csv'den)
   const base64Mappings: Record<string, string> = {
@@ -534,12 +549,13 @@ function decodeAdNetwork(code: string): string {
     'NTNZ': 'AppsPrize',
     'NZZ1': 'AppsPrize',
     'LV9UVnNKZTY4WjZW': 'Ad It Up',
-    'LV9UVNNKZTY4WJZW': 'Ad It Up',
     'MTkwMzZ8': 'Fluent',
-    'MTKWMZZ8': 'Fluent',
-    'MTkxNDF8': 'Fluent',
-    'MTKXNDF8': 'Fluent'
+    'MTkxNDF8': 'Fluent'
   };
+  
+  // Base64 kodları için esnek arama
+  const base64Result = findMapping(base64Mappings, cleanCode);
+  if (base64Result) return base64Result;
   
   // PTSDK kodları (Adnetworkler.csv'den)
   const ptsdkMappings: Record<string, string> = {
@@ -622,6 +638,10 @@ function decodeAdNetwork(code: string): string {
       return realName;
     }
   }
+  
+  // PTSDK kodları için esnek arama
+  const ptsdkResult = findMapping(ptsdkMappings, cleanCode);
+  if (ptsdkResult) return ptsdkResult;
   
   // PTSDK prefix kontrolü
   if (cleanCode.startsWith('PTSDK_')) {
