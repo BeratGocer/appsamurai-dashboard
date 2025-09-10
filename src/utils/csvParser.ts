@@ -992,7 +992,27 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'PTSDK_H_Nzc2': 'AppsPrize',
     'PTSDK_H_MzI5': 'AppsPrize',
     'PTSDK_H_NTcz': 'AppsPrize',
-    'PTSDK_H_Nzc1': 'AppsPrize'
+    'PTSDK_H_Nzc1': 'AppsPrize',
+    
+    // PTSDK_ format codes from Adnetworkler.csv (all AppsPrize)
+    'PTSDK_NTg4': 'AppsPrize',
+    'PTSDK_NTI4': 'AppsPrize',
+    'PTSDK_NzQ4': 'AppsPrize',
+    'PTSDK_Mjgx': 'AppsPrize',
+    'PTSDK_MTE5': 'AppsPrize',
+    'PTSDK_NDc2': 'AppsPrize',
+    'PTSDK_NDg1': 'AppsPrize',
+    'PTSDK_NjEy': 'AppsPrize',
+    'PTSDK_NjI3': 'AppsPrize',
+    'PTSDK_NjM4': 'AppsPrize',
+    'PTSDK_NjQy': 'AppsPrize',
+    'PTSDK_NjU2': 'AppsPrize',
+    'PTSDK_NjUz': 'AppsPrize',
+    'PTSDK_NTg1': 'AppsPrize',
+    'PTSDK_NTI3': 'AppsPrize',
+    'PTSDK_NTIx': 'AppsPrize',
+    'PTSDK_NTk2': 'AppsPrize',
+    'PTSDK_NTk5': 'AppsPrize'
   };
   
   // 1. Önce tam eşleşme kontrol et (CSV'deki kodlar)
