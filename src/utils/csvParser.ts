@@ -1542,7 +1542,8 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'd0': 'Versemedia',
     'd3': 'Fyber',
     'Zl': 'Prodege Inbox Dollar iFrame',
-    'S2': 'Klink'
+    'S2': 'Klink',
+    'SAT': 'AppQwest'
   };
   
   // Special case: SFT_ prefix should always map to Fluent
@@ -1584,7 +1585,8 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'd0': 'Versemedia',
     'd3': 'Fyber',
     'Zl': 'Prodege Inbox Dollar iFrame',
-    'S2': 'Klink'
+    'S2': 'Klink',
+    'SAT': 'AppQwest'
   };
   
   // Check for prefix matches
