@@ -1501,23 +1501,18 @@ export function generateCampaignId(data: CampaignData[]): string {
   
   // Get unique values from the data
   const games = [...new Set(data.map(row => extractGameName(row.app)))];
-  const countries = [...new Set(data.map(row => {
-    // Try to extract country from campaign network or use a default
+  const customers = [...new Set(data.map(row => {
+    // Try to extract customer from campaign network or use a default
     const parsed = parseCampaignNetwork(row.campaign_network);
     return parsed.country || 'Global';
   }))];
   
   // Sort for consistent ID generation
   games.sort();
-  countries.sort();
+  customers.sort();
   
-  // Combine multiple countries with "and" instead of showing "Global"
-  const countryDisplay = countries.length > 1 
-    ? countries.join(' and ') 
-    : countries[0] || 'Global';
-  
-  // Create a unique identifier based on games and countries
-  return `${games.join('|')}-${countryDisplay}`;
+  // Create a unique identifier based on games and customers
+  return `${games.join('|')}-${customers.join('|')}`;
 }
 
 // Check if two datasets represent the same campaign
