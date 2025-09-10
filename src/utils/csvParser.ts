@@ -1464,7 +1464,7 @@ export function decodeAdNetwork(encryptedCode: string): string {
   if (cleanCode === 'unknown') return 'Test';
   if (cleanCode === 'test') return 'Test';
   
-  // Ad network mapping from Adnetworks.csv
+  // Ad network mapping from Adnetworks.csv - COMPLETE SYNC
   const adNetworkMap: Record<string, string> = {
     // Base64 decoded mappings
     'VGVzdA==': 'Test',
@@ -1497,24 +1497,13 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'SG9waSBTMlM=': 'Hopi S2S',
     'TW9kZSBFYXJuIEFwcA==': 'Mode Earn App',
     
-    // Direct codes (case insensitive)
+    // Direct codes from Adnetworks.csv - COMPLETE LIST
     'SCR': 'Copper',
-    'ScR': 'Copper', 
-    'ScR_': 'Copper',
     'SPE': 'Prime',
-    'SPE_': 'Prime',
     'SFT': 'Fluent',
-    'SFT_': 'Fluent',
-    'SFT_MTkwMzZ8': 'Fluent',
-    'SFT_MTkxNDF8': 'Fluent',
-    'SFT_34631_5406': 'Fluent',
-    'SFT_45209_5406': 'Fluent',
     'SDA': 'Dynata',
-    'SDA_': 'Dynata',
     'SAP': 'Ad it Up',
-    'SAP_': 'Ad it Up',
     'SKK': 'Klink',
-    'SKK_': 'Klink',
     'STK': 'TNK',
     'SEA': 'Eneba',
     'TEST': 'Test',
@@ -1527,6 +1516,7 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'ZU': 'Eneba',
     'OT': 'Copper',
     'e3': 'Test',
+    'unknown': 'Test',
     'UF': 'Ayet Studios',
     'ZG': 'EmberFund',
     'Ql': 'Ad it Up',
@@ -1567,7 +1557,15 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'SJK': 'JumpTask API',
     'SWK': 'AppsPrize',
     'V1': 'Prodege Swagbucks iFrame',
-    'Str': 'TradeDoubler'
+    'Str': 'TradeDoubler',
+    
+    // NEW ADDITIONS
+    'SBL': 'Buzzvil',
+    'SAS': 'Ad for Us',
+    'SMN': 'Mode Earn App',
+    'Yj': 'catbyte',
+    'SRY': 'Rewardy',
+    'STS': 'TapChamps'
   };
   
   // Special case: SFT_ prefix should always map to Fluent
@@ -1593,6 +1591,11 @@ export function decodeAdNetwork(encryptedCode: string): string {
   // Special case: Numeric patterns like "48591_208110", "34631_", "34631_206305", etc. should map to Fluent
   if (/^\d+_/.test(cleanCode)) {
     return 'Fluent';
+  }
+  
+  // Special case: str_ prefix should always map to TradeDoubler
+  if (cleanCode.startsWith('str_')) {
+    return 'TradeDoubler';
   }
   
   // NEW: Check for ad network suffixes in campaign names
@@ -1807,7 +1810,7 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
     if (!publisherRaw) return 'Unknown';
     
     // Handle decoded ad network names - normalize case for consistency
-    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile', 'Catbyte', 'Efez', 'sMiles', 'Jumptask iFrame', 'JumpTask API', 'Prodege Swagbucks iFrame', 'TradeDoubler'];
+    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile', 'Catbyte', 'Efez', 'sMiles', 'Jumptask iFrame', 'JumpTask API', 'Prodege Swagbucks iFrame', 'TradeDoubler', 'catbyte'];
     
     // Case-insensitive matching for known ad networks
     const normalizedInput = publisherRaw.toLowerCase();
