@@ -589,8 +589,11 @@ export function parseCampaignNetwork(campaignNetwork: string): {
         platformIndex = i;
       }
       
-      // Country detection
-      if (['US', 'USA', 'UK', 'GB', 'TR', 'DE', 'FR', 'KR', 'JP', 'CN', 'IN', 'BR', 'RU', 'CA', 'AU', 'MX'].includes(part)) {
+      // Country detection - handle both direct codes and CNTUS format
+      if (part.includes('CNTUS')) {
+        result.country = 'US';
+        countryIndex = i;
+      } else if (['US', 'USA', 'UK', 'GB', 'TR', 'DE', 'FR', 'KR', 'JP', 'CN', 'IN', 'BR', 'RU', 'CA', 'AU', 'MX'].includes(part)) {
         switch (part.toUpperCase()) {
           case 'US':
           case 'USA':
@@ -965,12 +968,25 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'Nm': 'Hopi S2S',
     'NJ': 'AppsPrize',
     'NT': 'AppsPrize',
-    'NH': 'Mode Earn App'
+    'NH': 'Mode Earn App',
+    'SIE': 'Influence Mobile',
+    'dX': 'Influence Mobile',
+    'MTg2Njl8': 'Unknown'
   };
   
   // Special case: SFT_ prefix should always map to Fluent
   if (cleanCode.startsWith('SFT_')) {
     return 'Fluent';
+  }
+  
+  // Special case: SIE_ prefix should always map to Influence Mobile
+  if (cleanCode.startsWith('SIE_')) {
+    return 'Influence Mobile';
+  }
+  
+  // Special case: dX prefix should always map to Influence Mobile
+  if (cleanCode.startsWith('dX')) {
+    return 'Influence Mobile';
   }
   
   // Extract prefix and match
@@ -1031,6 +1047,11 @@ export function decodePublisherCode(adgroupNetwork: string): string {
     return 'Fluent';
   }
   
+  // Special case: dX prefix should always map to Influence Mobile
+  if (cleanCode.startsWith('dX')) {
+    return 'Influence Mobile';
+  }
+  
   // Handle prefix formats like SFT_, SPE_, SAP_, LV9U_
   if (cleanCode.includes('_')) {
     const parts = cleanCode.split('_');
@@ -1044,7 +1065,8 @@ export function decodePublisherCode(adgroupNetwork: string): string {
       'SDA': 'Dynata',  // SDA maps to Dynata according to Adnetworks.csv
       'SKK': 'Klink',   // SKK maps to Klink according to Adnetworks.csv
       'STK': 'TNK',     // STK maps to TNK according to Adnetworks.csv
-      'SEA': 'Eneba'    // SEA maps to Eneba according to Adnetworks.csv
+      'SEA': 'Eneba',   // SEA maps to Eneba according to Adnetworks.csv
+      'SIE': 'Influence Mobile' // SIE maps to Influence Mobile according to Adnetworks.csv
     };
     
     if (knownPrefixes[prefix]) {
@@ -1148,7 +1170,7 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
     if (!publisherRaw) return 'Unknown';
     
     // Handle decoded ad network names - return them as-is
-    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App'];
+    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile'];
     
     if (decodedAdNetworks.includes(publisherRaw)) {
       return publisherRaw;
