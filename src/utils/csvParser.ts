@@ -629,38 +629,6 @@ function decodeAdNetwork(code: string): string {
     return 'Fluent';
   }
   
-  // Base64 decode denemesi (sadece mapping'de olmayan kodlar için)
-  if (!base64Mappings[cleanCode] && /^[A-Za-z0-9+/=]+$/.test(cleanCode)) {
-    try {
-      const decoded = atob(cleanCode);
-      if (decoded.length > 0 && decoded.length < 100) {
-        // Saçma sapan karakterleri filtrele (sadece alfanumerik ve boşluk karakterleri)
-        const cleanDecoded = decoded.replace(/[^\w\s-]/g, '').trim();
-        if (cleanDecoded.length > 0 && cleanDecoded.length < 50) {
-          return cleanDecoded;
-        }
-      }
-    } catch {
-      // Base64 decode başarısız, orijinal kodu döndür
-    }
-  }
-  
-  // Base64 kodları sonunda | karakteri ile (sadece mapping'de olmayan kodlar için)
-  if (!base64Mappings[cleanCode] && /^[A-Za-z0-9+/=]+\|$/.test(cleanCode)) {
-    const base64Part = cleanCode.slice(0, -1); // | karakterini kaldır
-    try {
-      const decoded = atob(base64Part);
-      if (decoded.length > 0 && decoded.length < 100) {
-        // Saçma sapan karakterleri filtrele (sadece alfanumerik ve boşluk karakterleri)
-        const cleanDecoded = decoded.replace(/[^\w\s-]/g, '').trim();
-        if (cleanDecoded.length > 0 && cleanDecoded.length < 50) {
-          return cleanDecoded;
-        }
-      }
-    } catch {
-      // Base64 decode başarısız, orijinal kodu döndür
-    }
-  }
   
   // Hiçbir eşleşme bulunamazsa orijinal kodu döndür
   return code;
