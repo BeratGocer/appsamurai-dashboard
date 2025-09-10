@@ -657,6 +657,26 @@ function decodeAdNetwork(code: string): string {
     return 'Fluent';
   }
   
+  // Karmaşık kodlar için parçalama (örn: ScR_OTlwSkZrSHNEcm01)
+  if (cleanCode.includes('_')) {
+    const parts = cleanCode.split('_');
+    
+    // İlk parça S network kodu olabilir
+    if (parts.length >= 2) {
+      const firstPart = parts[0];
+      const sNetworkResult = findMapping(sNetworkMappings, firstPart);
+      if (sNetworkResult) {
+        return sNetworkResult;
+      }
+      
+      // İkinci parça base64 kodu olabilir
+      const secondPart = parts[1];
+      const base64Result = findMapping(base64Mappings, secondPart);
+      if (base64Result) {
+        return base64Result;
+      }
+    }
+  }
   
   // Hiçbir eşleşme bulunamazsa orijinal kodu döndür
   return code;
