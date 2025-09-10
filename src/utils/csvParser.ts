@@ -886,7 +886,7 @@ export function decodeAdNetwork(encryptedCode: string): string {
   if (cleanCode === 'unknown') return 'Test';
   if (cleanCode === 'test') return 'Test';
   
-  // Ad network mapping from Adnetworkler.csv - TAM EŞLEŞME SADECE
+  // Sadece Adnetworkler.csv'deki kodlar - TAM EŞLEŞME SADECE
   const adNetworkMap: Record<string, string> = {
     // Direct codes from Adnetworkler.csv
     'SCR': 'Copper',
@@ -1020,7 +1020,8 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'PTSDK_H_NTg4': 'AppsPrize',
     
     // Additional codes
-    'ZlJTUG54Vll4SnYz': 'Prodege Inbox Dollar iFrame'
+    'ZlJTUG54Vll4SnYz': 'Prodege Inbox Dollar iFrame',
+    'YjdhNTIyMzlhZDhmNGNmNWFlZjZ8': 'Catbyte'
   };
   
   // 1. Önce tam eşleşme kontrol et (CSV'deki kodlar)
@@ -1044,7 +1045,7 @@ export function decodeAdNetwork(encryptedCode: string): string {
   }
   
   // 3. S ile başlayan kodlar için özel kurallar (mevcut mantık korunacak)
-  if (cleanCode.startsWith('S')) {
+  if (cleanCode.startsWith('S') || cleanCode.startsWith('s')) {
     // S ile başlayan kodlar için prefix kontrolü
     if (cleanCode.startsWith('SFT_')) {
       return 'Fluent';
@@ -1093,7 +1094,19 @@ export function decodeAdNetwork(encryptedCode: string): string {
     return 'Fluent';
   }
   
-  // 5. CSV'de olmayan her şey raw haliyle döndür
+  // 5. TBSDK patterns
+  if (cleanCode.includes('TBSDK')) {
+    return 'TBSDK';
+  }
+  
+  // 6. PTSDK patterns (should map to AppsPrize)
+  if (cleanCode.includes('PTSDK')) {
+    return 'AppsPrize';
+  }
+  
+  // Base64 decode yasak - sadece belirtilen yöntemler kullanılacak
+  
+  // 8. Return original code if no match found
   return cleanCode;
 }
 
@@ -1114,16 +1127,7 @@ export function decodePublisherCode(adgroupNetwork: string): string {
   
   // Known publisher mappings - only decode what we're sure about
   const knownMappings: Record<string, string> = {
-    // Base64 decoded mappings
-    'VGVzdA==': 'Test',
-    'QWQgaXQgdXA=': 'Ad it up', 
-    'Q29wcGVy': 'Copper',
-    'RHluYXRh': 'Dynata',
-    'SXJvblNvdXJjZQ==': 'IronSource',
-    'VW5pdHk=': 'Unity',
-    'QWRNb2I=': 'AdMob',
-    'RmFjZWJvb2s=': 'Facebook',
-    'QXBwTG92aW4=': 'AppLovin',
+    // Base64 decode yasak - sadece tam eşleşme
     
     // Direct codes
     'TEST': 'Test',
