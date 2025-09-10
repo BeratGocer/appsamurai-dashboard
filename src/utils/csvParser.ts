@@ -1544,7 +1544,13 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'd3J4ZE5yNkFWZUF': 'Fyber',
     'ajRZSnpNT3IWaHFX': 'Prodege ySense iFrame',
     'NjQy': 'AppsPrize',
-    'NjEy': 'AppsPrize'
+    'NjEy': 'AppsPrize',
+    'ajRZSnpNT3lWaHFX': 'Prodege ySense iFrame',
+    'd3J4ZEsyNkFWZUtF': 'Fyber',
+    'NjU2': 'AppsPrize',
+    'OWNmZDNjZDA3ZWYxNDEyZTkyOGF8': 'Catbyte',
+    'ZlJTUG54Vll4SnYz': 'Prodege Inbox Dollar iFrame',
+    'S2': 'Klink'
   };
   
   // Special case: SFT_ prefix should always map to Fluent
