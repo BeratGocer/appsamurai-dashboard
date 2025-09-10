@@ -85,8 +85,8 @@ export function parseCSV(csvContent: string): CampaignData[] {
       
       return {
         app: 'Azula', // Default app name for Azula format
-        campaign_network: decodeAdNetwork(rawCampaignNetwork),
-        adgroup_network: decodeAdNetwork(rawAdgroupNetwork),
+        campaign_network: rawCampaignNetwork,
+        adgroup_network: rawAdgroupNetwork,
         day: values[2] || '',
         installs: parseInt(values[3]) || 0,
         adjust_cost: parseFloat(values[4]) || 0,
@@ -118,8 +118,8 @@ export function parseCSV(csvContent: string): CampaignData[] {
       
       return {
         app: values[0] || '',
-        campaign_network: decodeAdNetwork(rawCampaignNetwork),
-        adgroup_network: decodeAdNetwork(rawAdgroupNetwork),
+        campaign_network: rawCampaignNetwork,
+        adgroup_network: rawAdgroupNetwork,
         day: values[3] || '',
         installs: parseInt(values[4]) || 0,
         ecpi: parseFloat(values[5]) || 0,
@@ -151,8 +151,8 @@ export function parseCSV(csvContent: string): CampaignData[] {
       
       return {
         app: values[0] || '',
-        campaign_network: decodeAdNetwork(rawCampaignNetwork),
-        adgroup_network: decodeAdNetwork(rawAdgroupNetwork),
+        campaign_network: rawCampaignNetwork,
+        adgroup_network: rawAdgroupNetwork,
         day: values[3] || '',
         installs: parseInt(values[4]) || 0,
         // Financial metrics
@@ -251,8 +251,8 @@ export function parseCSV(csvContent: string): CampaignData[] {
       
       return {
         app: appIndex >= 0 ? values[appIndex] || '' : '',
-        campaign_network: decodeAdNetwork(rawCampaignNetwork),
-        adgroup_network: decodeAdNetwork(rawAdgroupNetwork),
+        campaign_network: rawCampaignNetwork,
+        adgroup_network: rawAdgroupNetwork,
         day: dayIndex >= 0 ? values[dayIndex] || '' : '',
         installs: installsIndex >= 0 ? parseInt(values[installsIndex]) || 0 : 0,
         roas: roasIndex >= 0 ? parseFloat(values[roasIndex]) || 0 : 0,
@@ -869,39 +869,6 @@ export function extractPlatform(app: string, campaignNetwork: string = ''): stri
   return 'Unknown';
 }
 
-// Return raw ad network codes without any decoding
-export function decodeAdNetwork(encryptedCode: string): string {
-  if (!encryptedCode) return 'Unknown';
-  
-  // Clean up the input - remove ,undefined and other artifacts
-  let cleanCode = encryptedCode.trim();
-  if (cleanCode.includes(',undefined')) {
-    cleanCode = cleanCode.split(',undefined')[0];
-  }
-  if (cleanCode.includes(',')) {
-    cleanCode = cleanCode.split(',')[0];
-  }
-  
-  // Return raw code without any decoding
-  return cleanCode;
-}
-
-// Return raw publisher codes without any decoding
-export function decodePublisherCode(adgroupNetwork: string): string {
-  if (!adgroupNetwork) return 'Unknown';
-  
-  // Clean up the input - remove ,undefined and other artifacts
-  let cleanCode = adgroupNetwork.trim();
-  if (cleanCode.includes(',undefined')) {
-    cleanCode = cleanCode.split(',undefined')[0];
-  }
-  if (cleanCode.includes(',')) {
-    cleanCode = cleanCode.split(',')[0];
-  }
-  
-  // Return raw code without any decoding
-  return cleanCode;
-}
 
 // Extract country from campaign network and format it nicely
 export function extractCountryFromCampaign(campaignNetwork: string): string {
@@ -1012,9 +979,8 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
     }
     const country = parsed.country !== 'Unknown' ? parsed.country : extractCountryFromCampaign(row.campaign_network);
     
-    // Publisher comes from decoded adgroup_network, then normalized by known prefixes (e.g., SFT_, SDA_) to combine tables
-    const decodedAdgroupNetwork = decodeAdNetwork(row.adgroup_network || 'Unknown');
-    const publisher = normalizePublisher(decodedAdgroupNetwork);
+    // Publisher comes from raw adgroup_network
+    const publisher = normalizePublisher(row.adgroup_network || 'Unknown');
     
     const key = `${game}-${country}-${platform}-${publisher}`;
     
