@@ -1017,7 +1017,10 @@ export function decodeAdNetwork(encryptedCode: string): string {
     // Additional PTSDK_H_ format codes
     'PTSDK_H_NTI4': 'AppsPrize',
     'PTSDK_H_NzQ4': 'AppsPrize',
-    'PTSDK_H_NTg4': 'AppsPrize'
+    'PTSDK_H_NTg4': 'AppsPrize',
+    
+    // Additional codes
+    'ZlJTUG54Vll4SnYz': 'Prodege Inbox Dollar iFrame'
   };
   
   // 1. Önce tam eşleşme kontrol et (CSV'deki kodlar)
@@ -1025,7 +1028,12 @@ export function decodeAdNetwork(encryptedCode: string): string {
     return adNetworkMap[cleanCode];
   }
   
-  // 2. S ile başlayan kodlar için özel kurallar (mevcut mantık korunacak)
+  // 2. QUR0UXk4VGt0SEkz ile başlayan kodlar için prefix matching
+  if (cleanCode.startsWith('QUR0UXk4VGt0SEkz')) {
+    return 'Efez Games iFrame';
+  }
+  
+  // 3. S ile başlayan kodlar için özel kurallar (mevcut mantık korunacak)
   if (cleanCode.startsWith('S')) {
     // S ile başlayan kodlar için prefix kontrolü
     if (cleanCode.startsWith('SFT_')) {
@@ -1070,12 +1078,12 @@ export function decodeAdNetwork(encryptedCode: string): string {
     }
   }
   
-  // 3. Numeric patterns like "48591_208110", "34631_", "34631_206305", etc. should map to Fluent
+  // 4. Numeric patterns like "48591_208110", "34631_", "34631_206305", etc. should map to Fluent
   if (/^\d+_/.test(cleanCode)) {
     return 'Fluent';
   }
   
-  // 4. CSV'de olmayan her şey raw haliyle döndür
+  // 5. CSV'de olmayan her şey raw haliyle döndür
   return cleanCode;
 }
 
