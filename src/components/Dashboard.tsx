@@ -7,7 +7,7 @@ import { DynamicKPISection } from './DynamicKPISection'
 import { FileUpload } from './FileUpload'
 import { FileManager } from './FileManager'
 import { Navbar } from './Navbar'
-import { getCustomers, getAccountManagers, getGameCountryPublisherGroups, synchronizeGroupDates, generateFileDisplayName, getGamesFromData, getUndecodedCodes, clearUndecodedCodes } from '@/utils/csvParser'
+import { getCustomers, getAccountManagers, getGameCountryPublisherGroups, synchronizeGroupDates, generateFileDisplayName, getGamesFromData } from '@/utils/csvParser'
 import { getFileSettings, updateFileSettings } from '@/utils/api'
 
 
@@ -72,7 +72,6 @@ export function Dashboard({
   // Hidden tables state with per-file localStorage persistence
   const [hiddenTables, setHiddenTables] = useState<Set<string>>(new Set());
   const [focusPublisher, setFocusPublisher] = useState<string | null>(null);
-  const [showUndecodedCodes, setShowUndecodedCodes] = useState(false);
 
 
   // Load settings for current file - REMOVED (moved inline to useEffect)
@@ -447,55 +446,6 @@ export function Dashboard({
             isEditMode={kpiEditMode}
             onEditModeToggle={() => setKpiEditMode(!kpiEditMode)}
           />
-          
-          {/* Decode Debug Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Debug Tools</h3>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    clearUndecodedCodes();
-                    setShowUndecodedCodes(false);
-                  }}
-                >
-                  Clear Codes
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowUndecodedCodes(!showUndecodedCodes)}
-                >
-                  {showUndecodedCodes ? 'Hide' : 'Show'} Undecoded Codes
-                </Button>
-              </div>
-            </div>
-            
-            {showUndecodedCodes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Undecoded Ad Network Codes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {getUndecodedCodes().length === 0 ? (
-                      <p className="text-muted-foreground">No undecoded codes found.</p>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {getUndecodedCodes().map((code, index) => (
-                          <div key={index} className="p-2 bg-muted rounded text-sm font-mono">
-                            {code}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
         </div>
       )}
 
