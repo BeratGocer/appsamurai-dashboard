@@ -1,0 +1,71 @@
+---
+description: Publisher case normalization patterns for consistent ad network naming
+---
+
+# Publisher Case Normalization Patterns
+
+## Problem
+Ad network names like `catbyte` and `Catbyte` appear as separate publishers, causing duplicate tables and inconsistent data grouping. Case sensitivity prevents proper table merging.
+
+## Solution
+Case-insensitive publisher normalization in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts):
+
+```typescript
+const normalizePublisher = (publisherRaw: string): string => {
+  if (!publisherRaw) return 'Unknown';
+  
+  // Handle decoded ad network names - normalize case for consistency
+  const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile', 'Catbyte'];
+  
+  // Case-insensitive matching for known ad networks
+  const normalizedInput = publisherRaw.toLowerCase();
+  const matchedNetwork = decodedAdNetworks.find(network => 
+    network.toLowerCase() === normalizedInput
+  );
+  
+  if (matchedNetwork) {
+    return matchedNetwork; // Return the properly capitalized version
+  }
+  
+  // ... rest of normalization logic
+};
+```
+
+## Normalization Strategy
+1. **Known Networks**: Use predefined list with proper capitalization
+2. **Case Insensitive**: Match `catbyte`, `Catbyte`, `CATBYTE` → `Catbyte`
+3. **Consistent Output**: Always return properly capitalized names
+4. **Fallback**: Keep original if not in known list
+
+## Supported Ad Networks
+- **Major Networks**: Catbyte, Fluent, Prime, Dynata, Ad it Up
+- **Specialized**: Klink, TNK, Eneba, Test, Playwell
+- **Premium**: AppsPrize, Ayet Studios, EmberFund
+- **Emerging**: Lootably, RePocket, Ad for Us, Buzzvil
+
+## Implementation Benefits
+- **Table Merging**: `catbyte` and `Catbyte` tables merge into one
+- **Consistent UI**: All instances show as `Catbyte`
+- **Data Integrity**: Prevents duplicate publisher entries
+- **User Experience**: Cleaner, more organized dashboard
+
+## Critical Rules
+- ✅ Always normalize case for known ad networks
+- ✅ Use predefined list with proper capitalization
+- ✅ Return consistently formatted names
+- ✅ Test with real publisher data variations
+- ✅ Add new networks to the predefined list
+
+## Common Examples
+- `catbyte` → `Catbyte`
+- `fluent` → `Fluent`
+- `prime` → `Prime`
+- `dynata` → `Dynata`
+- `unknown_network` → `unknown_network` (unchanged)
+
+## Testing Checklist
+- [ ] Case variations merge into single table
+- [ ] Proper capitalization displayed in UI
+- [ ] No duplicate publisher entries
+- [ ] Unknown networks remain unchanged
+- [ ] Performance impact is minimal

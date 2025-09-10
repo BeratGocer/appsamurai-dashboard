@@ -1,101 +1,58 @@
 ---
-description: Country code extraction and parsing patterns for campaign data
+description: Country code parsing patterns and comprehensive ISO country code mapping for campaign data
 ---
 
 # Country Code Parsing Patterns
 
-## Core Implementation
-Country code parsing is handled in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) by the `parseCampaignNetwork()` and `extractCountryFromCampaign()` functions.
+## Problem
+Campaign networks like `BTA_NL_CPI` contain country codes that need to be decoded to full country names. Missing country codes cause campaigns to show as "Global" instead of the correct country.
 
-## Parsing Strategy
+## Solution
+Comprehensive ISO 3166-1 alpha-2 country code mapping in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts):
 
-### Campaign Network Format Detection
 ```typescript
-// Structured format with pipes
-if (campaignNetwork.includes('|') && campaignNetwork.includes(':')) {
-  // Parse p:platform|g:country|a:network format
-}
-
-// Underscore format detection
-if (parts.includes('CNTUS')) {
-  result.country = 'US'; // CNTUS = CNT + US
-}
-```
-
-### Country Code Mappings
-```typescript
-const countryMappings = {
-  'US': 'United States (US)',
-  'USA': 'United States (US)', 
-  'UK': 'United Kingdom (UK)',
-  'GB': 'United Kingdom (UK)',
-  'TR': 'Turkey',
-  'DE': 'Germany',
-  'FR': 'France',
-  'KR': 'Korea',
-  'JP': 'Japan',
-  'CN': 'China',
-  'IN': 'India',
-  'BR': 'Brazil',
-  'RU': 'Russia',
-  'CA': 'Canada',
-  'AU': 'Australia',
-  'MX': 'Mexico'
-};
-```
-
-## Special Format Handling
-
-### CNTUS Format
-- **Pattern**: `CNTUS` in campaign network
-- **Decoding**: `CNT` + `US` = United States
-- **Example**: `FD_AOS_PT_CPI_REG_CNTUS_20250312_Incent`
-
-### Position-Independent Scanning
-```typescript
-// Scan ALL parts for country indicators
-for (let i = 0; i < parts.length; i++) {
-  const part = parts[i];
-  if (part.includes('CNTUS')) {
-    result.country = 'US';
-    countryIndex = i;
-  } else if (['US', 'USA', 'UK', 'GB', 'TR'].includes(part)) {
-    // Handle direct country codes
+// Comprehensive country code list (200+ countries)
+} else if (['US', 'USA', 'UK', 'GB', 'TR', 'DE', 'FR', 'KR', 'JP', 'CN', 'IN', 'BR', 'RU', 'CA', 'AU', 'MX', 'NL', 'IT', 'ES', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'HU', 'RO', 'BG', 'GR', 'PT', 'IE', 'LU', 'MT', 'CY', 'EE', 'LV', 'LT', 'SI', 'SK', 'HR', 'UA', 'BY', 'MD', 'GE', 'AM', 'AZ', 'KZ', 'UZ', 'KG', 'TJ', 'TM', 'AF', 'PK', 'BD', 'LK', 'NP', 'BT', 'MV', 'TW', 'HK', 'MO', 'KP', 'MN', 'TH', 'VN', 'LA', 'KH', 'MY', 'SG', 'ID', 'PH', 'BN', 'MM', 'TL', 'NZ', 'FJ', 'PG', 'SB', 'VU', 'NC', 'PF', 'WS', 'TO', 'KI', 'TV', 'NR', 'PW', 'FM', 'MH', 'GT', 'BZ', 'SV', 'HN', 'NI', 'CR', 'PA', 'CU', 'JM', 'HT', 'DO', 'PR', 'TT', 'BB', 'LC', 'VC', 'GD', 'AG', 'KN', 'DM', 'BS', 'AR', 'CL', 'UY', 'PY', 'BO', 'PE', 'EC', 'CO', 'VE', 'GY', 'SR', 'GF', 'ZA', 'EG', 'LY', 'TN', 'DZ', 'MA', 'SD', 'SS', 'ET', 'ER', 'DJ', 'SO', 'KE', 'UG', 'TZ', 'RW', 'BI', 'MW', 'ZM', 'ZW', 'BW', 'NA', 'SZ', 'LS', 'MG', 'MU', 'SC', 'KM', 'YT', 'RE', 'MZ', 'AO', 'CD', 'CG', 'CF', 'TD', 'NE', 'NG', 'BJ', 'TG', 'GH', 'BF', 'ML', 'SN', 'GM', 'GW', 'GN', 'SL', 'LR', 'CI', 'MR', 'CV', 'ST', 'GQ', 'GA', 'CM', 'SA', 'AE', 'QA', 'BH', 'KW', 'OM', 'YE', 'IQ', 'SY', 'LB', 'JO', 'IL', 'PS', 'IR', 'IS', 'GL', 'FO', 'SJ', 'AD', 'MC', 'SM', 'VA', 'LI', 'AL', 'MK', 'RS', 'ME', 'BA', 'XK'].includes(part)) {
+  switch (part.toUpperCase()) {
+    case 'NL':
+      result.country = 'Netherlands';
+      break;
+    case 'IT':
+      result.country = 'Italy';
+      break;
+    // ... 200+ country mappings
   }
 }
 ```
 
-## Common Issues and Solutions
+## Supported Country Codes
+- **Europe**: NL (Netherlands), DE (Germany), FR (France), IT (Italy), ES (Spain), etc.
+- **Americas**: US (United States), CA (Canada), MX (Mexico), BR (Brazil), etc.
+- **Asia**: JP (Japan), KR (South Korea), CN (China), IN (India), etc.
+- **Africa**: ZA (South Africa), EG (Egypt), NG (Nigeria), KE (Kenya), etc.
+- **Oceania**: AU (Australia), NZ (New Zealand), FJ (Fiji), etc.
 
-### Issue: Country shows as "Unknown" or "Global"
-**Root Cause**: Country code not recognized in campaign network
-**Solution**:
-1. Check campaign network format in CSV
-2. Add new country code to mappings
-3. Handle special formats like CNTUS
-
-### Issue: Multiple country codes in same campaign
-**Root Cause**: Campaign network contains multiple country indicators
-**Solution**: Use first valid country found, or most specific one
-
-### Issue: Platform-country confusion
-**Root Cause**: Country code mistaken for platform code
-**Solution**: Check position and context in campaign network
-
-## Testing Country Parsing
-```typescript
-// Test examples
-const testCases = [
-  'FD_AOS_PT_CPI_REG_CNTUS_20250312_Incent', // Should extract US
-  'JPC_AOS_PT_CPI_REG_CNTUS_20250401_Incent_SAP', // Should extract US
-  'OP_AOS_PT_CPI_REG_CNTUS_20250401_Incent' // Should extract US
-];
-```
+## Implementation Pattern
+1. **Comprehensive List**: Include all ISO 3166-1 alpha-2 codes
+2. **Case Insensitive**: Use `toUpperCase()` for matching
+3. **Full Names**: Return complete country names, not codes
+4. **Future Proof**: Add new codes as they're discovered
 
 ## Critical Rules
-- ✅ Always scan all parts of campaign network
-- ✅ Handle special formats like CNTUS
-- ✅ Use position-independent scanning
-- ✅ Provide meaningful country names, not just codes
-- ✅ Default to 'Global' if no country found
-- ✅ Test with actual CSV data patterns
+- ✅ Always include new country codes in the comprehensive list
+- ✅ Use full country names in switch cases
+- ✅ Handle case-insensitive matching
+- ✅ Test with real CSV data containing country codes
+- ✅ Never leave country codes as "Global" when they can be decoded
+
+## Common Examples
+- `BTA_NL_CPI` → `Netherlands`
+- `FBE_US_CPI_A35_FEMALE_SCE` → `United States`
+- `AppSa_Game_DE_CPA` → `Germany`
+- `Campaign_FR_CPI_Network` → `France`
+
+## Error Prevention
+- Add country codes immediately when discovered in CSV data
+- Use comprehensive mapping to avoid "Global" fallbacks
+- Test parsing with actual campaign network strings
+- Maintain alphabetical order in switch cases for readability
