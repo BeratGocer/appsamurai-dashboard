@@ -1447,6 +1447,19 @@ export function extractPlatform(app: string, campaignNetwork: string = ''): stri
   return 'Unknown';
 }
 
+// Global array to track undecoded codes
+let undecodedCodes: string[] = [];
+
+// Function to get undecoded codes for debugging
+export function getUndecodedCodes(): string[] {
+  return [...undecodedCodes];
+}
+
+// Function to clear undecoded codes
+export function clearUndecodedCodes(): void {
+  undecodedCodes = [];
+}
+
 // Decode ad network codes using the latest Adnetworks.csv mapping
 export function decodeAdNetwork(encryptedCode: string): string {
   if (!encryptedCode || encryptedCode.toLowerCase() === 'unknown') return 'Unknown';
@@ -1464,9 +1477,8 @@ export function decodeAdNetwork(encryptedCode: string): string {
   if (cleanCode === 'unknown') return 'Test';
   if (cleanCode === 'test') return 'Test';
   
-  // Ad network mapping from Adnetworks.csv - COMPLETE SYNC
+  // Ad network mapping from Adnetworks.csv - ONLY S CODES + TEST + PTSDK_ADVN
   const adNetworkMap: Record<string, string> = {
-    // Direct codes from Adnetworks.csv - COMPLETE LIST
     'SCR': 'Copper',
     'SPE': 'Prime',
     'SFT': 'Fluent',
@@ -1479,70 +1491,17 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'SPL': 'Playwell',
     'SAN': 'AppsPrize',
     'PTSDK_ADVN': 'AppsPrize',
-    'LV9': 'Ad it Up',
-    'WU': 'Prime',
-    'MT': 'Fluent',
-    'ZU': 'Eneba',
-    'OT': 'Copper',
-    'e3': 'Test',
-    'unknown': 'Test',
-    'UF': 'Ayet Studios',
-    'ZG': 'EmberFund',
-    'Ql': 'Ad it Up',
-    'Y2': 'Lootably',
-    'Zn': 'RePocket',
-    'Z0': 'Ad for Us',
-    'OX': 'Buzzvil',
-    'U0': 'TapChamps',
-    'Mz': 'AppsPrize',
-    'dW': 'ATM',
-    'Mm': 'Poikey',
-    'Mj': 'AppsPrize',
-    'ND': 'AppsPrize',
-    'N3': 'AppsPrize',
-    'MX': 'Dynata',
-    'Mn': 'Dynata',
-    'b3': 'Rewardy',
-    'OD': 'AppsPrize',
-    'NE': 'TNK',
-    'Nz': 'AppsPrize',
-    'Nm': 'Hopi S2S',
-    'NJ': 'AppsPrize',
-    'NT': 'AppsPrize',
-    'NH': 'Mode Earn App',
     'SIE': 'Influence Mobile',
-    'dX': 'Influence Mobile',
-    'MTg2Njl8': 'Fluent',
     'SAM': 'ATM',
-    'Zm': 'catbyte',
-    'ZT': 'catbyte',
-    'Zj': 'catbyte',
-    'YW': 'catbyte',
     'SCE': 'Catbyte',
-    'ZG5BU2hhUEFyeEE0': 'EmberFund',
     'SEZ': 'Efez',
-    'bW': 'sMiles',
-    'a3': 'Jumptask iFrame',
     'SJK': 'JumpTask API',
     'SWK': 'AppsPrize',
-    'V1': 'Prodege Swagbucks iFrame',
-    'Str': 'TradeDoubler',
     'SBL': 'Buzzvil',
     'SAS': 'Ad for Us',
     'SMN': 'Mode Earn App',
-    'Yj': 'catbyte',
     'SRY': 'Rewardy',
     'STS': 'TapChamps',
-    
-    // Prefix-based mappings from Adnetworks.csv
-    'aj': 'Prodege ySense iFrame',
-    'OW': 'Catbyte',
-    'Nj': 'AppsPrize',
-    'cG': 'TradeDoubler',
-    'd0': 'Versemedia',
-    'd3': 'Fyber',
-    'Zl': 'Prodege Inbox Dollar iFrame',
-    'S2': 'Klink',
     'SAT': 'AppQwest'
   };
   
@@ -1626,6 +1585,11 @@ export function decodeAdNetwork(encryptedCode: string): string {
     if (cleanCode.startsWith(prefix)) {
       return realName;
     }
+  }
+  
+  // Track undecoded codes for debugging
+  if (!undecodedCodes.includes(cleanCode)) {
+    undecodedCodes.push(cleanCode);
   }
   
   // Return original if no match found
