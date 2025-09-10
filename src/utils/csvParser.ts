@@ -1033,6 +1033,16 @@ export function decodeAdNetwork(encryptedCode: string): string {
     return 'Efez Games iFrame';
   }
   
+  // 2.1. NlU3ckxQaElyTWVU ile başlayan kodlar için prefix matching
+  if (cleanCode.startsWith('NlU3ckxQaElyTWVU')) {
+    return 'Stepler iOS (Diamonds) for Production';
+  }
+  
+  // 2.2. UDJGcTd6aTdrbGVa ile başlayan kodlar için prefix matching
+  if (cleanCode.startsWith('UDJGcTd6aTdrbGVa')) {
+    return 'Stepler iOS (Diamonds) for Staging';
+  }
+  
   // 3. S ile başlayan kodlar için özel kurallar (mevcut mantık korunacak)
   if (cleanCode.startsWith('S')) {
     // S ile başlayan kodlar için prefix kontrolü
