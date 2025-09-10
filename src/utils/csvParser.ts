@@ -593,7 +593,7 @@ export function parseCampaignNetwork(campaignNetwork: string): {
       if (part.includes('CNTUS')) {
         result.country = 'US';
         countryIndex = i;
-      } else if (['US', 'USA', 'UK', 'GB', 'TR', 'DE', 'FR', 'KR', 'JP', 'CN', 'IN', 'BR', 'RU', 'CA', 'AU', 'MX'].includes(part)) {
+      } else if (['US', 'USA', 'UK', 'GB', 'TR', 'DE', 'FR', 'KR', 'JP', 'CN', 'IN', 'BR', 'RU', 'CA', 'AU', 'MX', 'NL', 'IT', 'ES', 'BE', 'CH', 'AT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'HU', 'RO', 'BG', 'GR', 'PT', 'IE', 'LU', 'MT', 'CY', 'EE', 'LV', 'LT', 'SI', 'SK', 'HR', 'UA', 'BY', 'MD', 'GE', 'AM', 'AZ', 'KZ', 'UZ', 'KG', 'TJ', 'TM', 'AF', 'PK', 'BD', 'LK', 'NP', 'BT', 'MV', 'TW', 'HK', 'MO', 'KP', 'MN', 'TH', 'VN', 'LA', 'KH', 'MY', 'SG', 'ID', 'PH', 'BN', 'MM', 'TL', 'NZ', 'FJ', 'PG', 'SB', 'VU', 'NC', 'PF', 'WS', 'TO', 'KI', 'TV', 'NR', 'PW', 'FM', 'MH', 'GT', 'BZ', 'SV', 'HN', 'NI', 'CR', 'PA', 'CU', 'JM', 'HT', 'DO', 'PR', 'TT', 'BB', 'LC', 'VC', 'GD', 'AG', 'KN', 'DM', 'BS', 'AR', 'CL', 'UY', 'PY', 'BO', 'PE', 'EC', 'CO', 'VE', 'GY', 'SR', 'GF', 'ZA', 'EG', 'LY', 'TN', 'DZ', 'MA', 'SD', 'SS', 'ET', 'ER', 'DJ', 'SO', 'KE', 'UG', 'TZ', 'RW', 'BI', 'MW', 'ZM', 'ZW', 'BW', 'NA', 'SZ', 'LS', 'MG', 'MU', 'SC', 'KM', 'YT', 'RE', 'MZ', 'AO', 'CD', 'CG', 'CF', 'TD', 'NE', 'NG', 'BJ', 'TG', 'GH', 'BF', 'ML', 'SN', 'GM', 'GW', 'GN', 'SL', 'LR', 'CI', 'MR', 'CV', 'ST', 'GQ', 'GA', 'CM', 'SA', 'AE', 'QA', 'BH', 'KW', 'OM', 'YE', 'IQ', 'SY', 'LB', 'JO', 'IL', 'PS', 'IR', 'IS', 'GL', 'FO', 'SJ', 'AD', 'MC', 'SM', 'VA', 'LI', 'AL', 'MK', 'RS', 'ME', 'BA', 'XK'].includes(part)) {
         switch (part.toUpperCase()) {
           case 'US':
           case 'USA':
@@ -638,6 +638,588 @@ export function parseCampaignNetwork(campaignNetwork: string): {
             break;
           case 'MX':
             result.country = 'Mexico';
+            break;
+          case 'NL':
+            result.country = 'Netherlands';
+            break;
+          case 'IT':
+            result.country = 'Italy';
+            break;
+          case 'ES':
+            result.country = 'Spain';
+            break;
+          case 'BE':
+            result.country = 'Belgium';
+            break;
+          case 'CH':
+            result.country = 'Switzerland';
+            break;
+          case 'AT':
+            result.country = 'Austria';
+            break;
+          case 'SE':
+            result.country = 'Sweden';
+            break;
+          case 'NO':
+            result.country = 'Norway';
+            break;
+          case 'DK':
+            result.country = 'Denmark';
+            break;
+          case 'FI':
+            result.country = 'Finland';
+            break;
+          case 'PL':
+            result.country = 'Poland';
+            break;
+          case 'CZ':
+            result.country = 'Czech Republic';
+            break;
+          case 'HU':
+            result.country = 'Hungary';
+            break;
+          case 'RO':
+            result.country = 'Romania';
+            break;
+          case 'BG':
+            result.country = 'Bulgaria';
+            break;
+          case 'GR':
+            result.country = 'Greece';
+            break;
+          case 'PT':
+            result.country = 'Portugal';
+            break;
+          case 'IE':
+            result.country = 'Ireland';
+            break;
+          case 'LU':
+            result.country = 'Luxembourg';
+            break;
+          case 'MT':
+            result.country = 'Malta';
+            break;
+          case 'CY':
+            result.country = 'Cyprus';
+            break;
+          case 'EE':
+            result.country = 'Estonia';
+            break;
+          case 'LV':
+            result.country = 'Latvia';
+            break;
+          case 'LT':
+            result.country = 'Lithuania';
+            break;
+          case 'SI':
+            result.country = 'Slovenia';
+            break;
+          case 'SK':
+            result.country = 'Slovakia';
+            break;
+          case 'HR':
+            result.country = 'Croatia';
+            break;
+          case 'UA':
+            result.country = 'Ukraine';
+            break;
+          case 'BY':
+            result.country = 'Belarus';
+            break;
+          case 'MD':
+            result.country = 'Moldova';
+            break;
+          case 'GE':
+            result.country = 'Georgia';
+            break;
+          case 'AM':
+            result.country = 'Armenia';
+            break;
+          case 'AZ':
+            result.country = 'Azerbaijan';
+            break;
+          case 'KZ':
+            result.country = 'Kazakhstan';
+            break;
+          case 'UZ':
+            result.country = 'Uzbekistan';
+            break;
+          case 'KG':
+            result.country = 'Kyrgyzstan';
+            break;
+          case 'TJ':
+            result.country = 'Tajikistan';
+            break;
+          case 'TM':
+            result.country = 'Turkmenistan';
+            break;
+          case 'AF':
+            result.country = 'Afghanistan';
+            break;
+          case 'PK':
+            result.country = 'Pakistan';
+            break;
+          case 'BD':
+            result.country = 'Bangladesh';
+            break;
+          case 'LK':
+            result.country = 'Sri Lanka';
+            break;
+          case 'NP':
+            result.country = 'Nepal';
+            break;
+          case 'BT':
+            result.country = 'Bhutan';
+            break;
+          case 'MV':
+            result.country = 'Maldives';
+            break;
+          case 'TW':
+            result.country = 'Taiwan';
+            break;
+          case 'HK':
+            result.country = 'Hong Kong';
+            break;
+          case 'MO':
+            result.country = 'Macau';
+            break;
+          case 'KP':
+            result.country = 'North Korea';
+            break;
+          case 'MN':
+            result.country = 'Mongolia';
+            break;
+          case 'TH':
+            result.country = 'Thailand';
+            break;
+          case 'VN':
+            result.country = 'Vietnam';
+            break;
+          case 'LA':
+            result.country = 'Laos';
+            break;
+          case 'KH':
+            result.country = 'Cambodia';
+            break;
+          case 'MY':
+            result.country = 'Malaysia';
+            break;
+          case 'SG':
+            result.country = 'Singapore';
+            break;
+          case 'ID':
+            result.country = 'Indonesia';
+            break;
+          case 'PH':
+            result.country = 'Philippines';
+            break;
+          case 'BN':
+            result.country = 'Brunei';
+            break;
+          case 'MM':
+            result.country = 'Myanmar';
+            break;
+          case 'TL':
+            result.country = 'East Timor';
+            break;
+          case 'NZ':
+            result.country = 'New Zealand';
+            break;
+          case 'FJ':
+            result.country = 'Fiji';
+            break;
+          case 'PG':
+            result.country = 'Papua New Guinea';
+            break;
+          case 'SB':
+            result.country = 'Solomon Islands';
+            break;
+          case 'VU':
+            result.country = 'Vanuatu';
+            break;
+          case 'NC':
+            result.country = 'New Caledonia';
+            break;
+          case 'PF':
+            result.country = 'French Polynesia';
+            break;
+          case 'WS':
+            result.country = 'Samoa';
+            break;
+          case 'TO':
+            result.country = 'Tonga';
+            break;
+          case 'KI':
+            result.country = 'Kiribati';
+            break;
+          case 'TV':
+            result.country = 'Tuvalu';
+            break;
+          case 'NR':
+            result.country = 'Nauru';
+            break;
+          case 'PW':
+            result.country = 'Palau';
+            break;
+          case 'FM':
+            result.country = 'Micronesia';
+            break;
+          case 'MH':
+            result.country = 'Marshall Islands';
+            break;
+          case 'GT':
+            result.country = 'Guatemala';
+            break;
+          case 'BZ':
+            result.country = 'Belize';
+            break;
+          case 'SV':
+            result.country = 'El Salvador';
+            break;
+          case 'HN':
+            result.country = 'Honduras';
+            break;
+          case 'NI':
+            result.country = 'Nicaragua';
+            break;
+          case 'CR':
+            result.country = 'Costa Rica';
+            break;
+          case 'PA':
+            result.country = 'Panama';
+            break;
+          case 'CU':
+            result.country = 'Cuba';
+            break;
+          case 'JM':
+            result.country = 'Jamaica';
+            break;
+          case 'HT':
+            result.country = 'Haiti';
+            break;
+          case 'DO':
+            result.country = 'Dominican Republic';
+            break;
+          case 'PR':
+            result.country = 'Puerto Rico';
+            break;
+          case 'TT':
+            result.country = 'Trinidad and Tobago';
+            break;
+          case 'BB':
+            result.country = 'Barbados';
+            break;
+          case 'LC':
+            result.country = 'Saint Lucia';
+            break;
+          case 'VC':
+            result.country = 'Saint Vincent and the Grenadines';
+            break;
+          case 'GD':
+            result.country = 'Grenada';
+            break;
+          case 'AG':
+            result.country = 'Antigua and Barbuda';
+            break;
+          case 'KN':
+            result.country = 'Saint Kitts and Nevis';
+            break;
+          case 'DM':
+            result.country = 'Dominica';
+            break;
+          case 'BS':
+            result.country = 'Bahamas';
+            break;
+          case 'AR':
+            result.country = 'Argentina';
+            break;
+          case 'CL':
+            result.country = 'Chile';
+            break;
+          case 'UY':
+            result.country = 'Uruguay';
+            break;
+          case 'PY':
+            result.country = 'Paraguay';
+            break;
+          case 'BO':
+            result.country = 'Bolivia';
+            break;
+          case 'PE':
+            result.country = 'Peru';
+            break;
+          case 'EC':
+            result.country = 'Ecuador';
+            break;
+          case 'CO':
+            result.country = 'Colombia';
+            break;
+          case 'VE':
+            result.country = 'Venezuela';
+            break;
+          case 'GY':
+            result.country = 'Guyana';
+            break;
+          case 'SR':
+            result.country = 'Suriname';
+            break;
+          case 'GF':
+            result.country = 'French Guiana';
+            break;
+          case 'ZA':
+            result.country = 'South Africa';
+            break;
+          case 'EG':
+            result.country = 'Egypt';
+            break;
+          case 'LY':
+            result.country = 'Libya';
+            break;
+          case 'TN':
+            result.country = 'Tunisia';
+            break;
+          case 'DZ':
+            result.country = 'Algeria';
+            break;
+          case 'MA':
+            result.country = 'Morocco';
+            break;
+          case 'SD':
+            result.country = 'Sudan';
+            break;
+          case 'SS':
+            result.country = 'South Sudan';
+            break;
+          case 'ET':
+            result.country = 'Ethiopia';
+            break;
+          case 'ER':
+            result.country = 'Eritrea';
+            break;
+          case 'DJ':
+            result.country = 'Djibouti';
+            break;
+          case 'SO':
+            result.country = 'Somalia';
+            break;
+          case 'KE':
+            result.country = 'Kenya';
+            break;
+          case 'UG':
+            result.country = 'Uganda';
+            break;
+          case 'TZ':
+            result.country = 'Tanzania';
+            break;
+          case 'RW':
+            result.country = 'Rwanda';
+            break;
+          case 'BI':
+            result.country = 'Burundi';
+            break;
+          case 'MW':
+            result.country = 'Malawi';
+            break;
+          case 'ZM':
+            result.country = 'Zambia';
+            break;
+          case 'ZW':
+            result.country = 'Zimbabwe';
+            break;
+          case 'BW':
+            result.country = 'Botswana';
+            break;
+          case 'NA':
+            result.country = 'Namibia';
+            break;
+          case 'SZ':
+            result.country = 'Eswatini';
+            break;
+          case 'LS':
+            result.country = 'Lesotho';
+            break;
+          case 'MG':
+            result.country = 'Madagascar';
+            break;
+          case 'MU':
+            result.country = 'Mauritius';
+            break;
+          case 'SC':
+            result.country = 'Seychelles';
+            break;
+          case 'KM':
+            result.country = 'Comoros';
+            break;
+          case 'YT':
+            result.country = 'Mayotte';
+            break;
+          case 'RE':
+            result.country = 'Réunion';
+            break;
+          case 'MZ':
+            result.country = 'Mozambique';
+            break;
+          case 'AO':
+            result.country = 'Angola';
+            break;
+          case 'CD':
+            result.country = 'Democratic Republic of the Congo';
+            break;
+          case 'CG':
+            result.country = 'Republic of the Congo';
+            break;
+          case 'CF':
+            result.country = 'Central African Republic';
+            break;
+          case 'TD':
+            result.country = 'Chad';
+            break;
+          case 'NE':
+            result.country = 'Niger';
+            break;
+          case 'NG':
+            result.country = 'Nigeria';
+            break;
+          case 'BJ':
+            result.country = 'Benin';
+            break;
+          case 'TG':
+            result.country = 'Togo';
+            break;
+          case 'GH':
+            result.country = 'Ghana';
+            break;
+          case 'BF':
+            result.country = 'Burkina Faso';
+            break;
+          case 'ML':
+            result.country = 'Mali';
+            break;
+          case 'SN':
+            result.country = 'Senegal';
+            break;
+          case 'GM':
+            result.country = 'Gambia';
+            break;
+          case 'GW':
+            result.country = 'Guinea-Bissau';
+            break;
+          case 'GN':
+            result.country = 'Guinea';
+            break;
+          case 'SL':
+            result.country = 'Sierra Leone';
+            break;
+          case 'LR':
+            result.country = 'Liberia';
+            break;
+          case 'CI':
+            result.country = 'Ivory Coast';
+            break;
+          case 'MR':
+            result.country = 'Mauritania';
+            break;
+          case 'CV':
+            result.country = 'Cape Verde';
+            break;
+          case 'ST':
+            result.country = 'São Tomé and Príncipe';
+            break;
+          case 'GQ':
+            result.country = 'Equatorial Guinea';
+            break;
+          case 'GA':
+            result.country = 'Gabon';
+            break;
+          case 'CM':
+            result.country = 'Cameroon';
+            break;
+          case 'SA':
+            result.country = 'Saudi Arabia';
+            break;
+          case 'AE':
+            result.country = 'United Arab Emirates';
+            break;
+          case 'QA':
+            result.country = 'Qatar';
+            break;
+          case 'BH':
+            result.country = 'Bahrain';
+            break;
+          case 'KW':
+            result.country = 'Kuwait';
+            break;
+          case 'OM':
+            result.country = 'Oman';
+            break;
+          case 'YE':
+            result.country = 'Yemen';
+            break;
+          case 'IQ':
+            result.country = 'Iraq';
+            break;
+          case 'SY':
+            result.country = 'Syria';
+            break;
+          case 'LB':
+            result.country = 'Lebanon';
+            break;
+          case 'JO':
+            result.country = 'Jordan';
+            break;
+          case 'IL':
+            result.country = 'Israel';
+            break;
+          case 'PS':
+            result.country = 'Palestine';
+            break;
+          case 'IR':
+            result.country = 'Iran';
+            break;
+          case 'IS':
+            result.country = 'Iceland';
+            break;
+          case 'GL':
+            result.country = 'Greenland';
+            break;
+          case 'FO':
+            result.country = 'Faroe Islands';
+            break;
+          case 'SJ':
+            result.country = 'Svalbard and Jan Mayen';
+            break;
+          case 'AD':
+            result.country = 'Andorra';
+            break;
+          case 'MC':
+            result.country = 'Monaco';
+            break;
+          case 'SM':
+            result.country = 'San Marino';
+            break;
+          case 'VA':
+            result.country = 'Vatican City';
+            break;
+          case 'LI':
+            result.country = 'Liechtenstein';
+            break;
+          case 'AL':
+            result.country = 'Albania';
+            break;
+          case 'MK':
+            result.country = 'North Macedonia';
+            break;
+          case 'RS':
+            result.country = 'Serbia';
+            break;
+          case 'ME':
+            result.country = 'Montenegro';
+            break;
+          case 'BA':
+            result.country = 'Bosnia and Herzegovina';
+            break;
+          case 'XK':
+            result.country = 'Kosovo';
             break;
         }
         countryIndex = i;
@@ -1212,11 +1794,17 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
   const normalizePublisher = (publisherRaw: string): string => {
     if (!publisherRaw) return 'Unknown';
     
-    // Handle decoded ad network names - return them as-is
-    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile'];
+    // Handle decoded ad network names - normalize case for consistency
+    const decodedAdNetworks = ['Copper', 'Prime', 'Fluent', 'Dynata', 'Ad it Up', 'Klink', 'TNK', 'Eneba', 'Test', 'Playwell', 'AppsPrize', 'Ayet Studios', 'EmberFund', 'Lootably', 'RePocket', 'Ad for Us', 'Buzzvil', 'TapChamps', 'OfferToro', 'ATM', 'Poikey', 'Rewardy', 'Hopi S2S', 'Mode Earn App', 'Influence Mobile', 'Catbyte'];
     
-    if (decodedAdNetworks.includes(publisherRaw)) {
-      return publisherRaw;
+    // Case-insensitive matching for known ad networks
+    const normalizedInput = publisherRaw.toLowerCase();
+    const matchedNetwork = decodedAdNetworks.find(network => 
+      network.toLowerCase() === normalizedInput
+    );
+    
+    if (matchedNetwork) {
+      return matchedNetwork; // Return the properly capitalized version
     }
     
     // Handle prefix patterns for raw codes - but check if the prefix itself can be decoded
