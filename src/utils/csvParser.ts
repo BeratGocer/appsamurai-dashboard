@@ -971,7 +971,14 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'NH': 'Mode Earn App',
     'SIE': 'Influence Mobile',
     'dX': 'Influence Mobile',
-    'MTg2Njl8': 'Fluent'
+    'MTg2Njl8': 'Fluent',
+    'SAM': 'ATM',
+    'Zm': 'catbyte',
+    'ZT': 'catbyte',
+    'Zj': 'catbyte',
+    'YW': 'catbyte',
+    'SCE': 'Catbyte',
+    'ZG5BU2hhUEFyeEE0': 'EmberFund'
   };
   
   // Special case: SFT_ prefix should always map to Fluent
@@ -993,6 +1000,7 @@ export function decodeAdNetwork(encryptedCode: string): string {
   if (cleanCode.startsWith('MT')) {
     return 'Fluent';
   }
+  
   
   // Extract prefix and match
   for (const [prefix, realName] of Object.entries(adNetworkMap)) {

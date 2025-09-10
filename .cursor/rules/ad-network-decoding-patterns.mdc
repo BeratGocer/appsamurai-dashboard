@@ -4,68 +4,88 @@ description: Ad network decoding implementation patterns and troubleshooting
 
 # Ad Network Decoding Patterns
 
-## Core Architecture
-The ad network decoding system uses [Adnetworks.csv](mdc:Adnetworks.csv) as the source of truth for publisher mappings and [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) for implementation.
+## Core Decoding Strategy
+The system uses [Adnetworks.csv](mdc:Adnetworks.csv) as the source of truth for ad network mappings and implements intelligent pattern recognition.
 
-## Decoding Functions
-- **`decodeAdNetwork()`**: Decodes campaign_network (B column) 
-- **`decodePublisherCode()`**: Decodes adgroup_network (C column)
+## S-Pattern Recognition
+For ad networks starting with 'S', the system recognizes the pattern:
+- **S** + **middle letter** + **last letter** = **adnetwork name**
+- Examples:
+  - `SCE` = **S** + **C** + **E** = **Catbyte**
+  - `SPE` = **S** + **P** + **E** = **Prime** 
+  - `SFT` = **S** + **F** + **T** = **Fluent**
 
-## Key Patterns
+## Implementation in csvParser.ts
+The decoding logic is implemented in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) in the `decodeAdNetwork` function:
 
-### Prefix-Based Decoding
 ```typescript
-// Special cases for common prefixes
-if (cleanCode.startsWith('SFT_')) return 'Fluent';
-if (cleanCode.startsWith('SIE_')) return 'Influence Mobile';
-if (cleanCode.startsWith('dX')) return 'Influence Mobile';
-if (cleanCode.startsWith('MT')) return 'Fluent';
+// Ad network mapping from Adnetworks.csv
+const adNetworkMap: Record<string, string> = {
+  // S-pattern codes
+  'SCE': 'Catbyte',
+  'SPE': 'Prime', 
+  'SFT': 'Fluent',
+  
+  // Direct mappings
+  'SAM': 'ATM',
+  'Zm': 'catbyte',
+  'ZT': 'catbyte', 
+  'Zj': 'catbyte',
+  'YW': 'catbyte',
+  'ZG5BU2hhUEFyeEE0': 'EmberFund'
+};
 ```
 
-### Base64 Decoding
-Many codes are Base64 encoded:
-- `MTg2Njl8` → Base64 decode → `18669|` → `MT` (Fluent) + `cc`
-- `dXhVZFNTSlBtVUFq` → Base64 decode → Influence Mobile identifier
+## Special Case Handling
+The system includes special case handling for prefixes:
 
-### Adnetworks.csv Structure
-```csv
-PREFIX,PUBLISHER_NAME
-SFT,Fluent
-SIE,Influence Mobile
-MT,Fluent
-dX,Influence Mobile
+```typescript
+// Special case: SFT_ prefix should always map to Fluent
+if (cleanCode.startsWith('SFT_')) {
+  return 'Fluent';
+}
+
+// Special case: SIE_ prefix should always map to Influence Mobile  
+if (cleanCode.startsWith('SIE_')) {
+  return 'Influence Mobile';
+}
 ```
 
-## Common Issues and Solutions
+## Base64 Decoding
+For Base64 encoded values, the system attempts decoding:
 
-### Issue: "Unknown" publisher in dashboard
-**Root Cause**: New ad network code not in mapping
-**Solution**: 
-1. Check [Adnetworks.csv](mdc:Adnetworks.csv) for existing prefix
-2. Add new mapping if needed
-3. Update both `decodeAdNetwork()` and `decodePublisherCode()` functions
-
-### Issue: Base64 codes not decoding
-**Root Cause**: Code looks like Base64 but isn't standard format
-**Solution**: 
-1. Try `atob()` decoding
-2. Check if result makes sense (alphanumeric + common chars)
-3. Add to mapping if valid
-
-### Issue: Prefix conflicts
-**Root Cause**: Multiple prefixes map to same publisher
-**Solution**: Use most specific prefix first in special cases
-
-## Testing New Codes
-When adding new ad network codes:
-1. Test with `node -e "console.log(atob('CODE'))"` for Base64
-2. Check CSV data for usage patterns
-3. Verify both campaign_network and adgroup_network decoding
-4. Test in dashboard to ensure proper grouping
+```typescript
+// Try base64 decoding only for clear base64 patterns
+if (adgroupNetwork.length > 8 && /^[A-Za-z0-9+/]+=*$/.test(adgroupNetwork)) {
+  try {
+    const decoded = atob(adgroupNetwork);
+    if (decoded && decoded.length > 0 && /^[a-zA-Z0-9\s\-_.]+$/.test(decoded)) {
+      return decoded;
+    }
+  } catch {
+    // Base64 decode failed, keep original
+  }
+}
+```
 
 ## Critical Rules
-- ✅ Always check [Adnetworks.csv](mdc:Adnetworks.csv) first
-- ✅ Add special cases for common prefixes
-- ✅ Test Base64 decoding before adding mappings
-- ✅ Update both decoding functions consistently
-- ✅ Verify publisher grouping works in dashboard
+- ✅ Always update [Adnetworks.csv](mdc:Adnetworks.csv) first when adding new mappings
+- ✅ Add mappings to both CSV file and `adNetworkMap` in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- ✅ Test new patterns with actual CSV data before deployment
+- ✅ Keep unrecognized codes as-is (don't force decode unknown patterns)
+- ✅ Use S-pattern recognition for networks starting with 'S'
+- ✅ Handle special prefixes with dedicated logic
+- ✅ Validate Base64 patterns before attempting decode
+
+## Troubleshooting
+When ad networks show as "Unknown":
+1. Check if the code exists in [Adnetworks.csv](mdc:Adnetworks.csv)
+2. Verify the mapping is added to `adNetworkMap` in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+3. Test the S-pattern recognition logic
+4. Check for special prefix handling
+5. Validate Base64 decoding for encoded values
+
+## File References
+- Ad network mappings: [Adnetworks.csv](mdc:Adnetworks.csv)
+- Decoding implementation: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- Type definitions: [src/types/index.ts](mdc:src/types/index.ts)

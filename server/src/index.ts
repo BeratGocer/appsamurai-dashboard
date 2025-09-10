@@ -17,9 +17,9 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''
 const pool = DATABASE_URL ? new Pool({ 
   connectionString: DATABASE_URL, 
   ssl: DATABASE_URL.includes('proxy.rlwy.net') ? { rejectUnauthorized: false } : undefined,
-  max: 20,
+  max: 50,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
+  connectionTimeoutMillis: 5000
 }) : undefined
 
 // Initialize database schema once at startup
@@ -61,7 +61,7 @@ const initializeDatabase = async () => {
 }
 
 app.use(helmet())
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({ limit: '50mb' }))
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -86,9 +86,14 @@ app.use(cors({
   optionsSuccessStatus: 200
 }))
 
+// Handle preflight OPTIONS requests
+app.options('*', (req, res) => {
+  res.status(200).end()
+})
+
 // API key guard
 app.use((req, res, next) => {
-  if (req.path === '/api/health') return next()
+  if (req.path === '/api/health' || req.method === 'OPTIONS') return next()
   const key = req.header('x-api-key')
   if (!API_KEY || key === API_KEY) return next()
   return res.status(401).json({ error: 'Unauthorized' })
@@ -132,9 +137,11 @@ app.post('/api/files', async (req, res) => {
       setTimeout(() => reject(new Error('Database operation timeout')), 120000) // 2 minutes
     })
     
+    // Memory-efficient JSON stringify for large data
+    const jsonData = JSON.stringify(data)
     const insertPromise = pool.query(
       'INSERT INTO files(id,name,size,upload_date,data,customer_name,account_manager) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', 
-      [id, name, size, uploadDate, JSON.stringify(data), customerName || null, accountManager || null]
+      [id, name, size, uploadDate, jsonData, customerName || null, accountManager || null]
     )
     
     const result = await Promise.race([insertPromise, timeoutPromise]) as any
