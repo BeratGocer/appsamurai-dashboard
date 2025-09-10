@@ -535,7 +535,9 @@ function decodeAdNetwork(code: string): string {
     'NZZ1': 'AppsPrize',
     'LV9UVnNKZTY4WjZW': 'Ad It Up',
     'MTkwMzZ8': 'Fluent',
-    'MTKWMZZ8': 'Fluent'
+    'MTKWMZZ8': 'Fluent',
+    'MTkxNDF8': 'Fluent',
+    'MTKXNDF8': 'Fluent'
   };
   
   // PTSDK kodları (Adnetworkler.csv'den)
