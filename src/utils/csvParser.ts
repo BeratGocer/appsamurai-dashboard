@@ -1567,44 +1567,9 @@ export function decodeAdNetwork(encryptedCode: string): string {
     return 'Influence Mobile';
   }
   
-  // Special case: dX prefix should always map to Influence Mobile
-  if (cleanCode.startsWith('dX')) {
-    return 'Influence Mobile';
-  }
-  
-  // Special case: MT prefix should always map to Fluent
-  if (cleanCode.startsWith('MT')) {
-    return 'Fluent';
-  }
-  
   // Special case: Numeric patterns like "48591_208110", "34631_", "34631_206305", etc. should map to Fluent
   if (/^\d+_/.test(cleanCode)) {
     return 'Fluent';
-  }
-  
-  // Special case: str_ prefix should always map to TradeDoubler
-  if (cleanCode.startsWith('str_')) {
-    return 'TradeDoubler';
-  }
-  
-  // Prefix-based decoding for base64 codes
-  const prefixMappings: Record<string, string> = {
-    'aj': 'Prodege ySense iFrame',
-    'OW': 'Catbyte',
-    'Nj': 'AppsPrize',
-    'cG': 'TradeDoubler',
-    'd0': 'Versemedia',
-    'd3': 'Fyber',
-    'Zl': 'Prodege Inbox Dollar iFrame',
-    'S2': 'Klink',
-    'SAT': 'AppQwest'
-  };
-  
-  // Check for prefix matches
-  for (const [prefix, adNetwork] of Object.entries(prefixMappings)) {
-    if (cleanCode.startsWith(prefix)) {
-      return adNetwork;
-    }
   }
   
   // NEW: Check for ad network suffixes in campaign names
