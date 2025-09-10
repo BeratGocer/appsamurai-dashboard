@@ -1,0 +1,65 @@
+---
+description: Flexible case-insensitive mapping function patterns for ad network decoding
+globs: src/utils/csvParser.ts
+---
+
+# Flexible Mapping Function Patterns
+
+## Core Principle
+Always use case-insensitive mapping functions instead of hardcoded uppercase/lowercase versions.
+
+## Implementation Pattern
+```typescript
+// ✅ CORRECT: Flexible case-insensitive mapping
+const findMapping = (mappings: Record<string, string>, searchCode: string): string | null => {
+  for (const [key, value] of Object.entries(mappings)) {
+    if (key.toLowerCase() === searchCode.toLowerCase()) {
+      return value;
+    }
+  }
+  return null;
+};
+
+// Usage in decodeAdNetwork
+const sNetworkResult = findMapping(sNetworkMappings, cleanCode);
+if (sNetworkResult) return sNetworkResult;
+
+const base64Result = findMapping(base64Mappings, cleanCode);
+if (base64Result) return base64Result;
+```
+
+## Anti-Patterns to Avoid
+```typescript
+// ❌ WRONG: Hardcoded case conversions
+const cleanCode = code.trim().toUpperCase();
+
+// ❌ WRONG: Duplicate mappings for case variations
+const base64Mappings = {
+  'LV9UVnNKZTY4WjZW': 'Ad It Up',
+  'LV9UVNNKZTY4WJZW': 'Ad It Up',  // Don't do this!
+  'MTkwMzZ8': 'Fluent',
+  'MTKWMZZ8': 'Fluent'  // Don't do this!
+};
+```
+
+## Benefits
+- ✅ **Single Source of Truth**: One mapping per code
+- ✅ **Case Insensitive**: Works with any case combination
+- ✅ **Maintainable**: No duplicate entries to maintain
+- ✅ **Flexible**: Handles user input variations automatically
+
+## Critical Rules
+- ✅ Use `findMapping()` for all mapping lookups
+- ✅ Store only lowercase versions in mappings
+- ✅ Never create duplicate uppercase/lowercase entries
+- ✅ Test with various case combinations
+- ✅ Apply to all mapping types (S networks, Base64, PTSDK)
+
+## Testing Examples
+```typescript
+// All these should work with single mapping entry:
+'LV9UVnNKZTY4WjZW' → 'Ad It Up'
+'lv9uvnnkzty4wjzw' → 'Ad It Up'  
+'LV9UVNNKZTY4WJZW' → 'Ad It Up'
+'Lv9UvNnKzTy4WjZw' → 'Ad It Up'
+```

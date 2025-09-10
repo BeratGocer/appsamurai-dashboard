@@ -1,166 +1,55 @@
 ---
 description: Ad network decoding implementation patterns and troubleshooting
+globs: src/utils/csvParser.ts,Adnetworkler.csv
 ---
 
 # Ad Network Decoding Patterns
 
-## Core Principle
-**NEVER decode anything not explicitly listed in Adnetworkler.csv**. Only use exact matches from the CSV file.
+## Core Implementation
+The ad network decoding system in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) uses explicit mappings from [Adnetworkler.csv](mdc:Adnetworkler.csv) rather than generic Base64 decoding.
 
-## CSV-Based Decoding Strategy
+## Key Functions
+- `decodeAdNetwork(code: string): string` - Main decoding function
+- `findMapping(mappings: Record<string, string>, searchCode: string)` - Case-insensitive mapping lookup
 
-### 1. Exact Match Priority
+## Mapping Types
+1. **S Network Codes**: SPE, SDA, SFT, etc. (prefix/suffix matching)
+2. **Base64 Codes**: Explicit mappings only (no generic Base64 decoding)
+3. **PTSDK Codes**: PTSDK_H_ prefixed codes
+4. **Number_Number Pattern**: `^\d+_\d+$` → Always "Fluent"
+
+## Critical Rules
+- ✅ **NO Generic Base64 Decoding**: Only use explicit mappings from CSV
+- ✅ **Case Insensitive**: Use `findMapping()` for flexible case handling
+- ✅ **Explicit Mappings Only**: All codes must be defined in Adnetworkler.csv
+- ✅ **Pattern Matching**: Support regex patterns for number_number format
+- ✅ **Prefix/Suffix Matching**: Handle S codes with various formats
+
+## Common Patterns
 ```typescript
-// ✅ CORRECT: Only decode exact matches from CSV
-const adNetworkMap: Record<string, string> = {
-  'SCR': 'Copper',
-  'SPE': 'Prime', 
-  'SFT': 'Fluent',
-  'aGNaOHZvZXNTOEE1': 'Freeward iFrame',
-  'NTg1': 'AppsPrize',
-  'ZlJTUG54Vll4SnYz': 'Prodege Inbox Dollar iFrame',
-  // ... all entries from Adnetworkler.csv
+// Case-insensitive mapping lookup
+const findMapping = (mappings: Record<string, string>, searchCode: string): string | null => {
+  for (const [key, value] of Object.entries(mappings)) {
+    if (key.toLowerCase() === searchCode.toLowerCase()) {
+      return value;
+    }
+  }
+  return null;
 };
 
-// Check exact match first
-if (adNetworkMap[cleanCode]) {
-  return adNetworkMap[cleanCode];
-}
-```
-
-### 2. Prefix Matching Rules
-```typescript
-// QUR0UXk4VGt0SEkz ile başlayan kodlar → Efez Games iFrame
-if (cleanCode.startsWith('QUR0UXk4VGt0SEkz')) {
-  return 'Efez Games iFrame';
-}
-
-// NlU3ckxQaElyTWVU ile başlayan kodlar → Stepler iOS (Diamonds) for Production
-if (cleanCode.startsWith('NlU3ckxQaElyTWVU')) {
-  return 'Stepler iOS (Diamonds) for Production';
-}
-
-// UDJGcTd6aTdrbGVa ile başlayan kodlar → Stepler iOS (Diamonds) for Staging
-if (cleanCode.startsWith('UDJGcTd6aTdrbGVa')) {
-  return 'Stepler iOS (Diamonds) for Staging';
-}
-```
-
-### 3. S-Prefix Rules (Preserved Logic)
-```typescript
-// S ile başlayan kodlar için özel kurallar korunur
-if (cleanCode.startsWith('S')) {
-  // SFT_ prefix → Fluent
-  if (cleanCode.startsWith('SFT_')) {
-    return 'Fluent';
-  }
-  
-  // SIE_ prefix → Influence Mobile  
-  if (cleanCode.startsWith('SIE_')) {
-    return 'Influence Mobile';
-  }
-  
-  // Suffix matching for S codes
-  const suffixMappings = {
-    'SCE': 'Catbyte',
-    'SFT': 'Fluent',
-    'SPE': 'Prime',
-    // ... all S codes from CSV
-  };
-}
-```
-
-### 4. PTSDK Format Support
-```typescript
-// PTSDK_H_ format codes (all AppsPrize)
-'PTSDK_H_NTg1': 'AppsPrize',
-'PTSDK_H_NTI4': 'AppsPrize',
-'PTSDK_H_NzQ4': 'AppsPrize',
-// ... all PTSDK_H_ codes
-
-// PTSDK_ format codes (all AppsPrize)
-'PTSDK_NTg4': 'AppsPrize',
-'PTSDK_NTI4': 'AppsPrize',
-'PTSDK_NzQ4': 'AppsPrize',
-// ... all PTSDK_ codes
-```
-
-### 5. Numeric Pattern Handling
-```typescript
-// Numeric patterns like "48591_208110" → Fluent
-if (/^\d+_/.test(cleanCode)) {
+// Number_number pattern (all Fluent)
+if (/^\d+_\d+$/.test(cleanCode)) {
   return 'Fluent';
 }
 ```
 
-### 6. Raw Fallback
-```typescript
-// CSV'de olmayan her şey raw haliyle döndür
-return cleanCode;
-```
+## Troubleshooting
+- **"saçma sapan" decode results**: Check for generic Base64 decoding (should be removed)
+- **Case sensitivity issues**: Use `findMapping()` instead of direct key lookup
+- **Missing mappings**: Add explicit entries to Adnetworkler.csv
+- **Duplicate mappings**: Remove uppercase versions, use case-insensitive lookup
 
-## Critical Rules
-- ✅ **Exact Match Only**: Only decode codes explicitly in Adnetworkler.csv
-- ✅ **Prefix Matching**: Support prefix matching for specific base64 codes
-- ✅ **No Base64 Decoding**: Never attempt to decode base64 strings
-- ✅ **No Uydurma**: Never guess or invent decode mappings
-- ✅ **S-Prefix Preserved**: Maintain existing S-prefix logic
-- ✅ **PTSDK Support**: Handle both PTSDK_H_ and PTSDK_ formats
-- ✅ **Raw Fallback**: Return original code if not in CSV
-- ✅ **CSV Source of Truth**: Adnetworkler.csv is the only source for mappings
-
-## File References
-- CSV mapping: [Adnetworkler.csv](mdc:Adnetworkler.csv)
-- Decode function: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) - `decodeAdNetwork` function
-
-## Implementation Pattern
-```typescript
-export function decodeAdNetwork(encryptedCode: string): string {
-  // 1. Clean input
-  let cleanCode = encryptedCode.trim();
-  
-  // 2. Handle special cases
-  if (cleanCode === 'unknown') return 'Test';
-  if (cleanCode === 'test') return 'Test';
-  
-  // 3. Check exact match from CSV
-  if (adNetworkMap[cleanCode]) {
-    return adNetworkMap[cleanCode];
-  }
-  
-  // 4. Prefix matching for specific codes
-  if (cleanCode.startsWith('QUR0UXk4VGt0SEkz')) {
-    return 'Efez Games iFrame';
-  }
-  if (cleanCode.startsWith('NlU3ckxQaElyTWVU')) {
-    return 'Stepler iOS (Diamonds) for Production';
-  }
-  if (cleanCode.startsWith('UDJGcTd6aTdrbGVa')) {
-    return 'Stepler iOS (Diamonds) for Staging';
-  }
-  
-  // 5. S-prefix rules (preserved)
-  if (cleanCode.startsWith('S')) {
-    // SFT_, SIE_ prefix handling
-    // Suffix matching for S codes
-  }
-  
-  // 6. Numeric pattern → Fluent
-  if (/^\d+_/.test(cleanCode)) {
-    return 'Fluent';
-  }
-  
-  // 7. Raw fallback
-  return cleanCode;
-}
-```
-
-## Testing Checklist
-- [ ] CSV codes decode correctly
-- [ ] Prefix matching works for base64 codes
-- [ ] PTSDK_H_ and PTSDK_ formats work
-- [ ] S-prefix codes work as before
-- [ ] Non-CSV codes return raw
-- [ ] No base64 decoding attempts
-- [ ] Numeric patterns map to Fluent
-- [ ] Unknown codes return original
+## CSV Format
+Adnetworkler.csv format: `code,network_name`
+- Example: `LV9UVnNKZTY4WjZW,Ad It Up`
+- Example: `MTkwMzZ8,Fluent`
