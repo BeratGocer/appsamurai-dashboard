@@ -211,24 +211,25 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
     return {};
   };
 
-  // Calculate summary statistics
+  // Calculate summary statistics - Dynamic based on actual data days
   const totalInstalls = group.dailyData.reduce((sum, day) => sum + day.installs, 0);
-  const averageDailyInstalls = group.dailyData.length > 0 ? totalInstalls / group.dailyData.length : 0;
   
-  const validD7Roas = group.dailyData.filter(day => day.roas_d7 > 0);
-  const avgD7Roas = validD7Roas.length > 0 
-    ? validD7Roas.reduce((sum, day) => sum + day.roas_d7, 0) / validD7Roas.length 
+  // Dynamic average daily installs - exclude days with 0 installs
+  const validInstallDays = group.dailyData.filter(day => day.installs > 0);
+  const averageDailyInstalls = validInstallDays.length > 0 
+    ? validInstallDays.reduce((sum, day) => sum + day.installs, 0) / validInstallDays.length 
     : 0;
-
-  // const validD30Roas = group.dailyData.filter(day => day.roas_d30 > 0);
-  // const avgD30Roas = validD30Roas.length > 0 
-  //   ? validD30Roas.reduce((sum, day) => sum + day.roas_d30, 0) / validD30Roas.length 
-  //   : 0;
-
-  // Calculate D0 ROAS average from actual roas_d0 data
+  
+  // Dynamic D0 ROAS average - exclude days with 0 ROAS
   const validD0Roas = group.dailyData.filter(day => day.roas_d0 > 0);
   const avgD0Roas = validD0Roas.length > 0 
     ? validD0Roas.reduce((sum, day) => sum + day.roas_d0, 0) / validD0Roas.length 
+    : 0;
+
+  // Dynamic D7 ROAS average - exclude days with 0 ROAS
+  const validD7Roas = group.dailyData.filter(day => day.roas_d7 > 0);
+  const avgD7Roas = validD7Roas.length > 0 
+    ? validD7Roas.reduce((sum, day) => sum + day.roas_d7, 0) / validD7Roas.length 
     : 0;
 
   return (
@@ -283,9 +284,9 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block">Day Count:</span>
+                        <span className="text-muted-foreground block">Valid Days:</span>
                         <span className="font-bold block">
-                          {group.dailyData.length}
+                          {validInstallDays.length}/{group.dailyData.length}
                         </span>
                       </div>
                     </div>

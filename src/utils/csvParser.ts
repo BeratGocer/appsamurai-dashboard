@@ -971,7 +971,7 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'NH': 'Mode Earn App',
     'SIE': 'Influence Mobile',
     'dX': 'Influence Mobile',
-    'MTg2Njl8': '18669'
+    'MTg2Njl8': 'Fluent'
   };
   
   // Special case: SFT_ prefix should always map to Fluent
@@ -987,6 +987,11 @@ export function decodeAdNetwork(encryptedCode: string): string {
   // Special case: dX prefix should always map to Influence Mobile
   if (cleanCode.startsWith('dX')) {
     return 'Influence Mobile';
+  }
+  
+  // Special case: MT prefix should always map to Fluent
+  if (cleanCode.startsWith('MT')) {
+    return 'Fluent';
   }
   
   // Extract prefix and match
@@ -1052,6 +1057,11 @@ export function decodePublisherCode(adgroupNetwork: string): string {
     return 'Influence Mobile';
   }
   
+  // Special case: MT prefix should always map to Fluent
+  if (cleanCode.startsWith('MT')) {
+    return 'Fluent';
+  }
+  
   // Handle prefix formats like SFT_, SPE_, SAP_, LV9U_
   if (cleanCode.includes('_')) {
     const parts = cleanCode.split('_');
@@ -1066,7 +1076,8 @@ export function decodePublisherCode(adgroupNetwork: string): string {
       'SKK': 'Klink',   // SKK maps to Klink according to Adnetworks.csv
       'STK': 'TNK',     // STK maps to TNK according to Adnetworks.csv
       'SEA': 'Eneba',   // SEA maps to Eneba according to Adnetworks.csv
-      'SIE': 'Influence Mobile' // SIE maps to Influence Mobile according to Adnetworks.csv
+      'SIE': 'Influence Mobile', // SIE maps to Influence Mobile according to Adnetworks.csv
+      'MT': 'Fluent'    // MT maps to Fluent according to Adnetworks.csv
     };
     
     if (knownPrefixes[prefix]) {

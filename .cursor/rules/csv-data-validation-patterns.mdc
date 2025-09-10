@@ -4,40 +4,124 @@ description: CSV data validation and logical consistency checking patterns
 
 # CSV Data Validation Patterns
 
-## Critical Data Logic Validation
-When analyzing CSV data, **ALWAYS** check for logical consistency:
+## Core Validation Strategy
+CSV data validation is implemented in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) with multiple format detection and parsing functions.
 
-### ROAS Timeline Logic
-- **D3 ROAS**: Requires 3 days after install date
-- **D7 ROAS**: Requires 7 days after install date  
-- **D30 ROAS**: Requires 30 days after install date
+## Format Detection
 
-### Example Validation
-If current date is **September 5, 2025**:
-- **August 29**: D3 ✅ (3 days passed), D7 ✅ (7 days passed)
-- **August 30**: D3 ✅ (3 days passed), D7 ❌ (only 6 days passed)
-- **September 1**: D3 ✅ (3 days passed), D7 ❌ (only 4 days passed)
-- **September 2**: D3 ✅ (3 days passed), D7 ❌ (only 3 days passed)
+### Header Analysis
+```typescript
+// Detect format type based on headers
+const isDetailedFormat = headers.includes('ecpi') && headers.includes('adjust_cost');
+const isAzulaFormat = headers.includes('all_revenue') && !headers.includes('app');
+const isBusFrenzyFormat = headers.includes('all_revenue') && headers.includes('cost') && headers.includes('roas_d0');
+```
 
-### Data Consistency Checks
-1. **Verify timeline logic** before assuming data errors
-2. **Check if 0.00% values are logical** (not yet measured vs missing data)
-3. **Validate KPI calculations** against individual row data
-4. **Confirm date ranges** match expected measurement periods
+### Flexible Column Matching
+```typescript
+const getColumnIndex = (columnName: string): number => {
+  // Direct match first
+  let index = headers.indexOf(columnName);
+  if (index >= 0) return index;
+  
+  // Flexible matching for different formats
+  if (columnName === 'app') {
+    const appVariants = ['m app', 'mobile app', 'app_name', 'application'];
+    for (const variant of appVariants) {
+      index = headers.indexOf(variant);
+      if (index >= 0) return index;
+    }
+  }
+  return -1;
+};
+```
+
+## Data Quality Checks
+
+### Required Fields Validation
+```typescript
+// Essential fields for campaign data
+const requiredFields = ['app', 'campaign_network', 'adgroup_network', 'day', 'installs'];
+const numericFields = ['installs', 'cost', 'all_revenue', 'roas_d0', 'roas_d7', 'roas_d30'];
+```
+
+### Data Type Validation
+```typescript
+// Parse numeric fields with fallbacks
+installs: parseInt(values[installIndex]) || 0,
+cost: parseFloat(values[costIndex]) || 0,
+roas_d0: parseFloat(values[roasIndex]) || 0
+```
 
 ## Common Data Issues
-- **All D3/D7 values 0.00%**: Likely missing data or parsing error
-- **KPI doesn't match table data**: May be weighted average vs single day
-- **Inconsistent ROAS values**: Check if measurement periods are correct
 
-## Validation Questions to Ask
-1. "What is the current date for this data?"
-2. "How many days have passed since each install date?"
-3. "Are the 0.00% values logical given the timeline?"
-4. "Does the KPI calculation method match the table data?"
+### Issue: Corrupted Headers
+**Symptoms**: Headers start with 'm app,' or 'gönder app,'
+**Solution**: Clean header before parsing
+```typescript
+if (firstLine.startsWith('m app,')) {
+  firstLine = firstLine.substring(2); // Remove 'm ' prefix
+} else if (firstLine.startsWith('gönder app,')) {
+  firstLine = firstLine.replace('gönder app,', 'app,'); // Fix corrupted header
+}
+```
 
-## Error Prevention
-- **Always validate data logic** before assuming technical issues
-- **Consider temporal relationships** in campaign data
-- **Verify measurement periods** align with ROAS definitions
-- **Check for data completeness** vs logical impossibility
+### Issue: Missing Ad Network Decoding
+**Symptoms**: Publisher shows as encoded string (e.g., 'LV9UVnNKZTY4WjZW')
+**Solution**: Check [Adnetworks.csv](mdc:Adnetworks.csv) mappings and update decoding functions
+
+### Issue: Invalid Date Formats
+**Symptoms**: Date parsing errors or incorrect date ranges
+**Solution**: Validate date format and provide fallbacks
+
+## Validation Patterns
+
+### Campaign Network Validation
+```typescript
+// Validate campaign network structure
+const validateCampaignNetwork = (network: string) => {
+  if (!network || network === 'unknown') return false;
+  
+  // Check for expected patterns
+  const hasPlatform = /AND|iOS|Android|GP/.test(network);
+  const hasCountry = /US|UK|TR|DE|CNTUS/.test(network);
+  
+  return hasPlatform && hasCountry;
+};
+```
+
+### Publisher Code Validation
+```typescript
+// Validate publisher codes
+const validatePublisherCode = (code: string) => {
+  if (!code || code === 'unknown') return false;
+  
+  // Check if code can be decoded
+  const decoded = decodePublisherCode(code);
+  return decoded !== 'Unknown' && decoded !== code;
+};
+```
+
+## Testing Data Quality
+```typescript
+// Test data quality metrics
+const validateCSVData = (data: CampaignData[]) => {
+  const stats = {
+    totalRows: data.length,
+    validCampaigns: data.filter(d => validateCampaignNetwork(d.campaign_network)).length,
+    validPublishers: data.filter(d => validatePublisherCode(d.adgroup_network)).length,
+    validDates: data.filter(d => d.day && !isNaN(Date.parse(d.day))).length
+  };
+  
+  return stats;
+};
+```
+
+## Critical Rules
+- ✅ Always validate headers before parsing
+- ✅ Provide fallbacks for missing or invalid data
+- ✅ Check ad network decoding for all publisher codes
+- ✅ Validate date formats and ranges
+- ✅ Log data quality metrics for debugging
+- ✅ Handle corrupted headers gracefully
+- ✅ Test with multiple CSV format variations

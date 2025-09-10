@@ -1,0 +1,101 @@
+---
+description: Country code extraction and parsing patterns for campaign data
+---
+
+# Country Code Parsing Patterns
+
+## Core Implementation
+Country code parsing is handled in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) by the `parseCampaignNetwork()` and `extractCountryFromCampaign()` functions.
+
+## Parsing Strategy
+
+### Campaign Network Format Detection
+```typescript
+// Structured format with pipes
+if (campaignNetwork.includes('|') && campaignNetwork.includes(':')) {
+  // Parse p:platform|g:country|a:network format
+}
+
+// Underscore format detection
+if (parts.includes('CNTUS')) {
+  result.country = 'US'; // CNTUS = CNT + US
+}
+```
+
+### Country Code Mappings
+```typescript
+const countryMappings = {
+  'US': 'United States (US)',
+  'USA': 'United States (US)', 
+  'UK': 'United Kingdom (UK)',
+  'GB': 'United Kingdom (UK)',
+  'TR': 'Turkey',
+  'DE': 'Germany',
+  'FR': 'France',
+  'KR': 'Korea',
+  'JP': 'Japan',
+  'CN': 'China',
+  'IN': 'India',
+  'BR': 'Brazil',
+  'RU': 'Russia',
+  'CA': 'Canada',
+  'AU': 'Australia',
+  'MX': 'Mexico'
+};
+```
+
+## Special Format Handling
+
+### CNTUS Format
+- **Pattern**: `CNTUS` in campaign network
+- **Decoding**: `CNT` + `US` = United States
+- **Example**: `FD_AOS_PT_CPI_REG_CNTUS_20250312_Incent`
+
+### Position-Independent Scanning
+```typescript
+// Scan ALL parts for country indicators
+for (let i = 0; i < parts.length; i++) {
+  const part = parts[i];
+  if (part.includes('CNTUS')) {
+    result.country = 'US';
+    countryIndex = i;
+  } else if (['US', 'USA', 'UK', 'GB', 'TR'].includes(part)) {
+    // Handle direct country codes
+  }
+}
+```
+
+## Common Issues and Solutions
+
+### Issue: Country shows as "Unknown" or "Global"
+**Root Cause**: Country code not recognized in campaign network
+**Solution**:
+1. Check campaign network format in CSV
+2. Add new country code to mappings
+3. Handle special formats like CNTUS
+
+### Issue: Multiple country codes in same campaign
+**Root Cause**: Campaign network contains multiple country indicators
+**Solution**: Use first valid country found, or most specific one
+
+### Issue: Platform-country confusion
+**Root Cause**: Country code mistaken for platform code
+**Solution**: Check position and context in campaign network
+
+## Testing Country Parsing
+```typescript
+// Test examples
+const testCases = [
+  'FD_AOS_PT_CPI_REG_CNTUS_20250312_Incent', // Should extract US
+  'JPC_AOS_PT_CPI_REG_CNTUS_20250401_Incent_SAP', // Should extract US
+  'OP_AOS_PT_CPI_REG_CNTUS_20250401_Incent' // Should extract US
+];
+```
+
+## Critical Rules
+- ✅ Always scan all parts of campaign network
+- ✅ Handle special formats like CNTUS
+- ✅ Use position-independent scanning
+- ✅ Provide meaningful country names, not just codes
+- ✅ Default to 'Global' if no country found
+- ✅ Test with actual CSV data patterns
