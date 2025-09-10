@@ -534,6 +534,7 @@ function decodeAdNetwork(code: string): string {
     'NTNZ': 'AppsPrize',
     'NZZ1': 'AppsPrize',
     'LV9UVnNKZTY4WjZW': 'Ad It Up',
+    'LV9UVNNKZTY4WJZW': 'Ad It Up',
     'MTkwMzZ8': 'Fluent',
     'MTKWMZZ8': 'Fluent',
     'MTkxNDF8': 'Fluent',
