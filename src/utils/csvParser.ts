@@ -465,6 +465,184 @@ export function getGameCompletionMetrics(data: CampaignData[]): GameCompletionMe
   };
 }
 
+// Decode ad network codes from Adnetworkler.csv
+function decodeAdNetwork(code: string): string {
+  if (!code) return code;
+  
+  const cleanCode = code.trim().toUpperCase();
+  
+  // S ile başlayan ad network kodları (Adnetworkler.csv'den)
+  const sNetworkMappings: Record<string, string> = {
+    'SCR': 'Copper',
+    'SPE': 'Prime',
+    'SFT': 'Fluent',
+    'SDA': 'Dynata',
+    'SAP': 'Ad it Up',
+    'SKK': 'Klink',
+    'STK': 'TNK',
+    'SEA': 'Eneba',
+    'TEST': 'Test',
+    'SPL': 'Playwell',
+    'SAN': 'AppsPrize',
+    'SIE': 'Influence Mobile',
+    'SAM': 'ATM',
+    'SCE': 'Catbyte',
+    'SEZ': 'Efez',
+    'SJK': 'JumpTask API',
+    'SWK': 'AppsPrize',
+    'STR': 'TradeDoubler',
+    'SBL': 'Buzzvil',
+    'SAS': 'Ad for Us',
+    'SMN': 'Mode Earn App',
+    'SRY': 'Rewardy',
+    'STS': 'TapChamps',
+    'S2': 'Klink',
+    'SAT': 'AppQwest',
+    'SER': 'EmberFund'
+  };
+  
+  // Base64 kodları (Adnetworkler.csv'den)
+  const base64Mappings: Record<string, string> = {
+    'NTG1': 'AppsPrize',
+    'NTK2': 'AppsPrize',
+    'NJM4': 'AppsPrize',
+    'NJU2': 'AppsPrize',
+    'NJEy': 'AppsPrize',
+    'NTIX': 'AppsPrize',
+    'NTK5': 'AppsPrize',
+    'NDC2': 'AppsPrize',
+    'NJI3': 'AppsPrize',
+    'NDG1': 'AppsPrize',
+    'MTE5': 'AppsPrize',
+    'NJQY': 'AppsPrize',
+    'NTI3': 'AppsPrize',
+    'NJUZ': 'AppsPrize',
+    'MJGX': 'AppsPrize',
+    'MTQZ': 'AppsPrize',
+    'OTG4': 'AppsPrize',
+    'ODMX': 'AppsPrize',
+    'OTK5': 'AppsPrize',
+    'NZAZ': 'AppsPrize',
+    'ODY0': 'AppsPrize',
+    'ODYZ': 'AppsPrize',
+    'OTAW': 'AppsPrize',
+    'NTYY': 'AppsPrize',
+    'ODKY': 'AppsPrize',
+    'ODU5': 'AppsPrize',
+    'NZZ2': 'AppsPrize',
+    'MZIZ': 'AppsPrize',
+    'NTNZ': 'AppsPrize',
+    'NZZ1': 'AppsPrize'
+  };
+  
+  // PTSDK kodları (Adnetworkler.csv'den)
+  const ptsdkMappings: Record<string, string> = {
+    'PTSDK_H_NTG1': 'AppsPrize',
+    'PTSDK_H_NTK2': 'AppsPrize',
+    'PTSDK_H_NJM4': 'AppsPrize',
+    'PTSDK_H_NJU2': 'AppsPrize',
+    'PTSDK_H_NJEy': 'AppsPrize',
+    'PTSDK_H_NTIX': 'AppsPrize',
+    'PTSDK_H_NTK5': 'AppsPrize',
+    'PTSDK_H_NDC2': 'AppsPrize',
+    'PTSDK_H_NJI3': 'AppsPrize',
+    'PTSDK_H_NDG1': 'AppsPrize',
+    'PTSDK_H_MTE5': 'AppsPrize',
+    'PTSDK_H_NJQY': 'AppsPrize',
+    'PTSDK_H_NTI3': 'AppsPrize',
+    'PTSDK_H_NJUZ': 'AppsPrize',
+    'PTSDK_H_MJGX': 'AppsPrize',
+    'PTSDK_H_MTQZ': 'AppsPrize',
+    'PTSDK_H_OTG4': 'AppsPrize',
+    'PTSDK_H_ODMX': 'AppsPrize',
+    'PTSDK_H_OTK5': 'AppsPrize',
+    'PTSDK_H_NZAZ': 'AppsPrize',
+    'PTSDK_H_ODY0': 'AppsPrize',
+    'PTSDK_H_ODYz': 'AppsPrize',
+    'PTSDK_H_OTAW': 'AppsPrize',
+    'PTSDK_H_NTYY': 'AppsPrize',
+    'PTSDK_H_ODKY': 'AppsPrize',
+    'PTSDK_H_ODU5': 'AppsPrize',
+    'PTSDK_H_NZZ2': 'AppsPrize',
+    'PTSDK_H_MZIZ': 'AppsPrize',
+    'PTSDK_H_NTNZ': 'AppsPrize',
+    'PTSDK_H_NZZ1': 'AppsPrize',
+    'PTSDK_NTG4': 'AppsPrize',
+    'PTSDK_NTI4': 'AppsPrize',
+    'PTSDK_NZQ4': 'AppsPrize',
+    'PTSDK_MJGX': 'AppsPrize',
+    'PTSDK_MTE5': 'AppsPrize',
+    'PTSDK_NDC2': 'AppsPrize',
+    'PTSDK_NDG1': 'AppsPrize',
+    'PTSDK_NJEy': 'AppsPrize',
+    'PTSDK_NJI3': 'AppsPrize',
+    'PTSDK_NJM4': 'AppsPrize',
+    'PTSDK_NJQY': 'AppsPrize',
+    'PTSDK_NJU2': 'AppsPrize',
+    'PTSDK_NJUZ': 'AppsPrize',
+    'PTSDK_NTG1': 'AppsPrize',
+    'PTSDK_NTI3': 'AppsPrize',
+    'PTSDK_NTIX': 'AppsPrize',
+    'PTSDK_NTK2': 'AppsPrize',
+    'PTSDK_NTK5': 'AppsPrize',
+    'PTSDK_H_NTI4': 'AppsPrize',
+    'PTSDK_H_NZQ4': 'AppsPrize',
+    'PTSDK_H_NTG4': 'AppsPrize'
+  };
+  
+  // Önce tam eşleşme kontrol et
+  if (sNetworkMappings[cleanCode]) {
+    return sNetworkMappings[cleanCode];
+  }
+  
+  if (base64Mappings[cleanCode]) {
+    return base64Mappings[cleanCode];
+  }
+  
+  if (ptsdkMappings[cleanCode]) {
+    return ptsdkMappings[cleanCode];
+  }
+  
+  // Prefix kontrolü (S ile başlayanlar için)
+  for (const [prefix, realName] of Object.entries(sNetworkMappings)) {
+    if (cleanCode.startsWith(prefix + '_') || cleanCode.startsWith(prefix)) {
+      return realName;
+    }
+  }
+  
+  // Suffix kontrolü (S ile başlayanlar için)
+  for (const [suffix, realName] of Object.entries(sNetworkMappings)) {
+    if (cleanCode.endsWith('_' + suffix) || cleanCode.endsWith(suffix)) {
+      return realName;
+    }
+  }
+  
+  // PTSDK prefix kontrolü
+  if (cleanCode.startsWith('PTSDK_')) {
+    return 'AppsPrize';
+  }
+  
+  // Sayı_sayı formatı kontrolü (örn: 34631_200222) - hepsi Fluent
+  if (/^\d+_\d+$/.test(cleanCode)) {
+    return 'Fluent';
+  }
+  
+  // Base64 decode denemesi (uzun base64 stringler için)
+  if (cleanCode.length > 20 && /^[A-Za-z0-9+/=]+$/.test(cleanCode)) {
+    try {
+      const decoded = atob(cleanCode);
+      if (decoded.length > 0 && decoded.length < 100) {
+        return decoded;
+      }
+    } catch {
+      // Base64 decode başarısız, orijinal kodu döndür
+    }
+  }
+  
+  // Hiçbir eşleşme bulunamazsa orijinal kodu döndür
+  return code;
+}
+
 // Parse campaign_network string to extract platform, country, and adnetwork
 export function parseCampaignNetwork(campaignNetwork: string): {
   platform: string;
@@ -504,7 +682,7 @@ export function parseCampaignNetwork(campaignNetwork: string): {
           result.country = value || 'Unknown';
           break;
         case 'a':
-          result.adnetwork = value || 'Unknown';
+          result.adnetwork = decodeAdNetwork(value) || 'Unknown';
           break;
         case 'ct':
           result.campaignType = value || 'Unknown';
@@ -659,14 +837,14 @@ export function parseCampaignNetwork(campaignNetwork: string): {
       const lastPart = parts[parts.length - 1];
       // If last part is not a known platform/country/type, use it as adnetwork
       if (!['AND', 'iOS', 'GP', 'US', 'UK', 'TR', 'DE', 'FR', 'CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(lastPart)) {
-        result.adnetwork = lastPart;
+        result.adnetwork = decodeAdNetwork(lastPart);
       } else {
         // Look for adnetwork in other positions
         for (let i = parts.length - 2; i >= 0; i--) {
           const part = parts[i];
           if (i !== platformIndex && i !== countryIndex && i !== campaignTypeIndex && 
               !['AppSa', 'App', parts[1]].includes(part)) { // Skip known prefixes and game names
-            result.adnetwork = part;
+            result.adnetwork = decodeAdNetwork(part);
             break;
           }
         }
@@ -951,8 +1129,8 @@ export function getGameCountryPublisherGroups(data: CampaignData[]): GameCountry
   const normalizePublisher = (publisherRaw: string): string => {
     if (!publisherRaw) return 'Unknown';
     
-    // Return raw publisher code without any normalization
-    return publisherRaw;
+    // Decode ad network codes from adgroup_network
+    return decodeAdNetwork(publisherRaw);
   };
 
   data.forEach(row => {
@@ -1385,4 +1563,27 @@ export function synchronizeGroupDates(groups: GameCountryPublisherGroup[], start
       dailyData: synchronizedDailyData
     };
   });
+}
+
+// Test function for ad network decoding
+export function testAdNetworkDecoding(): void {
+  console.log('=== Ad Network Decoding Test ===');
+  
+  // Test S ile başlayan kodlar
+  const testCases = [
+    'SPE', 'SFT', 'SDA', 'SCE', 'SPL', 'SAP', 'SKK', 'STK', 'SEA', 'SIE', 'SAM', 'SEZ', 'SJK', 'SWK', 'STR', 'SBL', 'SAS', 'SMN', 'SRY', 'STS', 'S2', 'SAT', 'SER',
+    'SPE_', '_SPE', 'SPE_US', 'US_SPE', 'spe', 'Sft', 'sda',
+    'NTG1', 'NTK2', 'NJM4', 'NJU2', 'NJEy', 'NTIX', 'NTK5', 'NDC2', 'NJI3', 'NDG1', 'MTE5', 'NJQY', 'NTI3', 'NJUZ', 'MJGX', 'MTQZ', 'OTG4', 'ODMX', 'OTK5', 'NZAZ', 'ODY0', 'ODYZ', 'OTAW', 'NTYY', 'ODKY', 'ODU5', 'NZZ2', 'MZIZ', 'NTNZ', 'NZZ1',
+    'PTSDK_H_NTG1', 'PTSDK_H_NTK2', 'PTSDK_H_NJM4', 'PTSDK_H_NJU2', 'PTSDK_H_NJEy', 'PTSDK_H_NTIX', 'PTSDK_H_NTK5', 'PTSDK_H_NDC2', 'PTSDK_H_NJI3', 'PTSDK_H_NDG1', 'PTSDK_H_MTE5', 'PTSDK_H_NJQY', 'PTSDK_H_NTI3', 'PTSDK_H_NJUZ', 'PTSDK_H_MJGX', 'PTSDK_H_MTQZ', 'PTSDK_H_OTG4', 'PTSDK_H_ODMX', 'PTSDK_H_OTK5', 'PTSDK_H_NZAZ', 'PTSDK_H_ODY0', 'PTSDK_H_ODYz', 'PTSDK_H_OTAW', 'PTSDK_H_NTYY', 'PTSDK_H_ODKY', 'PTSDK_H_ODU5', 'PTSDK_H_NZZ2', 'PTSDK_H_MZIZ', 'PTSDK_H_NTNZ', 'PTSDK_H_NZZ1',
+    'PTSDK_NTG4', 'PTSDK_NTI4', 'PTSDK_NZQ4', 'PTSDK_MJGX', 'PTSDK_MTE5', 'PTSDK_NDC2', 'PTSDK_NDG1', 'PTSDK_NJEy', 'PTSDK_NJI3', 'PTSDK_NJM4', 'PTSDK_NJQY', 'PTSDK_NJU2', 'PTSDK_NJUZ', 'PTSDK_NTG1', 'PTSDK_NTI3', 'PTSDK_NTIX', 'PTSDK_NTK2', 'PTSDK_NTK5', 'PTSDK_H_NTI4', 'PTSDK_H_NZQ4', 'PTSDK_H_NTG4',
+    '34631_200222', '12345_67890', '99999_11111', '1_2', '123456_789012',
+    'UNKNOWN_CODE', 'TEST123', 'RANDOM'
+  ];
+  
+  testCases.forEach(code => {
+    const decoded = decodeAdNetwork(code);
+    console.log(`${code} → ${decoded}`);
+  });
+  
+  console.log('=== Test Complete ===');
 }
