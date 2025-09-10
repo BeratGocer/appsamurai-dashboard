@@ -1534,22 +1534,14 @@ export function decodeAdNetwork(encryptedCode: string): string {
     'SRY': 'Rewardy',
     'STS': 'TapChamps',
     
-    // Base64 encoded mappings from Adnetworks.csv
-    'OWNmZDNJZDA3ZWYxNDEyZTkyOGF8': 'Catbyte',
-    'NjUz': 'AppsPrize',
-    'cGhBMnhIRSIwMV9u': 'TradeDoubler',
-    'd0dfRUxkVjEzZ1JC': 'Versemedia',
-    'NjI3': 'AppsPrize',
-    'ZJTUG54VII4SnYz': 'Prodege Inbox Dollar iFrame',
-    'd3J4ZE5yNkFWZUF': 'Fyber',
-    'ajRZSnpNT3IWaHFX': 'Prodege ySense iFrame',
-    'NjQy': 'AppsPrize',
-    'NjEy': 'AppsPrize',
-    'ajRZSnpNT3lWaHFX': 'Prodege ySense iFrame',
-    'd3J4ZEsyNkFWZUtF': 'Fyber',
-    'NjU2': 'AppsPrize',
-    'OWNmZDNjZDA3ZWYxNDEyZTkyOGF8': 'Catbyte',
-    'ZlJTUG54Vll4SnYz': 'Prodege Inbox Dollar iFrame',
+    // Prefix-based mappings from Adnetworks.csv
+    'aj': 'Prodege ySense iFrame',
+    'OW': 'Catbyte',
+    'Nj': 'AppsPrize',
+    'cG': 'TradeDoubler',
+    'd0': 'Versemedia',
+    'd3': 'Fyber',
+    'Zl': 'Prodege Inbox Dollar iFrame',
     'S2': 'Klink'
   };
   
@@ -1581,6 +1573,25 @@ export function decodeAdNetwork(encryptedCode: string): string {
   // Special case: str_ prefix should always map to TradeDoubler
   if (cleanCode.startsWith('str_')) {
     return 'TradeDoubler';
+  }
+  
+  // Prefix-based decoding for base64 codes
+  const prefixMappings: Record<string, string> = {
+    'aj': 'Prodege ySense iFrame',
+    'OW': 'Catbyte',
+    'Nj': 'AppsPrize',
+    'cG': 'TradeDoubler',
+    'd0': 'Versemedia',
+    'd3': 'Fyber',
+    'Zl': 'Prodege Inbox Dollar iFrame',
+    'S2': 'Klink'
+  };
+  
+  // Check for prefix matches
+  for (const [prefix, adNetwork] of Object.entries(prefixMappings)) {
+    if (cleanCode.startsWith(prefix)) {
+      return adNetwork;
+    }
   }
   
   // NEW: Check for ad network suffixes in campaign names
