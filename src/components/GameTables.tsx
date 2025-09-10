@@ -212,8 +212,6 @@ function SortableTableItem({ group, isExpanded, onToggle, conditionalRules, onVi
   };
 
   // Calculate summary statistics - Dynamic based on actual data days
-  const totalInstalls = group.dailyData.reduce((sum, day) => sum + day.installs, 0);
-  
   // Dynamic average daily installs - exclude days with 0 installs
   const validInstallDays = group.dailyData.filter(day => day.installs > 0);
   const averageDailyInstalls = validInstallDays.length > 0 
