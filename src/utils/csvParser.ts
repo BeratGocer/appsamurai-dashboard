@@ -1016,7 +1016,8 @@ export function decodeAdNetwork(encryptedCode: string): string {
     
     // Additional PTSDK_H_ format codes
     'PTSDK_H_NTI4': 'AppsPrize',
-    'PTSDK_H_NzQ4': 'AppsPrize'
+    'PTSDK_H_NzQ4': 'AppsPrize',
+    'PTSDK_H_NTg4': 'AppsPrize'
   };
   
   // 1. Önce tam eşleşme kontrol et (CSV'deki kodlar)
