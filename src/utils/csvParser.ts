@@ -471,6 +471,14 @@ export function decodeAdNetwork(code: string): string {
   
   const cleanCode = code.trim();
   
+  // "creative=" ile gelen uzantıları at (ör: ABCcreative=xyz -> ABC)
+  if (cleanCode.includes('creative=')) {
+    const beforeCreative = cleanCode.split('creative=')[0];
+    if (beforeCreative) {
+      return decodeAdNetwork(beforeCreative); // Ön kısmı tekrar decode et
+    }
+  }
+  
   // Handle comma-separated codes (e.g., "34631_5406,undefined" -> "34631_5406")
   if (cleanCode.includes(',')) {
     const firstPart = cleanCode.split(',')[0].trim();
@@ -845,6 +853,23 @@ export function decodeAdNetwork(code: string): string {
     'SC01MkJnTGM3aXZr': 'PlayToWin',
     'ZTZhODEwNTBiMTUxNDhlZjk5ZTl8': 'Catbyte',
     'NjYw': 'AppsPrize'
+    ,
+    // Yeni eklenen kodlar (Adnetworkler.csv'den)
+    'ZTYwYmEwZjE1ZjhhNDBkOTlhYzJ8': 'Catbyte',
+    'MjFkNGRiZjExMjRjNDYyMGI2YzB8': 'Catbyte',
+    'NmYxNTI0ZDExZDBiNGMxYjliM2N8': 'Catbyte',
+    'NTQ3YWVjMjQ5MThlNDU1NThlOGR8': 'Catbyte',
+    'Z0xOSkVKZm1hS0lm': 'Ad for Us',
+    'dWZhOVBsUy1NXzRp': 'ATM',
+    'MjI3OV80ODh8': 'HangMyAds',
+    'MjI3OV80ODJ8': 'HangMyAds',
+    'MjI3OV80ODV8': 'HangMyAds',
+    'MjI3OV8xMDN8': 'HangMyAds',
+    'MjI3OV8zMTN8': 'HangMyAds',
+    // 'MTE2M182MjczN3x8': '', // Boş değerli eşleşme atlandı
+    'MTM1NzQw': 'Fyber',
+    'NTA4MF9vZmZlcndhbGxfMzI1': 'HangMyAds',
+    'OTUzNDk3OTA4OGU4NDE1N2I0ZTN8': 'Catbyte'
   };
   
   // Base64 kodları için esnek arama
