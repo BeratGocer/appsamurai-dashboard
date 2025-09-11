@@ -1,109 +1,106 @@
 ---
-description: Ad network decoding update patterns and new code integration workflow
+description: Ad network decoding update patterns and comprehensive mapping management
 ---
 
 # Ad Network Decoding Update Patterns
 
 ## Overview
-This rule defines the workflow for updating ad network decoding when new codes are added to [Adnetworkler.csv](mdc:Adnetworkler.csv).
+This rule covers the comprehensive update of ad network decoding mappings in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) based on [Adnetworkler.csv](mdc:Adnetworkler.csv) data.
 
-## Integration Process
+## Mapping Categories
 
-### 1. New Code Detection
-When new codes are added to [Adnetworkler.csv](mdc:Adnetworkler.csv), they must be integrated into [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts):
-
+### S Network Mappings
+Short codes starting with 'S' for direct ad network identification:
 ```typescript
-// Add to base64Mappings object in decodeAdNetwork function
-const base64Mappings: Record<string, string> = {
-  // ... existing codes ...
-  'NEW_CODE': 'Network Name',
-  'ANOTHER_CODE': 'Another Network'
+const sNetworkMappings: Record<string, string> = {
+  'SCR': 'Copper',
+  'SPE': 'Prime', 
+  'SFT': 'Fluent',
+  'SDA': 'Dynata',
+  'SAP': 'Ad it Up',
+  'SKK': 'Klink',
+  'STK': 'TNK',
+  'SEA': 'Eneba',
+  'TEST': 'Test',
+  'SPL': 'Playwell',
+  'SAN': 'AppsPrize',
+  'SIE': 'Influence Mobile',
+  'SAM': 'ATM',
+  'SCE': 'Catbyte',
+  'SEZ': 'Efez',
+  'SJK': 'JumpTask API',
+  'SWK': 'AppsPrize',
+  'STR': 'TradeDoubler',
+  'SBL': 'Buzzvil',
+  'SAS': 'Ad for Us',
+  'SMN': 'Mode Earn App',
+  'SRY': 'Rewardy',
+  'STS': 'TapChamps',
+  'S2': 'Klink',
+  'SAT': 'AppQwest',
+  'SER': 'EmberFund',
+  'Str': 'TradeDoubler'
 };
 ```
 
-### 2. Test Function Update
-Always update the `testAdNetworkDecoding()` function to include new codes:
+### Base64 Mappings
+Base64 encoded strings for various ad networks:
+- AppsPrize codes (NTg1, NTk2, etc.)
+- Catbyte codes (YjZkMjY1OWQ0ZjczNDZhZDliZWV8, etc.)
+- Fyber codes (MTM1MTc0, MTIzNDUx, etc.)
+- HangMyAds codes (OTEwXzExNJE3Mnx8, etc.)
+- OfferToro codes (MTUwOTh8, MTYwMDh8, etc.)
+- Lootably codes (Y2tkMmN3bzE4MDAwOWtnc2lkMGkxMWFrd3x8, etc.)
 
-```typescript
-const testCases = [
-  // ... existing test cases ...
-  'NEW_CODE', 'ANOTHER_CODE',
-  'UNKNOWN_CODE', 'TEST123', 'RANDOM'
-];
-```
+### PTSDK Mappings
+PTSDK prefixed codes for AppsPrize network:
+- PTSDK_H_* variants (PTSDK_H_NTg1, PTSDK_H_NTk2, etc.)
+- PTSDK_* variants (PTSDK_NTg4, PTSDK_NzQ4, etc.)
 
-### 3. Automatic Deployment Workflow
-Upon integration, execute the complete deployment workflow:
+## Update Process
 
-```bash
-# 1. Stage changes
-git add .
+### 1. Analysis Phase
+- Read all codes from [Adnetworkler.csv](mdc:Adnetworkler.csv)
+- Compare with existing mappings in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- Identify missing codes by category
 
-# 2. Commit with timestamp
-git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Added new ad network codes from Adnetworkler.csv"
+### 2. Implementation Phase
+- Add missing S network codes to `sNetworkMappings`
+- Add missing Base64 codes to `base64Mappings`
+- Add missing PTSDK codes to `ptsdkMappings`
+- Use case-insensitive `findMapping()` function for all lookups
 
-# 3. Push to GitHub
-git push origin main
-
-# 4. Build frontend
-npm run build
-
-# 5. Deploy to Netlify
-netlify deploy --prod --dir=dist
-
-# 6. Build backend
-cd server && npm run build
-
-# 7. Deploy to Railway
-railway up
-```
-
-## Code Categories
-
-### S Network Codes (3-letter prefixes)
-- Format: `SXX` (e.g., `SPE`, `SFT`, `SDA`)
-- Stored in `sNetworkMappings` object
-- Case-insensitive matching
-
-### Base64 Encoded Codes
-- Format: Base64 strings (e.g., `MTkwMzZ8`, `LV9UVnNKZTY4WjZW`)
-- Stored in `base64Mappings` object
-- Case-insensitive matching
-
-### PTSDK Codes
-- Format: `PTSDK_*` or `PTSDK_H_*`
-- Stored in `ptsdkMappings` object
-- All map to AppsPrize
-
-### Pattern-Based Codes
-- Format: `number_number` (e.g., `34631_200222`)
-- Regex pattern: `/^\d+_\d+$/`
-- All map to Fluent
+### 3. Validation Phase
+- Create [tanımlı.csv](mdc:tanımlı.csv) with all defined codes
+- Verify all Adnetworkler.csv codes are covered
+- Test decoding functionality
+- Fix any linter errors (duplicate properties, etc.)
 
 ## Critical Rules
-- ✅ Always add explicit mappings to CSV
-- ✅ Use case-insensitive lookup functions
-- ✅ Test new mappings with multiple case variations
-- ✅ Update test function with new codes
-- ✅ Execute complete deployment workflow
-- ✅ Verify no linter errors
-- ✅ Test on live site after deployment
+- ✅ Always use case-insensitive mapping functions
+- ✅ Maintain existing prefix/suffix pattern matching
+- ✅ Preserve all existing functionality
+- ✅ Handle duplicate codes gracefully
+- ✅ Create comprehensive documentation file
+- ✅ Test all new mappings thoroughly
+
+## File References
+- Source data: [Adnetworkler.csv](mdc:Adnetworkler.csv)
+- Implementation: [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+- Documentation: [tanımlı.csv](mdc:tanımlı.csv)
+
+## Pattern Matching Logic
+The decodeAdNetwork function uses multiple strategies:
+1. Direct mapping lookup (case-insensitive)
+2. Prefix matching for S networks
+3. Suffix matching for S networks  
+4. PTSDK prefix detection
+5. Base64 pattern recognition
+6. Special case handling (UFVCL, comma-separated codes)
 
 ## Error Prevention
-- Never use generic Base64 decoding
-- Always provide explicit mappings
-- Test with various case combinations
-- Document pattern matching rules clearly
-- Handle quota exceeded errors gracefully
-
-## Deployment URLs
-- **Frontend**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
-- **Backend**: https://appsamurai-dashboard-backend-production-83b0.up.railway.app/
-- **GitHub**: https://github.com/BeratGocer/appsamurai-dashboard
-
-## Recent Updates (2025-09-11)
-Added 40+ new ad network codes including:
-- Catbyte codes: `OWNmZDNjZDA3ZWYxNDEyZTkyOGF8`, `Y2MzMGVkNzQtOTUyNC00ODNkLWE5MTItNGQyNjQ3ODg3NDk0`, etc.
-- Fyber codes: `MTIxMjc3`, `MTIxNzY4`, `MTM1Mzcy`, `MTIzNzg4`, etc.
-- Playwell codes: Multiple long base64 strings
-- Other networks: Mode Earn App, HangMyAds, App Karma, MakeMoney, PlayToWin
+- Check for duplicate properties in mappings
+- Validate all new codes before adding
+- Maintain alphabetical ordering where possible
+- Use consistent naming conventions
+- Handle edge cases (empty codes, special characters)
