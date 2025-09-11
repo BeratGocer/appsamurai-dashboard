@@ -869,7 +869,29 @@ export function decodeAdNetwork(code: string): string {
     // 'MTE2M182MjczN3x8': '', // Boş değerli eşleşme atlandı
     'MTM1NzQw': 'Fyber',
     'NTA4MF9vZmZlcndhbGxfMzI1': 'HangMyAds',
-    'OTUzNDk3OTA4OGU4NDE1N2I0ZTN8': 'Catbyte'
+    'OTUzNDk3OTA4OGU4NDE1N2I0ZTN8': 'Catbyte',
+    // Added from Adnetworkler.csv (2025-09-11)
+    'MTE2M182MjczN3x8': 'HangMyAds',
+    'MTIzNjc2': 'Fyber',
+    'MTIzNjg4': 'Fyber',
+    'MTIzODA1': 'Fyber',
+    'MTM1MjE0': 'Fyber',
+    'MTM1Mjk2': 'Fyber',
+    'MTM1MzI4': 'Fyber',
+    'MTM3NTg2': 'Fyber',
+    'MTM3ODg2': 'Fyber',
+    'MTM3ODk4': 'Fyber',
+    'MTM4MDQw': 'Fyber',
+    'MTM4MDY0': 'Fyber',
+    'MTM4Mjc0': 'Fyber',
+    'Nzc3': 'AppsPrize',
+    'NzM2': 'AppsPrize',
+    'MjA2YTY1MzZiMGI5NDBhYThlY2Z8': 'Catbyte',
+    'MjY3YTRkY2Q4MGE5NGYwMDlhOTd8': 'Catbyte',
+    'NmViMTJhODdjNDY0NGUxZDgxZTh8': 'Catbyte',
+    'ZmNjYjUyNmJiNzNjNDA5Mzk0Y2R8': 'Catbyte',
+    'ZmQ0MmMwZjhjNDVlNGRiNGJiYTN8': 'Catbyte',
+    'NHZab2ZMNUkyOXNk': 'Stepler iOS (Points) for Staging'
   };
   
   // Base64 kodları için esnek arama
