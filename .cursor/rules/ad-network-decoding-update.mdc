@@ -1,0 +1,109 @@
+---
+description: Ad network decoding update patterns and new code integration workflow
+---
+
+# Ad Network Decoding Update Patterns
+
+## Overview
+This rule defines the workflow for updating ad network decoding when new codes are added to [Adnetworkler.csv](mdc:Adnetworkler.csv).
+
+## Integration Process
+
+### 1. New Code Detection
+When new codes are added to [Adnetworkler.csv](mdc:Adnetworkler.csv), they must be integrated into [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts):
+
+```typescript
+// Add to base64Mappings object in decodeAdNetwork function
+const base64Mappings: Record<string, string> = {
+  // ... existing codes ...
+  'NEW_CODE': 'Network Name',
+  'ANOTHER_CODE': 'Another Network'
+};
+```
+
+### 2. Test Function Update
+Always update the `testAdNetworkDecoding()` function to include new codes:
+
+```typescript
+const testCases = [
+  // ... existing test cases ...
+  'NEW_CODE', 'ANOTHER_CODE',
+  'UNKNOWN_CODE', 'TEST123', 'RANDOM'
+];
+```
+
+### 3. Automatic Deployment Workflow
+Upon integration, execute the complete deployment workflow:
+
+```bash
+# 1. Stage changes
+git add .
+
+# 2. Commit with timestamp
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Added new ad network codes from Adnetworkler.csv"
+
+# 3. Push to GitHub
+git push origin main
+
+# 4. Build frontend
+npm run build
+
+# 5. Deploy to Netlify
+netlify deploy --prod --dir=dist
+
+# 6. Build backend
+cd server && npm run build
+
+# 7. Deploy to Railway
+railway up
+```
+
+## Code Categories
+
+### S Network Codes (3-letter prefixes)
+- Format: `SXX` (e.g., `SPE`, `SFT`, `SDA`)
+- Stored in `sNetworkMappings` object
+- Case-insensitive matching
+
+### Base64 Encoded Codes
+- Format: Base64 strings (e.g., `MTkwMzZ8`, `LV9UVnNKZTY4WjZW`)
+- Stored in `base64Mappings` object
+- Case-insensitive matching
+
+### PTSDK Codes
+- Format: `PTSDK_*` or `PTSDK_H_*`
+- Stored in `ptsdkMappings` object
+- All map to AppsPrize
+
+### Pattern-Based Codes
+- Format: `number_number` (e.g., `34631_200222`)
+- Regex pattern: `/^\d+_\d+$/`
+- All map to Fluent
+
+## Critical Rules
+- ✅ Always add explicit mappings to CSV
+- ✅ Use case-insensitive lookup functions
+- ✅ Test new mappings with multiple case variations
+- ✅ Update test function with new codes
+- ✅ Execute complete deployment workflow
+- ✅ Verify no linter errors
+- ✅ Test on live site after deployment
+
+## Error Prevention
+- Never use generic Base64 decoding
+- Always provide explicit mappings
+- Test with various case combinations
+- Document pattern matching rules clearly
+- Handle quota exceeded errors gracefully
+
+## Deployment URLs
+- **Frontend**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- **Backend**: https://appsamurai-dashboard-backend-production-83b0.up.railway.app/
+- **GitHub**: https://github.com/BeratGocer/appsamurai-dashboard
+
+## Recent Updates (2025-09-11)
+Added 40+ new ad network codes including:
+- Catbyte codes: `OWNmZDNjZDA3ZWYxNDEyZTkyOGF8`, `Y2MzMGVkNzQtOTUyNC00ODNkLWE5MTItNGQyNjQ3ODg3NDk0`, etc.
+- Fyber codes: `MTIxMjc3`, `MTIxNzY4`, `MTM1Mzcy`, `MTIzNzg4`, etc.
+- Playwell codes: Multiple long base64 strings
+- Other networks: Mode Earn App, HangMyAds, App Karma, MakeMoney, PlayToWin
