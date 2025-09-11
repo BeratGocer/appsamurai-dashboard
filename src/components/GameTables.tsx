@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { ChevronDown, ChevronRight, Eye, EyeOff, Settings, Edit3, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, EyeOff, Settings, Edit3, RefreshCw, GripVertical } from 'lucide-react';
 import type { GameCountryPublisherGroup } from '@/types'
 import type { ConditionalFormattingRule } from './SettingsPanel'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -93,7 +93,7 @@ function SortableHeaderItem({ game, country, platform, campaignCount, totalVolum
             title="Sürükle"
             aria-label="Sürükle"
           >
-            <span className="inline-block w-4 h-4 bg-current mask-[url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"%23000\" d=\"M9 6h2V4H9v2zm4 0h2V4h-2v2zM9 13h2v-2H9v2zm4 0h2v-2h-2v2zM9 20h2v-2H9v2zm4 0h2v-2h-2v2z\"/></svg>')]" />
+            <GripVertical className="w-4 h-4" />
           </button>
           <div>
             <h3 className="text-lg font-semibold whitespace-nowrap">
