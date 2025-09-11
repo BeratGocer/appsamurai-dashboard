@@ -1127,6 +1127,14 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     if (['CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(upper)) {
       return { matched: false, value: 'Unknown' };
     }
+    // Exclude ad network like tokens that can be mistaken as countries
+    const adNetworkLikeTokens = new Set([
+      'SCE','SFT','SPE','SDA','SAP','SKK','STK','SEA','SIE','SAM','SPL','SAN','SJK','SWK','STR','SBL','SAS','SMN','SRY','STS','S2','SAT','SER','SPK',
+      'PTSDK','TBSDK'
+    ]);
+    if (adNetworkLikeTokens.has(upper)) {
+      return { matched: false, value: 'Unknown' };
+    }
     // CNTUS special handling
     if (upper.includes('CNTUS')) {
       return { matched: true, value: 'United States' };
