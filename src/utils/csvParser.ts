@@ -577,7 +577,34 @@ function decodeAdNetwork(code: string): string {
     'MTI3NXx8': 'Dynata',
     'MTkyODZ8': 'Fluent',
     'MzV8': 'Dynata',
-    'e3NvdXJjZX18': 'API Test'
+    'e3NvdXJjZX18': 'API Test',
+    // Yeni eklenen ad network'ler
+    'V1FtU1U2RTJjLWwx': 'Prodege Swagbucks iFrame',
+    'Y2tkMmN3bzE4MDAwOWtnc2lkMGkxMWFrd3x8': 'Lootably',
+    'Y2t0dWVxdWMxMDAwNDAxeDY2em1mYWd5Znx8': 'Lootably',
+    'ZG5BU2hhUEFyeEE0': 'EmberFund',
+    'Y2w2anJ4a244MDAyMDAxMzcxMjcyZWI5Znx8': 'Lootably',
+    'MTUwOTh8': 'OfferToro',
+    'MTYwMDh8': 'OfferToro',
+    'MTI1Mjd8': 'OfferToro',
+    'MTUwNTJ8': 'OfferToro',
+    'Y2w4NXcydmNzMDAxM2AxM2JnM2ZlZDnbXx8': 'Lootably',
+    'MnlKcVJENUphSGVB': 'Freecash iFrame',
+    'Y2twMnhhOHpxMDA2azAxdDEwMzVsZWd1dXx8': 'Lootably',
+    'MTE2MTF8': 'OfferToro',
+    'NzIzMHx8': 'OfferToro',
+    'MTA4MzB8': 'OfferToro',
+    'Y2thZzBvODEzMDAwN3Z6c2ZlMjk3MHdmaXx8': 'Lootably',
+    'Y2hwM2hvNWoyMDAyazAxeWNlNHA3Y296bHx8': 'Lootably',
+    'Y2ttY2FudmJ3MDAwYjAxejM5bDNqaHRvNXx8': 'Lootably',
+    'MTU2OTJ8': 'OfferToro',
+    'bWhJWFFaRFp3U3RX': 'sMiles',
+    'OTc0Nnx8': 'OfferToro',
+    'MTI1NzI8': 'OfferToro',
+    'MTQ5NTd8': 'OfferToro',
+    'Y2xzbmlpYXZIMDAxOTAxemxsbTZ4ZDhhZnx8': 'Lootably',
+    'OTg1NHx8': 'OfferToro',
+    'Y2tlOHEwMjJhMDAzbmprc0U0aTB3MXY1cnx8': 'Lootably'
   };
   
   // Base64 kodları için esnek arama
@@ -735,6 +762,16 @@ function decodeAdNetwork(code: string): string {
   // 7. Sadece sayılar (206305 gibi)
   if (/^\d+$/.test(cleanCode)) {
     return 'Fluent';
+  }
+  
+  // OfferToro için pattern kuralları (Base64 sayı + pipe formatı)
+  if (/^[A-Za-z0-9]+8$/.test(cleanCode) && cleanCode.length <= 10) {
+    return 'OfferToro';
+  }
+  
+  // Lootably için pattern kuralları (Y2 ile başlayan uzun base64 string'ler)
+  if (/^Y2[a-zA-Z0-9]{30,}x8$/.test(cleanCode)) {
+    return 'Lootably';
   }
   
   // Hiçbir eşleşme bulunamazsa orijinal kodu döndür
