@@ -680,6 +680,12 @@ export function decodeAdNetwork(code: string): string {
     'ODU0OGM3ZjNlMmQ4NGU4NzliNjl8': 'Catbyte',
     'MmExODZlYzM5Y2Q4NDRiYjhmNzB8': 'Catbyte',
     'YzM1MDIxNjJkOWE3NDdiNzkwNzB8': 'Catbyte',
+    // En son eklenen Catbyte kodları (Adnetworkler.csv'den)
+    'ZmRhNzljMzE4MjI1NGI4OTgxM2F8': 'Catbyte',
+    'ZTRjNGU3M2Q0MWZkNGI5OGFhZTN8': 'Catbyte',
+    'ZmYzYWMxMTA5YWI5NGRmM2JjOWJ8': 'Catbyte',
+    'YWYzYjE2ODNjNGQ2NDM4M2JhYTB8': 'Catbyte',
+    'Zjg4NWE1YmY5NTVhNDM4M2FiZDR8': 'Catbyte',
     // Fyber ad network kodları
     'MTM1MTc0': 'Fyber',
     'MTIzNDUx': 'Fyber',
