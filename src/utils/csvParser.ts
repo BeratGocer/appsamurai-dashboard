@@ -466,7 +466,7 @@ export function getGameCompletionMetrics(data: CampaignData[]): GameCompletionMe
 }
 
 // Decode ad network codes from Adnetworkler.csv
-function decodeAdNetwork(code: string): string {
+export function decodeAdNetwork(code: string): string {
   if (!code) return code;
   
   const cleanCode = code.trim();
@@ -610,7 +610,26 @@ function decodeAdNetwork(code: string): string {
     'Y2xzbmlpYXZIMDAxOTAxemxsbTZ4ZDhhZnx8': 'Lootably',
     'OTg1NHx8': 'OfferToro',
     'Y2tlOHEwMjJhMDAzbmprc0U0aTB3MXY1cnx8': 'Lootably',
-    'a3I3a2tYQnRDQlI1': 'Jumptask iFrame'
+    'a3I3a2tYQnRDQlI1': 'Jumptask iFrame',
+    // Yeni eklenen ad network kodları
+    'aGNaOHZvZXNTOEE1': 'Freeward iFrame',
+    'c01LNHJBVkJ3Sk9z': 'GG2U iFrame',
+    'YzE3YTMzZjBkNTc3NGYzNzk1ZTB8': 'Catbyte',
+    'VkY2ODg2QzNEVXpZ': 'Gamehag iFrame',
+    'QUR0UXk4VGt0SEkz': 'Efez Games iFrame',
+    'V3B4WmFRc29OZlp3': 'FireFaucet iFrame',
+    'YzZiN2NiMGU5YjNjNDJmMDkyNmR8': 'Catbyte',
+    'bGUtVmdJa09FWFZj': 'Playback Rewards',
+    'MDAwYzliNGE5NGJiNGUyNjk2ZWN8': 'Catbyte',
+    'NlU3ckxQaElyTWVU': 'Stepler iOS (Diamonds) for Production',
+    'UDJGcTd6aTdrbGVa': 'Stepler iOS (Diamonds) for Staging',
+    'b1J5WHpUbTZFRkdwRXBZd1ltclJVdTJ3WGNYZDVFQ3dhU2k5VzVySnYyZzRSUmoyQ21aZmhVczVZMXUwNDVQWTRMSUJiTmszQ0xIY2hDQ3RDTG5VdlZVSUtqQ05QdU5BX1dWVnVkcEp4U3RhbVFHN2MyNVlZdk8wa0pLUENMUHl8': 'Playwell',
+    'ZlJTUG54Vll4SnYz': 'Prodege Inbox Dollar iFrame',
+    'YjdhNTIyMzlhZDhmNGNmNWFlZjZ8': 'Catbyte',
+    'NDk2M2MxNzBmZDBjNDgwNDg4YmN8': 'Catbyte',
+    'NmZhOTVjZTlhZmVjNDdmMGIxNTJ8': 'Catbyte',
+    'YjZkMY1OWQ0ZjczNDZhZDllZWV8': 'Catbyte',
+    'MTM1MTc0': 'Fyber'
   };
   
   // Base64 kodları için esnek arama
