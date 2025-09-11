@@ -701,6 +701,11 @@ function decodeAdNetwork(code: string): string {
     }
   }
   
+  // Fluent için sayı + underscore kuralı (4631_, 4631_4631 formatı)
+  if (/^\d+_$/.test(cleanCode) || /^\d+_\d+$/.test(cleanCode)) {
+    return 'Fluent';
+  }
+  
   // Hiçbir eşleşme bulunamazsa orijinal kodu döndür
   return code;
 }
