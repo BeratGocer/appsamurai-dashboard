@@ -604,7 +604,8 @@ function decodeAdNetwork(code: string): string {
     'MTQ5NTd8': 'OfferToro',
     'Y2xzbmlpYXZIMDAxOTAxemxsbTZ4ZDhhZnx8': 'Lootably',
     'OTg1NHx8': 'OfferToro',
-    'Y2tlOHEwMjJhMDAzbmprc0U0aTB3MXY1cnx8': 'Lootably'
+    'Y2tlOHEwMjJhMDAzbmprc0U0aTB3MXY1cnx8': 'Lootably',
+    'a3I3a2tYQnRDQlI1': 'Jumptask iFrame'
   };
   
   // Base64 kodları için esnek arama
@@ -729,6 +730,14 @@ function decodeAdNetwork(code: string): string {
   }
   
   // Fluent için kapsamlı sayı kuralları
+  // 0. Boşluklu formatları temizle (34631_ 206305 -> 34631_206305)
+  if (/^\d+_\s+\d+$/.test(cleanCode)) {
+    const cleanedCode = cleanCode.replace(/\s+/g, '');
+    if (/^\d+_\d+$/.test(cleanedCode)) {
+      return 'Fluent';
+    }
+  }
+  
   // 1. Sayı + underscore (34631_, 45209_)
   if (/^\d+_$/.test(cleanCode)) {
     return 'Fluent';
