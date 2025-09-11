@@ -708,33 +708,7 @@ function decodeAdNetwork(code: string): string {
     return 'AppsPrize';
   }
   
-  // Sayı_sayı formatı kontrolü (örn: 34631_200222) - hepsi Fluent
-  if (/^\d+_\d+$/.test(cleanCode)) {
-    return 'Fluent';
-  }
-  
-  // Karmaşık kodlar için parçalama (örn: ScR_OTlwSkZrSHNEcm01)
-  if (cleanCode.includes('_')) {
-    const parts = cleanCode.split('_');
-    
-    // İlk parça S network kodu olabilir
-    if (parts.length >= 2) {
-      const firstPart = parts[0];
-      const sNetworkResult = findMapping(sNetworkMappings, firstPart);
-      if (sNetworkResult) {
-        return sNetworkResult;
-      }
-      
-      // İkinci parça base64 kodu olabilir
-      const secondPart = parts[1];
-      const base64Result = findMapping(base64Mappings, secondPart);
-      if (base64Result) {
-        return base64Result;
-      }
-    }
-  }
-  
-  // Fluent için kapsamlı sayı kuralları
+  // Fluent için kapsamlı sayı kuralları - ÖNCE BUNLAR KONTROL EDİLMELİ
   // 0. Boşluklu formatları temizle (34631_ 206305 -> 34631_206305)
   if (/^\d+_\s+\d+$/.test(cleanCode)) {
     const cleanedCode = cleanCode.replace(/\s+/g, '');
@@ -748,7 +722,7 @@ function decodeAdNetwork(code: string): string {
     return 'Fluent';
   }
   
-  // 2. Sayı + underscore + sayı (34631_5406, 45209_5406)
+  // 2. Sayı + underscore + sayı (34631_5406, 45209_5406) - ÖNEMLİ: Bu önce kontrol edilmeli
   if (/^\d+_\d+$/.test(cleanCode)) {
     return 'Fluent';
   }
@@ -776,6 +750,28 @@ function decodeAdNetwork(code: string): string {
   // 7. Sadece sayılar (206305 gibi)
   if (/^\d+$/.test(cleanCode)) {
     return 'Fluent';
+  }
+  
+  // Karmaşık kodlar için parçalama (örn: ScR_OTlwSkZrSHNEcm01)
+  // NOT: Bu kontrol Fluent kontrollerinden SONRA yapılmalı
+  if (cleanCode.includes('_')) {
+    const parts = cleanCode.split('_');
+    
+    // İlk parça S network kodu olabilir
+    if (parts.length >= 2) {
+      const firstPart = parts[0];
+      const sNetworkResult = findMapping(sNetworkMappings, firstPart);
+      if (sNetworkResult) {
+        return sNetworkResult;
+      }
+      
+      // İkinci parça base64 kodu olabilir
+      const secondPart = parts[1];
+      const base64Result = findMapping(base64Mappings, secondPart);
+      if (base64Result) {
+        return base64Result;
+      }
+    }
   }
   
   // OfferToro için pattern kuralları (Base64 sayı + pipe formatı)
