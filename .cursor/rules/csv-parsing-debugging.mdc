@@ -1,6 +1,5 @@
 ---
 description: CSV parsing debugging patterns and error handling
-globs: src/utils/csvParser.ts,*.csv
 ---
 
 # CSV Parsing Debugging Patterns
