@@ -471,6 +471,14 @@ export function decodeAdNetwork(code: string): string {
   
   const cleanCode = code.trim();
   
+  // Handle comma-separated codes (e.g., "34631_5406,undefined" -> "34631_5406")
+  if (cleanCode.includes(',')) {
+    const firstPart = cleanCode.split(',')[0].trim();
+    if (firstPart) {
+      return decodeAdNetwork(firstPart); // Recursively decode the first part
+    }
+  }
+  
   // Ayet Studios için özel durum - UFVCL ile başlayan tüm kodlar
   if (cleanCode.startsWith('UFVCL')) {
     return 'Ayet Studios';
