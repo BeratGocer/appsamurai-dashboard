@@ -471,6 +471,11 @@ function decodeAdNetwork(code: string): string {
   
   const cleanCode = code.trim();
   
+  // Ayet Studios için özel durum - UFVCL ile başlayan tüm kodlar
+  if (cleanCode.startsWith('UFVCL')) {
+    return 'Ayet Studios';
+  }
+  
   // Esnek arama fonksiyonu - büyük küçük harf duyarsız
   const findMapping = (mappings: Record<string, string>, searchCode: string): string | null => {
     // Önce tam eşleşme ara (büyük küçük harf duyarsız)
