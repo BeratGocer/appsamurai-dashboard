@@ -560,7 +560,24 @@ function decodeAdNetwork(code: string): string {
     'QnN5MFBRaktvS1dq': 'Dynata',
     'Mnx8': 'Dynata',
     'OTA3OHx8': 'Dynata',
-    'OTEzN3x8': 'Dynata'
+    'OTEzN3x8': 'Dynata',
+    'MTkyODh8': 'Fluent',
+    'ODk5N3x8': 'Dynata',
+    'MjIzMnx8': 'Dynata',
+    'MjEzOHx8': 'Dynata',
+    'MjEyOHx8': 'Dynata',
+    'OTAzMHx8': 'Dynata',
+    'OTEwNnx8': 'Dynata',
+    'OTEyOXx8': 'Dynata',
+    'YWM0ZTQ3MzI2ZTZhNDA4MThhM2N8': 'Catbyte',
+    'MXx8': 'Dynata',
+    'MjQyM3x8': 'Dynata',
+    'bDVneFQ0ZDV2Z2Jr': 'Klink',
+    'clNkbFdocU8tY0JZ': 'Fluent',
+    'MTI3NXx8': 'Dynata',
+    'MTkyODZ8': 'Fluent',
+    'MzV8': 'Dynata',
+    'e3NvdXJjZX18': 'API Test'
   };
   
   // Base64 kodları için esnek arama
@@ -1630,6 +1647,9 @@ export function testAdNetworkDecoding(): void {
     'SFT_49238_', 'SFT_49378_206305', 'SFT_49378_207689', 'SFT_49388_15182', 'SFT_49388_206305', 'SFT_49388_207861', 'SFT_49558_208162', 'SFT_49558_208163', 'SFT_49558_208165', 'SFT_49788_208005', 'SFT_MTkwMzZ8',
     'e3N1Yl9hZmZ9', 'OTIwSkZrSHNEcm01', 'OTlwSkZrSHNEcm01', 'ZUpIY1o2eFJEa1Mw', 'WUpaY0xnb1A3QWNh',
     'dXhVZFNTSlBtVUFq', 'QnN5MFBRaktvS1dq', 'Mnx8', 'OTA3OHx8', 'OTEzN3x8',
+    'MTkyODh8', 'ODk5N3x8', 'MjIzMnx8', 'MjEzOHx8', 'MjEyOHx8', 'OTAzMHx8', 'OTEwNnx8', 'OTEyOXx8',
+    'YWM0ZTQ3MzI2ZTZhNDA4MThhM2N8', 'MXx8', 'MjQyM3x8', 'bDVneFQ0ZDV2Z2Jr', 'clNkbFdocU8tY0JZ',
+    'MTI3NXx8', 'MTkyODZ8', 'MzV8', 'e3NvdXJjZX18',
     'UNKNOWN_CODE', 'TEST123', 'RANDOM'
   ];
   
