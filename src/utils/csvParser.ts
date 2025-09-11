@@ -1103,6 +1103,93 @@ export function parseCampaignNetwork(campaignNetwork: string): {
   audience: string;
   dateCode: string;
 } {
+  // Helper: normalize platform token with case-insensitive mapping; returns 'Android' | 'iOS' | null
+  const normalizePlatformToken = (token: string): 'Android' | 'iOS' | null => {
+    if (!token) return null;
+    // Locale-agnostic lower; also normalize Turkish 'ı' -> 'i'
+    const lower = token.trim().toLowerCase().replace(/ı/g, 'i');
+    // iOS variants: only ios (no apple/iphone/ipad/appstore heuristics)
+    if (lower === 'ios') return 'iOS';
+    if (lower === 'ios ') return 'iOS';
+    if (lower === 'ıos') return 'iOS';
+    // Android variants: android/and/andr/aos + common typos
+    if (lower === 'android' || lower === 'and' || lower === 'andr' || lower === 'aos') return 'Android';
+    if (lower === 'andorid' || lower === 'anroid' || lower === 'andriod') return 'Android';
+    return null;
+  };
+
+  // Helper: normalize country token with case-insensitive mapping and raw fallback
+  const normalizeCountryToken = (token: string): { matched: boolean; value: string } => {
+    const raw = (token || '').trim();
+    if (!raw) return { matched: false, value: 'Unknown' };
+    const upper = raw.toUpperCase();
+    // Exclude known non-country tokens
+    if (['CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(upper)) {
+      return { matched: false, value: 'Unknown' };
+    }
+    // CNTUS special handling
+    if (upper.includes('CNTUS')) {
+      return { matched: true, value: 'United States' };
+    }
+    // Comprehensive country mapping (ISO-2 and common aliases)
+    const countryMapping: Record<string, string> = {
+      'US': 'United States', 'USA': 'United States', 'UK': 'United Kingdom', 'GB': 'Great Britain',
+      'TR': 'Turkey', 'DE': 'Germany', 'FR': 'France', 'KR': 'South Korea', 'JP': 'Japan',
+      'CN': 'China', 'IN': 'India', 'BR': 'Brazil', 'RU': 'Russia', 'CA': 'Canada', 'AU': 'Australia',
+      'MX': 'Mexico', 'NL': 'Netherlands', 'IT': 'Italy', 'ES': 'Spain', 'BE': 'Belgium',
+      'CH': 'Switzerland', 'AT': 'Austria', 'SE': 'Sweden', 'NO': 'Norway', 'DK': 'Denmark',
+      'FI': 'Finland', 'PL': 'Poland', 'CZ': 'Czech Republic', 'HU': 'Hungary', 'RO': 'Romania',
+      'BG': 'Bulgaria', 'GR': 'Greece', 'PT': 'Portugal', 'IE': 'Ireland', 'LU': 'Luxembourg',
+      'MT': 'Malta', 'CY': 'Cyprus', 'EE': 'Estonia', 'LV': 'Latvia', 'LT': 'Lithuania',
+      'SI': 'Slovenia', 'SK': 'Slovakia', 'HR': 'Croatia', 'UA': 'Ukraine', 'BY': 'Belarus',
+      'MD': 'Moldova', 'GE': 'Georgia', 'AM': 'Armenia', 'AZ': 'Azerbaijan', 'KZ': 'Kazakhstan',
+      'UZ': 'Uzbekistan', 'KG': 'Kyrgyzstan', 'TJ': 'Tajikistan', 'TM': 'Turkmenistan',
+      'AF': 'Afghanistan', 'PK': 'Pakistan', 'BD': 'Bangladesh', 'LK': 'Sri Lanka', 'NP': 'Nepal',
+      'BT': 'Bhutan', 'MV': 'Maldives', 'TW': 'Taiwan', 'HK': 'Hong Kong', 'MO': 'Macau',
+      'KP': 'North Korea', 'MN': 'Mongolia', 'TH': 'Thailand', 'VN': 'Vietnam', 'LA': 'Laos',
+      'KH': 'Cambodia', 'MY': 'Malaysia', 'SG': 'Singapore', 'ID': 'Indonesia', 'PH': 'Philippines',
+      'BN': 'Brunei', 'MM': 'Myanmar', 'TL': 'East Timor', 'NZ': 'New Zealand', 'FJ': 'Fiji',
+      'PG': 'Papua New Guinea', 'SB': 'Solomon Islands', 'VU': 'Vanuatu', 'NC': 'New Caledonia',
+      'PF': 'French Polynesia', 'WS': 'Samoa', 'TO': 'Tonga', 'KI': 'Kiribati', 'TV': 'Tuvalu',
+      'NR': 'Nauru', 'PW': 'Palau', 'FM': 'Micronesia', 'MH': 'Marshall Islands', 'GT': 'Guatemala',
+      'BZ': 'Belize', 'SV': 'El Salvador', 'HN': 'Honduras', 'NI': 'Nicaragua', 'CR': 'Costa Rica',
+      'PA': 'Panama', 'CU': 'Cuba', 'JM': 'Jamaica', 'HT': 'Haiti', 'DO': 'Dominican Republic',
+      'PR': 'Puerto Rico', 'TT': 'Trinidad and Tobago', 'BB': 'Barbados', 'LC': 'Saint Lucia',
+      'VC': 'Saint Vincent and the Grenadines', 'GD': 'Grenada', 'AG': 'Antigua and Barbuda',
+      'KN': 'Saint Kitts and Nevis', 'DM': 'Dominica', 'BS': 'Bahamas', 'AR': 'Argentina',
+      'CL': 'Chile', 'UY': 'Uruguay', 'PY': 'Paraguay', 'BO': 'Bolivia', 'PE': 'Peru',
+      'EC': 'Ecuador', 'CO': 'Colombia', 'VE': 'Venezuela', 'GY': 'Guyana', 'SR': 'Suriname',
+      'GF': 'French Guiana', 'ZA': 'South Africa', 'EG': 'Egypt', 'LY': 'Libya', 'TN': 'Tunisia',
+      'DZ': 'Algeria', 'MA': 'Morocco', 'SD': 'Sudan', 'SS': 'South Sudan', 'ET': 'Ethiopia',
+      'ER': 'Eritrea', 'DJ': 'Djibouti', 'SO': 'Somalia', 'KE': 'Kenya', 'UG': 'Uganda',
+      'TZ': 'Tanzania', 'RW': 'Rwanda', 'BI': 'Burundi', 'MW': 'Malawi', 'ZM': 'Zambia',
+      'ZW': 'Zimbabwe', 'BW': 'Botswana', 'NA': 'Namibia', 'SZ': 'Eswatini', 'LS': 'Lesotho',
+      'MG': 'Madagascar', 'MU': 'Mauritius', 'SC': 'Seychelles', 'KM': 'Comoros', 'YT': 'Mayotte',
+      'RE': 'Réunion', 'MZ': 'Mozambique', 'AO': 'Angola', 'CD': 'Democratic Republic of the Congo',
+      'CG': 'Republic of the Congo', 'CF': 'Central African Republic', 'TD': 'Chad', 'NE': 'Niger',
+      'NG': 'Nigeria', 'BJ': 'Benin', 'TG': 'Togo', 'GH': 'Ghana', 'BF': 'Burkina Faso',
+      'ML': 'Mali', 'SN': 'Senegal', 'GM': 'Gambia', 'GW': 'Guinea-Bissau', 'GN': 'Guinea',
+      'SL': 'Sierra Leone', 'LR': 'Liberia', 'CI': 'Ivory Coast', 'MR': 'Mauritania',
+      'CV': 'Cape Verde', 'ST': 'São Tomé and Príncipe', 'GQ': 'Equatorial Guinea', 'GA': 'Gabon',
+      'CM': 'Cameroon', 'SA': 'Saudi Arabia', 'AE': 'United Arab Emirates', 'QA': 'Qatar',
+      'BH': 'Bahrain', 'KW': 'Kuwait', 'OM': 'Oman', 'YE': 'Yemen', 'IQ': 'Iraq', 'SY': 'Syria',
+      'LB': 'Lebanon', 'JO': 'Jordan', 'IL': 'Israel', 'PS': 'Palestine', 'IR': 'Iran',
+      'IS': 'Iceland', 'GL': 'Greenland', 'FO': 'Faroe Islands', 'SJ': 'Svalbard and Jan Mayen',
+      'AD': 'Andorra', 'MC': 'Monaco', 'SM': 'San Marino', 'VA': 'Vatican City', 'LI': 'Liechtenstein',
+      'AL': 'Albania', 'MK': 'North Macedonia', 'RS': 'Serbia', 'ME': 'Montenegro',
+      'BA': 'Bosnia and Herzegovina', 'XK': 'Kosovo',
+      'EU': 'Europe', 'WW': 'Worldwide', 'ROW': 'Rest of World', 'GLOBAL': 'Global'
+    };
+    if (countryMapping[upper]) {
+      return { matched: true, value: countryMapping[upper] };
+    }
+    // If it looks like a country code (2-3 letters), treat as country and return raw
+    if (/^[A-Za-z]{2,3}$/.test(raw)) {
+      return { matched: true, value: raw };
+    }
+    return { matched: false, value: 'Unknown' };
+  };
+
   // First try the structured format with pipes (p:, g:, etc.)
   if (campaignNetwork.includes('|') && campaignNetwork.includes(':')) {
     const parts = campaignNetwork.split('|');
@@ -1123,11 +1210,18 @@ export function parseCampaignNetwork(campaignNetwork: string): {
       const [key, value] = part.split(':');
       switch (key) {
         case 'p':
-          result.platform = value || 'Unknown';
+          {
+            const plat = normalizePlatformToken(value || '');
+            if (plat) result.platform = plat;
+          }
           break;
-        case 'g':
-          result.country = value || 'Unknown';
+        case 'g': {
+          const norm = normalizeCountryToken(value || '');
+          if (norm.matched) {
+            result.country = norm.value;
+          }
           break;
+        }
         case 'a':
           result.adnetwork = decodeAdNetwork(value) || 'Unknown';
           break;
@@ -1193,85 +1287,31 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       
-      // Platform detection - look for platform indicators (flexible)
-      if (part === 'AND' || part === 'Android' || part.toLowerCase() === 'andr') {
-        result.platform = 'Android';
-        platformIndex = i;
-      } else if (part === 'iOS' || part === 'IOS') {
-        result.platform = 'iOS';
-        platformIndex = i;
-      } else if (part === 'GP') {  // Google Play = Android
-        result.platform = 'Android';
-        platformIndex = i;
+      // Platform detection - strict tokens only; ignore Google Play signals per requirement
+      // Note: Do not read platform from the first part (likely game name)
+      if (i > 0) {
+        const plat = normalizePlatformToken(part);
+        if (plat) {
+          // If platform already set and differs, mark conflict by clearing to Unknown
+          if (result.platform !== 'Unknown' && result.platform !== plat) {
+            result.platform = 'Unknown';
+            platformIndex = i;
+          } else {
+            result.platform = plat;
+            platformIndex = i;
+          }
+        }
       }
       
-      // Special handling for game names that might contain platform info
-      if (part.includes('Android')) {
-        result.platform = 'Android';
-        platformIndex = i;
-      } else if (part.includes('iOS') || part.includes('IOS')) {
-        result.platform = 'iOS';
-        platformIndex = i;
-      }
-      
-      // Country detection - handle both direct codes and CNTUS format
+      // Country detection - case-insensitive, only country-like tokens, raw fallback
       // CRITICAL: Country codes NEVER appear at the beginning of campaign network
       // Format is usually: GAME_PLATFORM_COUNTRY_ADNETWORK or PLATFORM_COUNTRY_ADNETWORK
-      if (part.includes('CNTUS')) {
-        result.country = 'US';
-        countryIndex = i;
-      } else if (i > 0 && ['AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ', 'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM', 'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT', 'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI', 'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW'].includes(part)) {
-        // Use comprehensive country mapping
-        const countryMapping: Record<string, string> = {
-          'US': 'United States', 'USA': 'United States', 'UK': 'United Kingdom', 'GB': 'Great Britain',
-          'TR': 'Turkey', 'DE': 'Germany', 'FR': 'France', 'KR': 'South Korea', 'JP': 'Japan',
-          'CN': 'China', 'IN': 'India', 'BR': 'Brazil', 'RU': 'Russia', 'CA': 'Canada', 'AU': 'Australia',
-          'MX': 'Mexico', 'NL': 'Netherlands', 'IT': 'Italy', 'ES': 'Spain', 'BE': 'Belgium',
-          'CH': 'Switzerland', 'AT': 'Austria', 'SE': 'Sweden', 'NO': 'Norway', 'DK': 'Denmark',
-          'FI': 'Finland', 'PL': 'Poland', 'CZ': 'Czech Republic', 'HU': 'Hungary', 'RO': 'Romania',
-          'BG': 'Bulgaria', 'GR': 'Greece', 'PT': 'Portugal', 'IE': 'Ireland', 'LU': 'Luxembourg',
-          'MT': 'Malta', 'CY': 'Cyprus', 'EE': 'Estonia', 'LV': 'Latvia', 'LT': 'Lithuania',
-          'SI': 'Slovenia', 'SK': 'Slovakia', 'HR': 'Croatia', 'UA': 'Ukraine', 'BY': 'Belarus',
-          'MD': 'Moldova', 'GE': 'Georgia', 'AM': 'Armenia', 'AZ': 'Azerbaijan', 'KZ': 'Kazakhstan',
-          'UZ': 'Uzbekistan', 'KG': 'Kyrgyzstan', 'TJ': 'Tajikistan', 'TM': 'Turkmenistan',
-          'AF': 'Afghanistan', 'PK': 'Pakistan', 'BD': 'Bangladesh', 'LK': 'Sri Lanka', 'NP': 'Nepal',
-          'BT': 'Bhutan', 'MV': 'Maldives', 'TW': 'Taiwan', 'HK': 'Hong Kong', 'MO': 'Macau',
-          'KP': 'North Korea', 'MN': 'Mongolia', 'TH': 'Thailand', 'VN': 'Vietnam', 'LA': 'Laos',
-          'KH': 'Cambodia', 'MY': 'Malaysia', 'SG': 'Singapore', 'ID': 'Indonesia', 'PH': 'Philippines',
-          'BN': 'Brunei', 'MM': 'Myanmar', 'TL': 'East Timor', 'NZ': 'New Zealand', 'FJ': 'Fiji',
-          'PG': 'Papua New Guinea', 'SB': 'Solomon Islands', 'VU': 'Vanuatu', 'NC': 'New Caledonia',
-          'PF': 'French Polynesia', 'WS': 'Samoa', 'TO': 'Tonga', 'KI': 'Kiribati', 'TV': 'Tuvalu',
-          'NR': 'Nauru', 'PW': 'Palau', 'FM': 'Micronesia', 'MH': 'Marshall Islands', 'GT': 'Guatemala',
-          'BZ': 'Belize', 'SV': 'El Salvador', 'HN': 'Honduras', 'NI': 'Nicaragua', 'CR': 'Costa Rica',
-          'PA': 'Panama', 'CU': 'Cuba', 'JM': 'Jamaica', 'HT': 'Haiti', 'DO': 'Dominican Republic',
-          'PR': 'Puerto Rico', 'TT': 'Trinidad and Tobago', 'BB': 'Barbados', 'LC': 'Saint Lucia',
-          'VC': 'Saint Vincent and the Grenadines', 'GD': 'Grenada', 'AG': 'Antigua and Barbuda',
-          'KN': 'Saint Kitts and Nevis', 'DM': 'Dominica', 'BS': 'Bahamas', 'AR': 'Argentina',
-          'CL': 'Chile', 'UY': 'Uruguay', 'PY': 'Paraguay', 'BO': 'Bolivia', 'PE': 'Peru',
-          'EC': 'Ecuador', 'CO': 'Colombia', 'VE': 'Venezuela', 'GY': 'Guyana', 'SR': 'Suriname',
-          'GF': 'French Guiana', 'ZA': 'South Africa', 'EG': 'Egypt', 'LY': 'Libya', 'TN': 'Tunisia',
-          'DZ': 'Algeria', 'MA': 'Morocco', 'SD': 'Sudan', 'SS': 'South Sudan', 'ET': 'Ethiopia',
-          'ER': 'Eritrea', 'DJ': 'Djibouti', 'SO': 'Somalia', 'KE': 'Kenya', 'UG': 'Uganda',
-          'TZ': 'Tanzania', 'RW': 'Rwanda', 'BI': 'Burundi', 'MW': 'Malawi', 'ZM': 'Zambia',
-          'ZW': 'Zimbabwe', 'BW': 'Botswana', 'NA': 'Namibia', 'SZ': 'Eswatini', 'LS': 'Lesotho',
-          'MG': 'Madagascar', 'MU': 'Mauritius', 'SC': 'Seychelles', 'KM': 'Comoros', 'YT': 'Mayotte',
-          'RE': 'Réunion', 'MZ': 'Mozambique', 'AO': 'Angola', 'CD': 'Democratic Republic of the Congo',
-          'CG': 'Republic of the Congo', 'CF': 'Central African Republic', 'TD': 'Chad', 'NE': 'Niger',
-          'NG': 'Nigeria', 'BJ': 'Benin', 'TG': 'Togo', 'GH': 'Ghana', 'BF': 'Burkina Faso',
-          'ML': 'Mali', 'SN': 'Senegal', 'GM': 'Gambia', 'GW': 'Guinea-Bissau', 'GN': 'Guinea',
-          'SL': 'Sierra Leone', 'LR': 'Liberia', 'CI': 'Ivory Coast', 'MR': 'Mauritania',
-          'CV': 'Cape Verde', 'ST': 'São Tomé and Príncipe', 'GQ': 'Equatorial Guinea', 'GA': 'Gabon',
-          'CM': 'Cameroon', 'SA': 'Saudi Arabia', 'AE': 'United Arab Emirates', 'QA': 'Qatar',
-          'BH': 'Bahrain', 'KW': 'Kuwait', 'OM': 'Oman', 'YE': 'Yemen', 'IQ': 'Iraq', 'SY': 'Syria',
-          'LB': 'Lebanon', 'JO': 'Jordan', 'IL': 'Israel', 'PS': 'Palestine', 'IR': 'Iran',
-          'IS': 'Iceland', 'GL': 'Greenland', 'FO': 'Faroe Islands', 'SJ': 'Svalbard and Jan Mayen',
-          'AD': 'Andorra', 'MC': 'Monaco', 'SM': 'San Marino', 'VA': 'Vatican City', 'LI': 'Liechtenstein',
-          'AL': 'Albania', 'MK': 'North Macedonia', 'RS': 'Serbia', 'ME': 'Montenegro',
-          'BA': 'Bosnia and Herzegovina', 'XK': 'Kosovo'
-        };
-        
-        result.country = countryMapping[part.toUpperCase()] || part.toUpperCase();
-        countryIndex = i;
+      if (i > 0) {
+        const norm = normalizeCountryToken(part);
+        if (norm.matched) {
+          result.country = norm.value;
+          countryIndex = i;
+        }
       }
       
       // Campaign type detection
@@ -1285,7 +1325,7 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     if (parts.length > 1) {
       const lastPart = parts[parts.length - 1];
       // If last part is not a known platform/country/type, use it as adnetwork
-      if (!['AND', 'iOS', 'GP', 'US', 'UK', 'TR', 'DE', 'FR', 'CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(lastPart)) {
+      if (!['AND', 'Android', 'iOS', 'IOS', 'US', 'UK', 'TR', 'DE', 'FR', 'CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(lastPart)) {
         result.adnetwork = decodeAdNetwork(lastPart);
       } else {
         // Look for adnetwork in other positions
@@ -1435,9 +1475,19 @@ export function extractGameName(app: string): string {
 
 // Extract platform from app string or campaign network
 export function extractPlatform(app: string, campaignNetwork: string = ''): string {
-  // First try to get platform from app name
-  if (app.toLowerCase().includes('android')) return 'Android';
-  if (app.toLowerCase().includes('ios')) return 'iOS';
+  // Reuse normalizePlatformToken from parseCampaignNetwork scope by redefining here
+  const normalizePlatformToken = (token: string): 'Android' | 'iOS' | null => {
+    if (!token) return null;
+    const lower = token.trim().toLowerCase().replace(/ı/g, 'i');
+    if (lower === 'ios' || lower === 'ıos') return 'iOS';
+    if (lower === 'android' || lower === 'and' || lower === 'andr' || lower === 'aos') return 'Android';
+    if (lower === 'andorid' || lower === 'anroid' || lower === 'andriod') return 'Android';
+    return null;
+  };
+
+  // First try to get platform from app name using strict tokens
+  const appPlat = normalizePlatformToken(app);
+  if (appPlat) return appPlat;
   
   // Use the improved parseCampaignNetwork function for consistency
   if (campaignNetwork && campaignNetwork !== 'unknown' && campaignNetwork !== 'Unknown') {
@@ -1447,9 +1497,20 @@ export function extractPlatform(app: string, campaignNetwork: string = ''): stri
     }
   }
   
-  // Try to extract platform from campaign network patterns
-  if (campaignNetwork.includes('-iOS-')) return 'iOS';
-  if (campaignNetwork.includes('-Android-')) return 'Android';
+  // Try to extract platform from campaign network tokens (strict tokens only)
+  const parts = campaignNetwork.split(/[_-]/);
+  let found: 'Android' | 'iOS' | null = null;
+  for (let i = 1; i < parts.length; i++) {
+    const plat = normalizePlatformToken(parts[i]);
+    if (plat) {
+      if (found && found !== plat) {
+        found = null; // conflict -> Unknown
+        break;
+      }
+      found = plat;
+    }
+  }
+  if (found) return found;
   
   // For unknown campaign networks, return Test as platform
   if (campaignNetwork === 'unknown' || campaignNetwork === 'Unknown') {
