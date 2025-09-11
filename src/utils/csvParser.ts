@@ -1135,6 +1135,13 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     if (adNetworkLikeTokens.has(upper)) {
       return { matched: false, value: 'Unknown' };
     }
+    // Exclude platform-like tokens (reported as appearing as country)
+    const platformLikeTokens = new Set([
+      'AND','ANDROID','IOS','AOS','ANDR','GP'
+    ]);
+    if (platformLikeTokens.has(upper)) {
+      return { matched: false, value: 'Unknown' };
+    }
     // CNTUS special handling
     if (upper.includes('CNTUS')) {
       return { matched: true, value: 'United States' };
@@ -1329,6 +1336,21 @@ export function parseCampaignNetwork(campaignNetwork: string): {
       }
     }
 
+    // If no strict platform found, pick a raw candidate to expose issues (exclude country/type/adnetwork)
+    if (result.platform === 'Unknown') {
+      for (let i = 1; i < parts.length; i++) {
+        const token = parts[i];
+        const plat = normalizePlatformToken(token);
+        const countryNorm = normalizeCountryToken(token);
+        const isType = ['CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(token.toUpperCase());
+        if (!plat && !countryNorm.matched && !isType) {
+          result.platform = token; // raw token
+          platformIndex = i;
+          break;
+        }
+      }
+    }
+
     // Extract ad network (usually the last part, but avoid known platform/country/type parts)
     if (parts.length > 1) {
       const lastPart = parts[parts.length - 1];
@@ -1519,6 +1541,19 @@ export function extractPlatform(app: string, campaignNetwork: string = ''): stri
     }
   }
   if (found) return found;
+
+  // If still not found, return a raw candidate to expose issues
+  for (let i = 1; i < parts.length; i++) {
+    const token = parts[i];
+    const plat = normalizePlatformToken(token);
+    const upper = (token || '').trim().toUpperCase();
+    const isType = ['CPA', 'CPI', 'CPE', 'CPM', 'CPC'].includes(upper);
+    const platformLike = new Set(['AND','ANDROID','IOS','AOS','ANDR','GP']).has(upper);
+    const isCountryLike = /^[A-Z]{2,3}$/.test(upper) && !platformLike;
+    if (!plat && !isCountryLike && !isType) {
+      return token; // raw
+    }
+  }
   
   // For unknown campaign networks, return Test as platform
   if (campaignNetwork === 'unknown' || campaignNetwork === 'Unknown') {
