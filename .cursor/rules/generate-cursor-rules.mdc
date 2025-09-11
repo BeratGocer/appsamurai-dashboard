@@ -1,0 +1,45 @@
+---
+description: Cursor command "/Generate Cursor Rules" triggers full deployment workflow
+globs: *
+---
+# /Generate Cursor Rules Workflow
+
+When the user types "/Generate Cursor Rules", execute the complete deployment workflow automatically:
+
+## 1) Git Push (Otomatik)
+```bash
+git add .
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - Generated Cursor Rules"
+git push origin main
+```
+
+## 2) Frontend Build & Deploy (Netlify)
+```bash
+npm run build
+netlify deploy --prod --dir=dist
+```
+
+## 3) Backend Build (Railway - manuel değil, sadece build)
+```bash
+cd server && npm run build
+```
+
+## 4) Railway Deploy (manuel gerektiğinde)
+```bash
+cd server
+railway login
+railway link
+railway up
+```
+
+## 5) Post-Deploy Tests
+```bash
+curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/health
+curl -H "x-api-key: public-demo-key" https://appsamurai-dashboard-backend-production-83b0.up.railway.app/api/files
+```
+
+## Critical Rules
+- Single push, ardından Netlify prod deploy
+- Hata olursa kullanıcıya raporla
+- Frontend URL: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- Backend URL: https://appsamurai-dashboard-backend-production-83b0.up.railway.app/
