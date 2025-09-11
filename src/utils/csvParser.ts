@@ -629,7 +629,34 @@ export function decodeAdNetwork(code: string): string {
     'NDk2M2MxNzBmZDBjNDgwNDg4YmN8': 'Catbyte',
     'NmZhOTVjZTlhZmVjNDdmMGIxNTJ8': 'Catbyte',
     'YjZkMY1OWQ0ZjczNDZhZDllZWV8': 'Catbyte',
-    'MTM1MTc0': 'Fyber'
+    // Fyber ad network kodları
+    'MTM1MTc0': 'Fyber',
+    'MTIzNDUx': 'Fyber',
+    'MTIzNDc4': 'Fyber',
+    'MTIwNjUy': 'Fyber',
+    'MTIzOTI1': 'Fyber',
+    'MTIzNDk3': 'Fyber',
+    'MTM3NzQ4': 'Fyber',
+    'MTM3NDAy': 'Fyber',
+    'MTM4MDAw': 'Fyber',
+    'MTM1Njcy': 'Fyber',
+    'MTM3MjIy': 'Fyber',
+    'MTM3NDk2': 'Fyber',
+    'MTM4MDg2': 'Fyber',
+    'MTM4MDQ0': 'Fyber',
+    'MTM4MDYw': 'Fyber',
+    'MTM1NTAw': 'Fyber',
+    'MTM1ODc0': 'Fyber',
+    'MTM1ODYw': 'Fyber',
+    'MTIzMTY3': 'Fyber',
+    'MTM3NjI4': 'Fyber',
+    'MTI0MDkx': 'Fyber',
+    'MTIzNTQ4': 'Fyber',
+    'MTIyMTA4': 'Fyber',
+    'MTIyOTQ5': 'Fyber',
+    'MTIzODMx': 'Fyber',
+    'MTIzNDYx': 'Fyber',
+    'MTIzOTIx': 'Fyber'
   };
   
   // Base64 kodları için esnek arama
