@@ -1161,7 +1161,7 @@ export function parseCampaignNetwork(campaignNetwork: string): {
   // Handle different underscore formats intelligently
   const result = {
     platform: 'Unknown',
-    country: 'Unknown',
+    country: 'No data',
     adnetwork: 'Unknown',
     campaignType: 'Unknown',
     eventType: 'Unknown',
@@ -1192,22 +1192,24 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     // FIRST PASS: Find platform indicators in ANY position
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      const partLower = part.toLowerCase();
       
       // Platform detection - look for platform indicators (flexible)
-      if (part === 'AND' || part === 'Android' || partLower === 'andr' || partLower === 'and' || partLower === 'android' || partLower === 'aos' || partLower === 'gp') {
+      if (part === 'AND' || part === 'Android' || part.toLowerCase() === 'andr') {
         result.platform = 'Android';
         platformIndex = i;
-      } else if (part === 'iOS' || part === 'IOS' || partLower === 'ios') {
+      } else if (part === 'iOS' || part === 'IOS') {
         result.platform = 'iOS';
         platformIndex = i;
-      } 
-      
-      // Special handling for game names that might contain platform info
-      if (partLower.includes('android')) {
+      } else if (part === 'GP') {  // Google Play = Android
         result.platform = 'Android';
         platformIndex = i;
-      } else if (partLower.includes('ios')) {
+      }
+      
+      // Special handling for game names that might contain platform info
+      if (part.includes('Android')) {
+        result.platform = 'Android';
+        platformIndex = i;
+      } else if (part.includes('iOS') || part.includes('IOS')) {
         result.platform = 'iOS';
         platformIndex = i;
       }
@@ -1215,16 +1217,11 @@ export function parseCampaignNetwork(campaignNetwork: string): {
       // Country detection - handle both direct codes and CNTUS format
       // CRITICAL: Country codes NEVER appear at the beginning of campaign network
       // Format is usually: GAME_PLATFORM_COUNTRY_ADNETWORK or PLATFORM_COUNTRY_ADNETWORK
-      const partTrimmed = part.trim();
-      const partUpper = partTrimmed.toUpperCase();
-
-      if (partUpper.includes('CNTUS')) {
+      if (part.includes('CNTUS')) {
         result.country = 'US';
         countryIndex = i;
-      } else if (
-        /^[A-Z]{2,3}$/.test(partUpper)
-      ) {
-        // Accept any 2-3 letter alpha code (case-insensitive) and map when known
+      } else if (i > 0 && ['AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ', 'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS', 'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM', 'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT', 'JE', 'JM', 'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA', 'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW', 'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI', 'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW'].includes(part)) {
+        // Use comprehensive country mapping
         const countryMapping: Record<string, string> = {
           'US': 'United States', 'USA': 'United States', 'UK': 'United Kingdom', 'GB': 'Great Britain',
           'TR': 'Turkey', 'DE': 'Germany', 'FR': 'France', 'KR': 'South Korea', 'JP': 'Japan',
@@ -1273,7 +1270,7 @@ export function parseCampaignNetwork(campaignNetwork: string): {
           'BA': 'Bosnia and Herzegovina', 'XK': 'Kosovo'
         };
         
-        result.country = countryMapping[partUpper] || partUpper;
+        result.country = countryMapping[part.toUpperCase()] || part.toUpperCase();
         countryIndex = i;
       }
       
