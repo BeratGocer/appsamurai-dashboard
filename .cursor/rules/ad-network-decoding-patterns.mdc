@@ -1,6 +1,5 @@
 ---
 description: Ad network decoding implementation patterns and troubleshooting
-globs: src/utils/csvParser.ts,Adnetworkler.csv
 ---
 
 # Ad Network Decoding Patterns
@@ -24,6 +23,19 @@ The ad network decoding system in [src/utils/csvParser.ts](mdc:src/utils/csvPars
 - ✅ **Explicit Mappings Only**: All codes must be defined in Adnetworkler.csv
 - ✅ **Pattern Matching**: Support regex patterns for number_number format
 - ✅ **Prefix/Suffix Matching**: Handle S codes with various formats
+
+## Complex Code Parsing
+For codes like `ScR_OTlwSkZrSHNEcm01`:
+1. Split by underscore: `['ScR', 'OTlwSkZrSHNEcm01']`
+2. Check first part against S network mappings: `ScR` → `SCR` → `Copper`
+3. Check second part against base64 mappings: `OTlwSkZrSHNEcm01` → `Copper`
+4. Return first successful match
+
+## Character Variations
+Handle similar-looking characters:
+- `OTIwSkZrSHNEcm01` (capital I) → `Copper`
+- `OTlwSkZrSHNEcm01` (lowercase l) → `Copper`
+- Both must be explicitly mapped in [Adnetworkler.csv](mdc:Adnetworkler.csv)
 
 ## Common Patterns
 ```typescript

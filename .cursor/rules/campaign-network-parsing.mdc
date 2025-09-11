@@ -1,0 +1,44 @@
+---
+description: Campaign network parsing patterns and country code detection rules
+---
+
+# Campaign Network Parsing Rules
+
+## Core Principle
+**Country codes NEVER appear at the beginning of campaign network strings**. This is a fundamental rule for correct parsing.
+
+## Campaign Network Formats
+Valid formats include:
+- `GAME_PLATFORM_COUNTRY_ADNETWORK` (e.g., `BF_AND_US_TEST`)
+- `PLATFORM_COUNTRY_ADNETWORK` (e.g., `AND_US_TEST`)
+- `GAME_COUNTRY_PLATFORM_ADNETWORK` (e.g., `BF_US_AND_TEST`)
+
+**INVALID format:**
+- `COUNTRY_PLATFORM_ADNETWORK` (e.g., `BF_AND_TEST` where BF is country)
+
+## Country Code Detection Logic
+```typescript
+// CRITICAL: Country codes NEVER appear at the beginning (i=0)
+if (i > 0 && ['AD', 'AE', 'AF', ..., 'BF', ..., 'ZW'].includes(part)) {
+  // This is a country code
+  result.country = countryMapping[part];
+  countryIndex = i;
+}
+```
+
+## Common Parsing Issues
+1. **Game names mistaken for countries**: `BF_AND_TEST` where `BF` is game name, not Burkina Faso
+2. **Position-dependent detection**: Country codes only detected when `i > 0`
+3. **Platform detection**: `AND`, `iOS`, `GP` are platform indicators
+4. **Ad network detection**: Last part is usually ad network unless it's a known platform/country
+
+## Implementation in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts)
+The `parseCampaignNetwork` function uses position-aware detection:
+- First pass: Scan all parts for platform indicators
+- Second pass: Scan for country codes (only when `i > 0`)
+- Third pass: Identify ad network from remaining parts
+
+## Testing Examples
+- `BF_AND_TEST` → Game: BF, Platform: AND, Ad Network: TEST
+- `US_AND_TEST` → Country: US, Platform: AND, Ad Network: TEST
+- `GAME_US_AND_TEST` → Game: GAME, Country: US, Platform: AND, Ad Network: TEST
