@@ -519,7 +519,7 @@ export function decodeAdNetwork(code: string): string {
     'SIE': 'Influence Mobile',
     'SAM': 'ATM',
     'SCE': 'Catbyte',
-    'SEZ': 'Efez',
+    'SEZ': 'Efez Games',
     'SJK': 'JumpTask API',
     'SWK': 'AppsPrize',
     'STR': 'TradeDoubler',
@@ -1129,7 +1129,7 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     }
     // Exclude ad network like tokens that can be mistaken as countries
     const adNetworkLikeTokens = new Set([
-      'SCE','SFT','SPE','SDA','SAP','SKK','STK','SEA','SIE','SAM','SPL','SAN','SJK','SWK','STR','SBL','SAS','SMN','SRY','STS','S2','SAT','SER','SPK',
+      'SCE','SFT','SPE','SDA','SAP','SKK','STK','SEA','SIE','SAM','SPL','SAN','SJK','SWK','STR','SBL','SAS','SMN','SRY','STS','S2','SAT','SER','SPK','SEZ',
       'PTSDK','TBSDK'
     ]);
     if (adNetworkLikeTokens.has(upper)) {
