@@ -652,12 +652,13 @@ export function GameTables({
     
     // Convert to array and sort by app -> country -> platform
     const groupEntries = Array.from(grouped.entries()).map(([key, groups]) => {
-      const [game, country, platform] = key.split('-');
+      // Do NOT split by '-' (game names may contain '-')
+      const first = groups[0];
       return {
         groupKey: key,
-        game,
-        country, 
-        platform,
+        game: first.game,
+        country: first.country,
+        platform: first.platform,
         groups
       };
     });
