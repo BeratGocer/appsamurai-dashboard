@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { ChevronDown, ChevronRight, Eye, EyeOff, Settings, Edit3, RefreshCw } from 'lucide-react';
 import type { GameCountryPublisherGroup } from '@/types'
 import type { ConditionalFormattingRule } from './SettingsPanel'
-import { DndContext, closestCenter } from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -66,6 +66,9 @@ function SortableHeaderItem({ game, country, platform, campaignCount, totalVolum
     transform,
     transition,
     isDragging,
+    attributes,
+    listeners,
+    setActivatorNodeRef,
   } = useSortable({ id: groupKey });
 
   const style = {
@@ -79,14 +82,25 @@ function SortableHeaderItem({ game, country, platform, campaignCount, totalVolum
       style={style} 
       className={`flex-shrink-0 ${isDragging ? 'opacity-50' : ''}`}
     >
-      <div className="bg-muted hover:bg-muted/80 p-4 rounded-lg border mb-4 min-w-[320px] cursor-pointer transition-colors shadow-sm">
+      <div className="bg-muted hover:bg-muted/80 p-4 rounded-lg border mb-4 min-w-[320px] cursor-default transition-colors shadow-sm">
         <div className="flex items-center gap-2">
+          {/* Drag handle */}
+          <button
+            ref={setActivatorNodeRef}
+            {...attributes}
+            {...listeners}
+            className="p-1 rounded hover:bg-muted/70 text-muted-foreground cursor-grab active:cursor-grabbing relative z-10"
+            title="Sürükle"
+            aria-label="Sürükle"
+          >
+            <span className="inline-block w-4 h-4 bg-current mask-[url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"%23000\" d=\"M9 6h2V4H9v2zm4 0h2V4h-2v2zM9 13h2v-2H9v2zm4 0h2v-2h-2v2zM9 20h2v-2H9v2zm4 0h2v-2h-2v2z\"/></svg>')]" />
+          </button>
           <div>
             <h3 className="text-lg font-semibold whitespace-nowrap">
               {game}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {platform} - {country}
+              {(platform && platform !== 'Unknown') ? platform : 'Unknown'} - {country}
             </p>
             <p className="text-xs text-muted-foreground">
               {campaignCount} farklı adnetwork/publisher
@@ -400,13 +414,13 @@ export function GameTables({
   onRefreshData,
 }: GameTablesProps) {
   // DnD Sensors for React 19 compatibility
-  // const sensors = useSensors(
-  //   useSensor(PointerSensor, {
-  //     activationConstraint: {
-  //       distance: 8, // 8px movement before drag starts
-  //     },
-  //   })
-  // );
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // State for expanded tables
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
@@ -922,6 +936,7 @@ export function GameTables({
         </div>
         <div className="overflow-x-auto pb-4 scroll-smooth">
           <DndContext
+            sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
@@ -986,7 +1001,7 @@ export function GameTables({
                       {game}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {platform} - {country}
+                      {(platform && platform !== 'Unknown') ? platform : 'Unknown'} - {country}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {visibleGroupTables.length} farklı adnetwork/publisher: {adnetworkPublishers.join(', ')}
@@ -1007,6 +1022,7 @@ export function GameTables({
                 <div className="overflow-x-auto pb-4 scroll-smooth">
                   <div className="flex gap-6 min-w-max min-h-[600px] items-stretch py-2">
                     <DndContext
+                      sensors={sensors}
                       collisionDetection={closestCenter}
                       onDragEnd={handleDragEnd}
                     >
