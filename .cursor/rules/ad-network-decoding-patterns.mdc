@@ -5,52 +5,62 @@ description: Ad network decoding implementation patterns and troubleshooting
 # Ad Network Decoding Patterns
 
 ## Core Architecture
-The ad network decoding system is implemented in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) using the `decodeAdNetwork()` function.
+The ad network decoding system is implemented in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) with the `decodeAdNetwork()` function.
 
-## Decoding Hierarchy
-1. **S Network Codes**: Direct mapping for codes starting with 'S' (SCR, SPE, SFT, etc.)
-2. **Base64 Mappings**: Direct mapping for specific Base64 encoded strings
-3. **PTSDK Codes**: Pattern-based recognition for PTSDK_H_ and PTSDK_ prefixes
-4. **Fluent Patterns**: Comprehensive number-based patterns for Fluent ad network
-5. **OfferToro Patterns**: Base64 number + pipe format recognition
-6. **Lootably Patterns**: Y2-prefixed long Base64 strings
+## Critical Decoding Order
+**IMPORTANT**: The order of checks in `decodeAdNetwork()` is crucial for correct decoding:
 
-## Fluent Ad Network Rules
-Fluent supports multiple number-based patterns:
-- `34631_` → Fluent (number + underscore)
-- `34631_5406` → Fluent (number + underscore + number)
-- `34631_dshop` → Fluent (number + underscore + text)
-- `34631_13821-207475-youtube` → Fluent (complex format)
-- `45209_BM-207288` → Fluent (BM/PSP format)
-- `45209_reward-205771` → Fluent (reward format)
-- `206305` → Fluent (numbers only)
-- `34631_ 206305` → Fluent (spaced format, auto-cleaned)
+1. **UFVCL Prefix Check** (Ayet Studios) - Must be FIRST
+2. **Exact Mappings** (S networks, Base64, PTSDK)
+3. **Fluent Pattern Checks** - Must be BEFORE underscore splitting
+4. **Underscore Splitting** - Must be AFTER Fluent checks
+5. **Other Pattern Checks** (OfferToro, Lootably, etc.)
 
-## Pattern Implementation
+## Special Cases
+
+### Ayet Studios (UFVCL Prefix)
 ```typescript
-// Spaced format cleaning
-if (/^\d+_\s+\d+$/.test(cleanCode)) {
-  const cleanedCode = cleanCode.replace(/\s+/g, '');
-  if (/^\d+_\d+$/.test(cleanedCode)) {
-    return 'Fluent';
-  }
-}
-
-// Lootably pattern
-if (/^Y2[a-zA-Z0-9]{30,}x8$/.test(cleanCode)) {
-  return 'Lootably';
-}
-
-// OfferToro pattern
-if (/^[A-Za-z0-9]+8$/.test(cleanCode) && cleanCode.length <= 10) {
-  return 'OfferToro';
+// Ayet Studios için özel durum - UFVCL ile başlayan tüm kodlar
+if (cleanCode.startsWith('UFVCL')) {
+  return 'Ayet Studios';
 }
 ```
+**Examples**: `UFVCLTE1NTN8`, `UFVCLTI4Mnx8`, `UFVCLTE0MTA4` → "Ayet Studios"
+
+### Fluent Number Patterns
+```typescript
+// 2. Sayı + underscore + sayı (34631_5406, 45209_5406) - ÖNEMLİ: Bu önce kontrol edilmeli
+if (/^\d+_\d+$/.test(cleanCode)) {
+  return 'Fluent';
+}
+```
+**Examples**: `34631_5406`, `45209_5406` → "Fluent"
+
+## Common Issues and Solutions
+
+### Issue: "Number_Number format not decoding"
+**Root Cause**: Fluent checks happening AFTER underscore splitting
+**Solution**: Move Fluent pattern checks BEFORE underscore splitting logic
+
+### Issue: "UFVCL codes not recognized"
+**Root Cause**: UFVCL check not at the beginning of function
+**Solution**: Place UFVCL check as the FIRST check after input validation
+
+## Mapping Sources
+- **S Networks**: [Adnetworkler.csv](mdc:Adnetworkler.csv) - Lines 1-25
+- **Base64 Codes**: [Adnetworkler.csv](mdc:Adnetworkler.csv) - Lines 26-184
+- **PTSDK Codes**: [Adnetworkler.csv](mdc:Adnetworkler.csv) - Lines 74-124
+
+## Testing Patterns
+Always test new decoding rules with:
+1. Exact match cases
+2. Prefix/suffix variations
+3. Edge cases with special characters
+4. Order dependency (ensure earlier patterns don't interfere)
 
 ## Critical Rules
-- ✅ Always test new patterns with actual CSV data
-- ✅ Use flexible regex patterns, not hardcoded positions
-- ✅ Handle spaced formats by cleaning whitespace
-- ✅ Maintain pattern hierarchy (specific patterns first)
-- ✅ Add new networks to base64Mappings for direct lookup
-- ✅ Use pattern rules for recurring formats
+- ✅ UFVCL prefix check MUST be first
+- ✅ Fluent number patterns MUST be before underscore splitting
+- ✅ Test decoding order when adding new patterns
+- ✅ Use case-insensitive matching for exact mappings
+- ✅ Preserve original code if no match found

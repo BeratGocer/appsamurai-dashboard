@@ -4,49 +4,78 @@ description: CSV data handling and parsing patterns for campaign data
 
 # CSV Data Handling Patterns
 
-## Core CSV Parser
-The main CSV parsing logic is in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) using the `parseCSV()` function.
+## Core Parser
+The main CSV parsing logic is in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) with the `parseCSV()` function.
 
-## Header Handling
-- **No Headers**: CSV files never include headers - first row is treated as data
-- **Corrupted Headers**: Handle corrupted headers like 'm app,' or 'gönder app,'
-- **Flexible Column Matching**: Use `getColumnIndex()` for flexible column name matching
+## CSV Format Detection
+The parser automatically detects different CSV formats:
 
-## Data Format Detection
 ```typescript
+// Check format type based on headers
 const isDetailedFormat = headers.includes('ecpi') && headers.includes('adjust_cost');
 const isAzulaFormat = headers.includes('all_revenue') && !headers.includes('app');
 const isBusFrenzyFormat = headers.includes('all_revenue') && headers.includes('cost') && headers.includes('roas_d0');
 ```
 
-## Campaign Network Parsing
-Use `parseCampaignNetwork()` function to extract:
-- Platform (Android/iOS)
-- Country (ISO codes)
-- Ad Network (decoded from codes)
-- Campaign Type, Event Type, Publisher
-- Creative Format, Targeting, Audience
+## Header Cleaning
+The parser handles corrupted headers automatically:
 
-## Data Types
 ```typescript
-interface CampaignData {
-  app: string;
-  installs: number;
-  campaign_network: string;
-  adgroup_network: string;
-  country: string;
-  platform: string;
-  date: string;
-  roas_d0: number;
-  roas_d7: number;
-  roas_d30: number;
+// Clean up first line if it has corrupted header
+if (firstLine.startsWith('m app,')) {
+  firstLine = firstLine.substring(2); // Remove 'm ' prefix
+} else if (firstLine.startsWith('gönder app,')) {
+  firstLine = firstLine.replace('gönder app,', 'app,'); // Fix corrupted header
+}
+```
+
+## Flexible Column Mapping
+The parser uses flexible column name matching:
+
+```typescript
+const getColumnIndex = (columnName: string): number => {
+  // Direct match first
+  let index = headers.indexOf(columnName);
+  if (index >= 0) return index;
+  
+  // Flexible matching for different formats
+  if (columnName === 'app') {
+    const appVariants = ['m app', 'mobile app', 'app_name', 'application'];
+    for (const variant of appVariants) {
+      index = headers.indexOf(variant);
+      if (index >= 0) return index;
+    }
+  }
+  
+  return -1;
+};
+```
+
+## Ad Network Decoding
+Campaign networks are automatically decoded using the `decodeAdNetwork()` function:
+
+```typescript
+// In parseCampaignNetwork function
+case 'a':
+  result.adnetwork = decodeAdNetwork(value) || 'Unknown';
+  break;
+```
+
+## Data Validation
+The parser includes data validation and error handling:
+
+```typescript
+// Validate required fields
+if (!app || !installs || !campaignNetwork) {
+  console.warn('Skipping invalid row:', row);
+  continue;
 }
 ```
 
 ## Critical Rules
-- ✅ Never assume CSV has headers
-- ✅ Handle corrupted first lines gracefully
-- ✅ Use flexible column matching for different formats
-- ✅ Parse campaign_network strings to extract structured data
-- ✅ Validate numeric fields (installs, ROAS values)
-- ✅ Handle missing or malformed data gracefully
+- ✅ Always handle corrupted headers gracefully
+- ✅ Use flexible column name matching
+- ✅ Validate required fields before processing
+- ✅ Apply ad network decoding to campaign_network field
+- ✅ Handle different CSV formats automatically
+- ✅ Log warnings for invalid rows instead of crashing

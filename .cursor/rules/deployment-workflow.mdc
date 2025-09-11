@@ -62,3 +62,11 @@ Deploy sonrası kontrol edilecekler:
 - **Frontend Deploy Hatası**: Kullanıcıya bildir
 - **Backend Build Hatası**: Kullanıcıya bildir
 - **Railway Deploy Hatası**: AI asistanı tekrar dener ve kullanıcıya bildirir
+
+## Cursor Rules Generation
+Kullanıcı "/Generate Cursor Rules" dediğinde:
+1. ✅ **Git Push**: Otomatik olarak değişiklikleri commit edip push et
+2. ✅ **Frontend Deploy**: `npm run build` ve `netlify deploy --prod --dir=dist`
+3. ✅ **Backend Build**: `cd server && npm run build`
+4. ✅ **Railway Deploy**: AI asistanı `railway up` komutunu çalıştırır
+5. ✅ **Test**: Deploy sonrası health check ve functionality test

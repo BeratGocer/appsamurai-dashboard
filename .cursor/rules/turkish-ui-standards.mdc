@@ -1,44 +1,72 @@
+---
+description: Turkish UI standards and localization patterns
+---
 
 # Turkish UI Standards
 
-## Language
-- **Primary Language**: Turkish (Türkçe)
-- **Technical Terms**: Use Turkish equivalents when possible
-- **Consistency**: Maintain consistent terminology across components
+## Language Requirements
+All user-facing text must be in Turkish (Türkçe).
 
 ## Common UI Terms
-- **Navigation**: Anasayfa, Müşteriler, Account Managers, Dashboard
-- **Actions**: Yükle, Sil, Görüntüle, Düzenle, Kaydet
-- **Status**: Yükleniyor, Tamamlandı, Hata, Başarılı
-- **Filters**: Arama, Filtrele, Tarih Aralığı
+- **Dashboard** → "Dashboard" (kept as is)
+- **Settings** → "Ayarlar"
+- **Upload** → "Yükle"
+- **Delete** → "Sil"
+- **Save** → "Kaydet"
+- **Cancel** → "İptal"
+- **Search** → "Ara"
+- **Filter** → "Filtrele"
+- **Total** → "Toplam"
+- **Average** → "Ortalama"
+- **Performance** → "Performans"
+- **Revenue** → "Gelir"
+- **Cost** → "Maliyet"
+- **Profit** → "Kar"
+- **Installs** → "Kurulum"
+- **ROAS** → "ROAS" (kept as is)
 
-## Column Labels
-- **Day**: Gün
-- **Installs**: Kurulum
-- **ROAS**: ROAS (keep as is)
-- **Cost**: Maliyet
-- **Revenue**: Gelir
-- **Platform**: Platform
-- **Country**: Ülke
-- **Publisher**: Yayıncı
+## Navigation Labels
+- **Home** → "Anasayfa"
+- **Customers** → "Müşteriler"
+- **Account Managers** → "Account Managers" (kept as is)
+- **Dashboard** → "Dashboard" (kept as is)
+
+## Data Labels
+- **App** → "Uygulama"
+- **Country** → "Ülke"
+- **Platform** → "Platform"
+- **Date** → "Tarih"
+- **Campaign** → "Kampanya"
+- **Ad Network** → "Reklam Ağı"
+- **Publisher** → "Yayıncı"
+
+## Button Text
+- **Upload File** → "Dosya Yükle"
+- **Delete File** → "Dosyayı Sil"
+- **Download** → "İndir"
+- **Export** → "Dışa Aktar"
+- **Import** → "İçe Aktar"
+- **Refresh** → "Yenile"
+- **Close** → "Kapat"
+- **Open** → "Aç"
 
 ## Error Messages
-- **File Upload**: "Dosya yüklenirken hata oluştu"
-- **Validation**: "Lütfen geçerli bir CSV dosyası seçin"
-- **Network**: "Bağlantı hatası"
-- **Processing**: "Veri işlenirken hata oluştu"
+- **File not found** → "Dosya bulunamadı"
+- **Upload failed** → "Yükleme başarısız"
+- **Invalid format** → "Geçersiz format"
+- **Network error** → "Ağ hatası"
+- **Please try again** → "Lütfen tekrar deneyin"
 
-## Settings Labels
-- **Date Range**: Tarih Aralığı
-- **Visible Columns**: Görünür Sütunlar
-- **Conditional Formatting**: Koşullu Biçimlendirme
-- **Table Settings**: Tablo Ayarları
+## Success Messages
+- **Upload successful** → "Yükleme başarılı"
+- **File saved** → "Dosya kaydedildi"
+- **Changes applied** → "Değişiklikler uygulandı"
+- **Operation completed** → "İşlem tamamlandı"
 
-## File Management
-- **Upload**: Dosya Yükle
-- **Replace**: Dosya Değiştir
-- **Delete**: Dosya Sil
-- **View**: Görüntüle
-- Use Turkish for user-facing descriptive text
-- Maintain consistency in terminology across components
-- Use placeholder text in Turkish: "App, kampanya veya adset ara..."
+## Critical Rules
+- ✅ All user-facing text must be in Turkish
+- ✅ Technical terms (ROAS, Dashboard) can remain in English
+- ✅ Error messages must be user-friendly in Turkish
+- ✅ Button labels must be clear and concise
+- ✅ Data labels must be consistent across all components
+- ✅ Use proper Turkish grammar and spelling
