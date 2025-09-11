@@ -1210,7 +1210,7 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     const parts = campaignNetwork.split('|');
     const result = {
       platform: 'Unknown',
-      country: 'Unknown',
+      country: 'No data',
       adnetwork: 'Unknown',
       campaignType: 'Unknown',
       eventType: 'Unknown',
@@ -1371,6 +1371,10 @@ export function parseCampaignNetwork(campaignNetwork: string): {
     }
   }
 
+  // Ensure country falls back to "No data" if still empty/Unknown
+  if (!result.country || result.country === 'Unknown') {
+    result.country = 'No data';
+  }
   return result;
 }
 
