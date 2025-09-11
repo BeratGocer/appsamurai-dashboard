@@ -1,35 +1,84 @@
 ---
 description: Auto Git push & deploy workflow for FE (Netlify) and BE (Railway)
 ---
-# Auto Deploy Workflow
 
-## Frontend (Netlify)
-- Build: `npm run build` → outputs `dist/`.
-- Deploy: `netlify deploy --prod --dir=dist`.
-- Env: `VITE_API_BASE` must point to backend public URL.
+# Auto Git Push & Deploy Rule
 
-## Backend (Railway)
-- Project: `appsamurai-dashboard-backend` production env.
-- Domain: managed via `railway domain -s appsamurai-dashboard-backend`.
-- Env: `CORS_ORIGINS=https://ubiquitous-sherbet-b4f6bf.netlify.app`, `API_KEY`, `DATABASE_PUBLIC_URL`.
-- Deploy: from `server/` → `railway up --service appsamurai-dashboard-backend --ci`.
+## Overview
+This rule ensures that any file changes in the AppSamurai Dashboard project are automatically committed, pushed to GitHub, and deployed to production.
 
-## Commands
+## Automatic Workflow
+When files are modified, the following commands will be executed automatically:
+
+1. **Stage Changes**: `git add .`
+2. **Commit Changes**: `git commit -m "Auto-commit: [description of changes]"`
+3. **Push to GitHub**: `git push origin main`
+4. **Build Frontend**: `npm run build`
+5. **Deploy to Netlify**: `netlify deploy --prod --dir=dist`
+
+## Implementation Pattern
 ```bash
-# FE
+# Automatic staging
 git add .
-git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - FE update"
-git push origin main
-npm run build
-netlify deploy --prod --dir=dist
 
-# BE (server/)
-cd server
+# Smart commit message generation
+git commit -m "Auto-commit: $(date +%Y-%m-%d_%H:%M:%S) - $(git status --porcelain | head -1 | cut -c4-)"
+
+# Push to remote
+git push origin main
+
+# Build frontend
 npm run build
-railway up --service appsamurai-dashboard-backend --ci
+
+# Deploy to production
+netlify deploy --prod --dir=dist
 ```
 
-## Verification
-- FE: Open production URL and check UI.
-- BE: `curl $VITE_API_BASE/api/health` should be `200 {"status":"ok"}`.
+## File Monitoring
+This rule applies to all project files except:
+- `node_modules/`
+- `dist/`
+- `.git/`
+- `.DS_Store`
+- `*.log`
 
+## Commit Message Format
+Auto-generated commit messages follow this pattern:
+- `Auto-commit: YYYY-MM-DD_HH:MM:SS - [file description]`
+- Example: `Auto-commit: 2025-01-03_16:30:45 - Updated Dashboard component`
+
+## Error Handling
+If push fails due to conflicts:
+1. Pull latest changes: `git pull origin main`
+2. Resolve conflicts if any
+3. Re-push: `git push origin main`
+
+## GitHub Integration
+- Repository: https://github.com/BeratGocer/appsamurai-dashboard
+- Branch: main
+- Remote: origin
+
+## Usage Instructions
+1. Make changes to any project file
+2. Save the file
+3. Rule automatically detects changes
+4. Git commands execute automatically
+5. Changes are pushed to GitHub
+6. Frontend is built automatically
+7. Changes are deployed to production Netlify site
+
+## Safety Measures
+- Only staged files are committed
+- Commit messages include timestamp
+- Push only to main branch
+- No force push operations
+- Preserves existing Git history
+- Build process creates fresh dist/ directory
+- Deploy only to production environment
+- No rollback operations without explicit request
+
+## Deployment Information
+- **Production URL**: https://ubiquitous-sherbet-b4f6bf.netlify.app/
+- **Build Command**: `npm run build`
+- **Deploy Directory**: `dist/`
+- **Deploy Command**: `netlify deploy --prod --dir=dist`

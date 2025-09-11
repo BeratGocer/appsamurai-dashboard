@@ -1,6 +1,5 @@
 ---
-description: Strategy for creating flexible, future-proof CSV parsing that adapts to any format
-alwaysApply: true
+description: Flexible parsing strategy for handling multiple CSV formats and ad network patterns
 ---
 
 # Flexible Parsing Strategy

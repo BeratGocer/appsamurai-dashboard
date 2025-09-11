@@ -4,64 +4,53 @@ description: Ad network decoding implementation patterns and troubleshooting
 
 # Ad Network Decoding Patterns
 
-## Core Implementation
-The ad network decoding system in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) uses explicit mappings from [Adnetworkler.csv](mdc:Adnetworkler.csv) rather than generic Base64 decoding.
+## Core Architecture
+The ad network decoding system is implemented in [src/utils/csvParser.ts](mdc:src/utils/csvParser.ts) using the `decodeAdNetwork()` function.
 
-## Key Functions
-- `decodeAdNetwork(code: string): string` - Main decoding function
-- `findMapping(mappings: Record<string, string>, searchCode: string)` - Case-insensitive mapping lookup
+## Decoding Hierarchy
+1. **S Network Codes**: Direct mapping for codes starting with 'S' (SCR, SPE, SFT, etc.)
+2. **Base64 Mappings**: Direct mapping for specific Base64 encoded strings
+3. **PTSDK Codes**: Pattern-based recognition for PTSDK_H_ and PTSDK_ prefixes
+4. **Fluent Patterns**: Comprehensive number-based patterns for Fluent ad network
+5. **OfferToro Patterns**: Base64 number + pipe format recognition
+6. **Lootably Patterns**: Y2-prefixed long Base64 strings
 
-## Mapping Types
-1. **S Network Codes**: SPE, SDA, SFT, etc. (prefix/suffix matching)
-2. **Base64 Codes**: Explicit mappings only (no generic Base64 decoding)
-3. **PTSDK Codes**: PTSDK_H_ prefixed codes
-4. **Number_Number Pattern**: `^\d+_\d+$` → Always "Fluent"
+## Fluent Ad Network Rules
+Fluent supports multiple number-based patterns:
+- `34631_` → Fluent (number + underscore)
+- `34631_5406` → Fluent (number + underscore + number)
+- `34631_dshop` → Fluent (number + underscore + text)
+- `34631_13821-207475-youtube` → Fluent (complex format)
+- `45209_BM-207288` → Fluent (BM/PSP format)
+- `45209_reward-205771` → Fluent (reward format)
+- `206305` → Fluent (numbers only)
+- `34631_ 206305` → Fluent (spaced format, auto-cleaned)
 
-## Critical Rules
-- ✅ **NO Generic Base64 Decoding**: Only use explicit mappings from CSV
-- ✅ **Case Insensitive**: Use `findMapping()` for flexible case handling
-- ✅ **Explicit Mappings Only**: All codes must be defined in Adnetworkler.csv
-- ✅ **Pattern Matching**: Support regex patterns for number_number format
-- ✅ **Prefix/Suffix Matching**: Handle S codes with various formats
-
-## Complex Code Parsing
-For codes like `ScR_OTlwSkZrSHNEcm01`:
-1. Split by underscore: `['ScR', 'OTlwSkZrSHNEcm01']`
-2. Check first part against S network mappings: `ScR` → `SCR` → `Copper`
-3. Check second part against base64 mappings: `OTlwSkZrSHNEcm01` → `Copper`
-4. Return first successful match
-
-## Character Variations
-Handle similar-looking characters:
-- `OTIwSkZrSHNEcm01` (capital I) → `Copper`
-- `OTlwSkZrSHNEcm01` (lowercase l) → `Copper`
-- Both must be explicitly mapped in [Adnetworkler.csv](mdc:Adnetworkler.csv)
-
-## Common Patterns
+## Pattern Implementation
 ```typescript
-// Case-insensitive mapping lookup
-const findMapping = (mappings: Record<string, string>, searchCode: string): string | null => {
-  for (const [key, value] of Object.entries(mappings)) {
-    if (key.toLowerCase() === searchCode.toLowerCase()) {
-      return value;
-    }
+// Spaced format cleaning
+if (/^\d+_\s+\d+$/.test(cleanCode)) {
+  const cleanedCode = cleanCode.replace(/\s+/g, '');
+  if (/^\d+_\d+$/.test(cleanedCode)) {
+    return 'Fluent';
   }
-  return null;
-};
+}
 
-// Number_number pattern (all Fluent)
-if (/^\d+_\d+$/.test(cleanCode)) {
-  return 'Fluent';
+// Lootably pattern
+if (/^Y2[a-zA-Z0-9]{30,}x8$/.test(cleanCode)) {
+  return 'Lootably';
+}
+
+// OfferToro pattern
+if (/^[A-Za-z0-9]+8$/.test(cleanCode) && cleanCode.length <= 10) {
+  return 'OfferToro';
 }
 ```
 
-## Troubleshooting
-- **"saçma sapan" decode results**: Check for generic Base64 decoding (should be removed)
-- **Case sensitivity issues**: Use `findMapping()` instead of direct key lookup
-- **Missing mappings**: Add explicit entries to Adnetworkler.csv
-- **Duplicate mappings**: Remove uppercase versions, use case-insensitive lookup
-
-## CSV Format
-Adnetworkler.csv format: `code,network_name`
-- Example: `LV9UVnNKZTY4WjZW,Ad It Up`
-- Example: `MTkwMzZ8,Fluent`
+## Critical Rules
+- ✅ Always test new patterns with actual CSV data
+- ✅ Use flexible regex patterns, not hardcoded positions
+- ✅ Handle spaced formats by cleaning whitespace
+- ✅ Maintain pattern hierarchy (specific patterns first)
+- ✅ Add new networks to base64Mappings for direct lookup
+- ✅ Use pattern rules for recurring formats
